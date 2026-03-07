@@ -1,0 +1,27 @@
+{
+	"schemaVersion": 1,
+	"id": "staffhelper",
+	"version": "${version}",
+	"name": "StaffHelper",
+	"description": "Staff helper tools",
+	"authors": [
+		"DontiMonti"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/staffhelper/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.dmsh.staffhelper.StaffHelperClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"mixins": [
+		"staffhelper.client.mixins.json"
+	]
+}

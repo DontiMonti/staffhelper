@@ -1,0 +1,24 @@
+{
+	"required": false,
+	"package": "com.dmsh.staffhelper.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"refmap": "staffhelper.refmap.json",
+	"client": [
+		"EntityStarMixin",
+		"ArmorStandMarkerSuppressMixin",
+		"EntityRendererNameTagMixin",
+		"TextDisplayMarkerSuppressMixin",
+		"TextRendererMarkerSuppressMixin",
+		"PlayerEntityRendererLabelSuppressMixin",
+		"PlayerListEntryDisplayNameMixin",
+		"ChatHudStarMixin",
+		"ChatHudSuppressMixin",
+		"ClientPlayNetworkHandlerTpsMixin",
+		"ChatScreenTabCompleteMixin",
+		"ChatInputSuggestorMixin",
+		"AdvancedChatBoxSuggestorMixin"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}
