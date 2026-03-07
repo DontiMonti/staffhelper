@@ -71,6 +71,33 @@
 - Доступ к функциям мода ограничен таблицей `allowed_users` в Supabase.
 - Если игрок не в списке — мод показывает уведомление и отключает рабочие данные.
 
+
+### 11. Работа с базой данных
+
+#### 11.1 Инициализация и конфиг
+- Берутся `supabaseProjectUrl`, `supabaseAnonKey`, имена таблиц из конфига: [StaffHelperConfig.java:90](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/main/java/com/dmsh/staffhelper/config/StaffHelperConfig.java#L90).
+- Базовый URL формируется как `https://<project>.supabase.co/rest/v1/<table>`: [SupabaseApi.java:139](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/util/SupabaseApi.java#L139).
+
+#### 11.2 Принятие запросов
+- Каждый read-запрос отправляет заголовки:
+  - `apikey: <anon key>`
+  - `Authorization: Bearer <anon key>`
+  - `Accept: application/json`
+
+#### 11.3 Что берется из бд
+  - roles: [RemoteRolesPoller.java:134](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/util/RemoteRolesPoller.java#L134)
+  - decorations: [RemoteNickDecorationsPoller.java:140](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/util/RemoteNickDecorationsPoller.java#L140)
+  - updates: [UpdateNotifyFeature.java:101](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/feature/UpdateNotifyFeature.java#L101)
+  - allowed_users: [AllowedUsersAccessGate.java:105](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/util/AllowedUsersAccessGate.java#L105)
+
+#### 11.4 Обмен информацией
+  - Переодический `GET` запрос.
+  - `get` запускается при старте клиента: [StaffHelperClient.java:36](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/client/java/com/dmsh/staffhelper/StaffHelperClient.java#L36)
+  - Переодический запрос `get` 10-15сек: [StaffHelperConfig.java:197](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/main/java/com/dmsh/staffhelper/config/StaffHelperConfig.java#L197)
+
+#### 11.5 Хранение ключей
+  - Ключи при сохранении конфига шифруются локально и пишутся в `...Encrypted` поля: [StaffHelperConfig.java:119](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/main/java/com/dmsh/staffhelper/config/StaffHelperConfig.java#L119), [ConfigSecretCodec.java:33](https://github.com/DontiMonti/staffhelper/blob/71c7fd3ebbfa3a29c67d77b5860ababfe4e8d603/src/main/java/com/dmsh/staffhelper/config/ConfigSecretCodec.java#L33).
+
 ## Горячие клавиши по умолчанию
 Все клавиши настраиваются через ванильное меню майнкрафта.
 
