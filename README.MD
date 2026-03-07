@@ -8,11 +8,14 @@
 - Открытие меню по `Right Shift`.
 - Вкладки: `NickSearch`, `AFK Zone`, `CommandBuilder`, `Modules`, `Appearance`.
 - Встроенный HUD Editor: перетаскивание и масштабирование виджетов.
+  [Main Menu](src/main/resources/assets/main_menu.png)
 
 ### 2. NickSearch (поиск ников в онлайне)
 - Отслеживает ники по шаблонам.
+- Поиск по добавленным шаблонам.
 - Показывает совпадения в отдельном HUD-виджете.
-  [Mod Screenshot](src/main/resources/assets/main_menu.png)
+  [NickSearch Options](src/main/resources/assets/main_menu.png)
+  [NickSearch example](src/main/resources/assets/ns-example.png)
 
 ### 3. AFK Zone + Multi-account check
 - Настройка зоны по двум точкам (`POS1`/`POS2`).
@@ -21,14 +24,15 @@
 - Отдельный HUD со списком нарушителей и бан-инфо(После выдачи наказания мод подтягивает причину и ID-бана).
 - Бинд для копирования готового текста из виджета.
 - Игнор-лист ников для исключений.
-  [Mod Screenshot](src/main/resources/assets/afk_zone.png)
+  [afk-zone options](src/main/resources/assets/afk_zone.png)
+  [afk-zone example](src/main/resources/assets/ma-example.png)
 
 ### 4. Command Builder (алиасы команд)
 - Создание своих шаблонов команд: `alias -> execute`.
 - Плейсхолдеры: `{playername}`, `{time}`, `{reason}`.
 - Автоподсказки в чате + поддержка `Tab`-дополнения.
 - Работает и с ванильным чат-суггестором, и с AdvancedChatBox.
-  [Mod Screenshot](src/main/resources/assets/comm_build.png)
+  [CommandBuilder](src/main/resources/assets/comm_build.png)
 
 ### 5. Modules
 - STATS HUD
@@ -39,25 +43,25 @@
 #####
 - AutoBox Beta
 - После входа на сервер может автоматически отправлять выбранную команду (Box#1 / Box#2).
-  [Mod Screenshot](src/main/resources/assets/modules.png)
+  [Modules](src/main/resources/assets/modules.png)
 
 ### 6. Appearance
 - Возможность перемещать виджеты.
 - Возможность отключить анимацию блеска.
 - Пресеты цветовых тем, а так-же кастомная тема из 2ух цветов.
-  [Mod Screenshot](src/main/resources/assets/appear.png)
+  [Appearance](src/main/resources/assets/appear.png)
 
 ### 7. Vanish-индикатор
 - Автоматически определяет включение/выключение vanish по сообщениям сервера.
 - Показывает отдельный HUD-индикатор, пока vanish активен.
-  [Mod Screenshot](src/main/resources/assets/hud.png)
+  [hud](src/main/resources/assets/hud.png)
 
 ### 8. Роли и декорации ников (удалённая синхронизация)
 - Подтягивает роли и декорации (символ/цвет) из Supabase.
 - Применяет декорации в
-  - чате;
-  - TAB;
-  - отдельном неймтеге над игроками.
+  - чате;[chat example](src/main/resources/assets/deco_chat_example.png)
+  - TAB;[tab example](src/main/resources/assets/deco_tab_example.png)
+  - отдельном неймтеге над игроками.[nametag example](src/main/resources/assets/deco_nametag_example.png)
 
 ### 9. Проверка обновлений
 - При входе проверяет актуальность версии.
@@ -67,7 +71,7 @@
 - Доступ к функциям мода ограничен таблицей `allowed_users` в Supabase.
 - Если игрок не в списке — мод показывает уведомление и отключает рабочие данные.
 
-## Горячие клавиши
+## Горячие клавиши по умолчанию
 Все клавиши настраиваются через ванильное меню майнкрафта.
 
 | Клавиша | Действие |
