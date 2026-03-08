@@ -68,6 +68,7 @@
   "gui.staffhelper.tab.nick.add_pattern": "Add pattern:",
   "gui.staffhelper.tab.nick.search": "Search:",
   "gui.staffhelper.tab.nick.patterns_list": "Patterns list (scrollable):",
+  "gui.staffhelper.tab.nick.ignored_nicks": "IgnoreList (exact nicks):",
 
   "gui.staffhelper.tab.afk.title": "AFK Zone",
   "gui.staffhelper.tab.afk.pos1": "POS1 (X Y Z):",

@@ -78,10 +78,12 @@ public class NickSearchFeature {
 
         List<String> patterns = StaffHelperState.CONFIG.nickPatterns;
         if (patterns == null || patterns.isEmpty()) return List.of();
+        List<String> ignoreNicks = StaffHelperState.CONFIG.nickIgnoreNicks;
 
         List<PlayerListEntry> matched = new ArrayList<>();
         for (PlayerListEntry entry : mc.getNetworkHandler().getPlayerList()) {
             String name = entry.getProfile().getName();
+            if (isIgnoredNick(ignoreNicks, name)) continue;
             if (matchesAny(patterns, name)) matched.add(entry);
         }
         return matched;
@@ -243,6 +245,14 @@ public class NickSearchFeature {
             return n.startsWith(prefix);
         }
         return n.startsWith(p) || n.contains(p);
+    }
+
+    private static boolean isIgnoredNick(List<String> ignoreNicks, String name) {
+        if (name == null || name.isBlank() || ignoreNicks == null || ignoreNicks.isEmpty()) return false;
+        for (String nick : ignoreNicks) {
+            if (nick != null && nick.equalsIgnoreCase(name)) return true;
+        }
+        return false;
     }
 
     private static float getScale() {

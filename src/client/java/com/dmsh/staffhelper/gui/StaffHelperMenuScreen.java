@@ -42,6 +42,9 @@ public class StaffHelperMenuScreen extends Screen {
 
     private TextFieldWidget addInput;
     private TextFieldWidget searchInput;
+    private TextFieldWidget nickIgnoreInput;
+    private ButtonWidget nickIgnoreAddBtn;
+    private int nickIgnoreScroll = 0;
 
     // AFK fields
     private TextFieldWidget pos1X, pos1Y, pos1Z;
@@ -236,6 +239,38 @@ public class StaffHelperMenuScreen extends Screen {
         clearBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 458 + 8, searchRowY + 14, 90, 20, tr("gui.staffhelper.button.clear"), b -> {
             searchInput.setText("");
             scroll = 0;
+        }));
+
+        int nickIgnoreX = x0 + pad + 370;
+        int nickIgnoreInputY = y0 + 196;
+        nickIgnoreInput = new CenteredTextFieldWidget(this.textRenderer,
+                nickIgnoreX,
+                nickIgnoreInputY,
+                130,
+                20,
+                Text.literal(""));
+        nickIgnoreInput.setMaxLength(16);
+        nickIgnoreInput.setDrawsBackground(false);
+        addDrawableChild(nickIgnoreInput);
+
+        nickIgnoreAddBtn = addDrawableChild(new SoupButtonWidget(nickIgnoreX + 130 + 8, nickIgnoreInputY, 80, 20, tr("gui.staffhelper.button.add"), b -> {
+            String nick = (nickIgnoreInput != null) ? nickIgnoreInput.getText().trim() : "";
+            if (nick.isEmpty()) return;
+            if (nick.length() < 3 || nick.length() > 16) return;
+
+            boolean exists = false;
+            for (String s : StaffHelperState.CONFIG.nickIgnoreNicks) {
+                if (s != null && s.equalsIgnoreCase(nick)) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (!exists) {
+                StaffHelperState.CONFIG.nickIgnoreNicks.add(nick);
+                StaffHelperState.CONFIG.save();
+            }
+            nickIgnoreInput.setText("");
+            clampNickIgnoreScroll();
         }));
 
         // HUD editor button
@@ -1110,6 +1145,8 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActive(addBtn, nick);
         setVisibleActiveAnimated(searchInput, nick);
         setVisibleActive(clearBtn, nick);
+        setVisibleActiveAnimated(nickIgnoreInput, nick);
+        setVisibleActive(nickIgnoreAddBtn, nick);
         setVisibleActive(toggleBtn, nick);
 
         // AFK tab
@@ -1181,7 +1218,10 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActive(themePinkBtn, appearance);
         setVisibleActive(themeCustomBtn, appearance);
 
-        if (!nick) scroll = 0;
+        if (!nick) {
+            scroll = 0;
+            nickIgnoreScroll = 0;
+        }
         if (!afk) afkIgnoreScroll = 0;
         if (!commandBuilder) commandBuilderScroll = 0;
     }
@@ -1191,7 +1231,10 @@ public class StaffHelperMenuScreen extends Screen {
         tickTextFieldAnimations();
         statsExpandProgress = animateProgress(statsExpandProgress, statsExpanded ? 1.0f : 0.0f, 0.16f);
         autoBoxExpandProgress = animateProgress(autoBoxExpandProgress, autoBoxExpanded ? 1.0f : 0.0f, 0.16f);
-        if (tab == Tab.NICKSEARCH) clampScroll();
+        if (tab == Tab.NICKSEARCH) {
+            clampScroll();
+            clampNickIgnoreScroll();
+        }
         if (tab == Tab.COMMANDBUILDER) {
             clampCommandBuilderScroll();
             applyCommandBuilderLayout();
@@ -1239,14 +1282,23 @@ public class StaffHelperMenuScreen extends Screen {
             int y0 = (this.height - panelH) / 2 + getUiOffsetY();
 
             int pad = 16;
-            int listX = x0 + pad;
-            int listY = y0 + 200;
-            int listW = panelW - pad * 2;
-            int listH = panelH - 200 - pad - 30;
-
-            if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) {
+            int patternListX = x0 + pad;
+            int patternListY = y0 + 200;
+            int patternListW = 362;
+            int patternListH = panelH - 200 - pad - 30;
+            if (mouseX >= patternListX && mouseX <= patternListX + patternListW && mouseY >= patternListY && mouseY <= patternListY + patternListH) {
                 scroll -= (int) Math.signum(verticalAmount) * 18;
                 clampScroll();
+                return true;
+            }
+
+            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxY = y0 + 220;
+            int ignoreBoxW = 218;
+            int ignoreBoxH = panelH - 220 - pad - 30;
+            if (mouseX >= ignoreBoxX && mouseX <= ignoreBoxX + ignoreBoxW && mouseY >= ignoreBoxY && mouseY <= ignoreBoxY + ignoreBoxH) {
+                nickIgnoreScroll -= (int) Math.signum(verticalAmount) * 18;
+                clampNickIgnoreScroll();
                 return true;
             }
 
@@ -1320,7 +1372,7 @@ public class StaffHelperMenuScreen extends Screen {
             int pad = 16;
             int listX = x0 + pad;
             int listY = y0 + 200;
-            int listW = panelW - pad * 2;
+            int listW = 362;
             int listH = panelH - 200 - pad - 30;
 
             if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) {
@@ -1343,6 +1395,34 @@ public class StaffHelperMenuScreen extends Screen {
                         if (removed) {
                             StaffHelperState.CONFIG.save();
                             clampScroll();
+                        }
+                        return true;
+                    }
+                }
+            }
+
+            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxY = y0 + 220;
+            int ignoreBoxW = 218;
+            int ignoreBoxH = panelH - 220 - pad - 30;
+            if (mouseX >= ignoreBoxX && mouseX <= ignoreBoxX + ignoreBoxW && mouseY >= ignoreBoxY && mouseY <= ignoreBoxY + ignoreBoxH) {
+                int rowH = 18;
+                int localY = (int) (mouseY - ignoreBoxY) + nickIgnoreScroll;
+                int idx = localY / rowH;
+                List<String> list = sortedNickIgnoreList();
+                if (idx >= 0 && idx < list.size()) {
+                    String value = list.get(idx);
+
+                    int crossSize = 12;
+                    int crossPadRight = 8;
+                    int crossX = ignoreBoxX + ignoreBoxW - crossPadRight - crossSize;
+                    int rowTop = (ignoreBoxY - nickIgnoreScroll) + idx * rowH;
+                    int crossY = rowTop + (rowH - crossSize) / 2;
+                    if (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize) {
+                        boolean removed = StaffHelperState.CONFIG.nickIgnoreNicks.removeIf(s -> s != null && s.equalsIgnoreCase(value));
+                        if (removed) {
+                            StaffHelperState.CONFIG.save();
+                            clampNickIgnoreScroll();
                         }
                         return true;
                     }
@@ -1460,12 +1540,16 @@ public class StaffHelperMenuScreen extends Screen {
             if (searchInput != null) {
                 drawTextFieldPanel(ctx, searchInput, 8);
             }
+            if (nickIgnoreInput != null) {
+                drawTextFieldPanel(ctx, nickIgnoreInput, 8);
+            }
 
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.patterns_list"), x0 + pad, y0 + 182, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.ignored_nicks"), x0 + pad + 370, y0 + 182, textSub, false);
 
             int listX = x0 + pad;
             int listY = y0 + 200;
-            int listW = panelW - pad * 2;
+            int listW = 362;
             int listH = panelH - 200 - pad - 30;
 
             UiChrome.drawPanel(ctx, listX, listY, listW, listH, 10, System.currentTimeMillis(), -0.10f, true);
@@ -1498,6 +1582,38 @@ public class StaffHelperMenuScreen extends Screen {
                 ctx.drawText(this.textRenderer, Text.literal("x"), crossX + 4, crossY + 2, 0xFFFFFFFF, false);
             }
 
+            ctx.disableScissor();
+
+            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxY = y0 + 220;
+            int ignoreBoxW = 218;
+            int ignoreBoxH = panelH - 220 - pad - 30;
+            UiChrome.drawPanel(ctx, ignoreBoxX, ignoreBoxY, ignoreBoxW, ignoreBoxH, 10, System.currentTimeMillis(), -0.10f, true);
+
+            List<String> ignoreList = sortedNickIgnoreList();
+            int ignoreRowH = 18;
+
+            ctx.enableScissor(ignoreBoxX, ignoreBoxY, ignoreBoxX + ignoreBoxW, ignoreBoxY + ignoreBoxH);
+            int ignoreStartY = ignoreBoxY - nickIgnoreScroll;
+            for (int i = 0; i < ignoreList.size(); i++) {
+                int yy = ignoreStartY + i * ignoreRowH;
+                if (yy + ignoreRowH < ignoreBoxY || yy > ignoreBoxY + ignoreBoxH) continue;
+
+                String value = ignoreList.get(i);
+                int rowBg = (i % 2 == 0) ? 0x8012141B : 0x80101116;
+                ctx.fill(ignoreBoxX + 2, yy, ignoreBoxX + ignoreBoxW - 2, yy + ignoreRowH, rowBg);
+                ctx.drawText(this.textRenderer, Text.literal(value), ignoreBoxX + 6, yy + 5, 0xFFEAEAEA, false);
+
+                int crossSize = 12;
+                int crossPadRight = 8;
+                int crossX = ignoreBoxX + ignoreBoxW - crossPadRight - crossSize;
+                int crossY = yy + (ignoreRowH - crossSize) / 2;
+                boolean hoverCross = (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize);
+                int crossBg = hoverCross ? 0xCC1C202A : 0xB015171E;
+                GuiRenderUtils.roundedRect(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, crossBg);
+                GuiRenderUtils.roundedOutline(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, 1, hoverCross ? 0xFF3A4252 : 0xFF2A2F3A);
+                ctx.drawText(this.textRenderer, Text.literal("x"), crossX + 4, crossY + 2, 0xFFFFFFFF, false);
+            }
             ctx.disableScissor();
 
         } else if (tab == Tab.AFKZONE) {
@@ -1728,6 +1844,14 @@ public class StaffHelperMenuScreen extends Screen {
         return out;
     }
 
+    private List<String> sortedNickIgnoreList() {
+        List<String> out = new ArrayList<>();
+        if (StaffHelperState.CONFIG == null || StaffHelperState.CONFIG.nickIgnoreNicks == null) return out;
+        out.addAll(StaffHelperState.CONFIG.nickIgnoreNicks);
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
+    }
+
     private void clampScroll() {
         List<String> list = filteredList();
         int rowH = 18;
@@ -1740,6 +1864,16 @@ public class StaffHelperMenuScreen extends Screen {
 
         if (scroll < 0) scroll = 0;
         if (scroll > maxScroll) scroll = maxScroll;
+    }
+
+    private void clampNickIgnoreScroll() {
+        List<String> list = sortedNickIgnoreList();
+        int rowH = 18;
+        int boxH = panelH - 220 - 16 - 30;
+        int contentH = list.size() * rowH;
+        int maxScroll = Math.max(0, contentH - boxH);
+        if (nickIgnoreScroll < 0) nickIgnoreScroll = 0;
+        if (nickIgnoreScroll > maxScroll) nickIgnoreScroll = maxScroll;
     }
 
     private void clampIgnoreScroll() {

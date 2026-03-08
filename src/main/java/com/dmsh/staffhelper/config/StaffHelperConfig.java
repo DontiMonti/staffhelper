@@ -20,6 +20,7 @@ public class StaffHelperConfig {
     public int nickWidgetX = 8;
     public int nickWidgetY = 8;
     public List<String> nickPatterns = new ArrayList<>();
+    public List<String> nickIgnoreNicks = new ArrayList<>();
 
     // Vanish HUD
     public int vanishWidgetX = 8;
@@ -136,6 +137,7 @@ public class StaffHelperConfig {
 
     private void normalize() {
         if (nickPatterns == null) nickPatterns = new ArrayList<>();
+        if (nickIgnoreNicks == null) nickIgnoreNicks = new ArrayList<>();
         if (afkIgnoreNicks == null) afkIgnoreNicks = new ArrayList<>();
         if (commandBuilders == null) commandBuilders = new ArrayList<>();
         uiTheme = normalizeTheme(uiTheme);

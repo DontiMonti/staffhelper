@@ -68,7 +68,7 @@
   "gui.staffhelper.tab.nick.add_pattern": "Добавить шаблон:",
   "gui.staffhelper.tab.nick.search": "Поиск:",
   "gui.staffhelper.tab.nick.patterns_list": "Список шаблонов (прокручиваемый):",
-
+  "gui.staffhelper.tab.nick.ignored_nicks": "IgnoreList (точные ники):",
   "gui.staffhelper.tab.afk.title": "AFK Zone",
   "gui.staffhelper.tab.afk.pos1": "POS1 (X Y Z):",
   "gui.staffhelper.tab.afk.pos2": "POS2 (X Y Z):",
