@@ -1502,7 +1502,7 @@ public class StaffHelperMenuScreen extends Screen {
         UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, System.currentTimeMillis(), 0.10f, true, false);
 
         // subtle top separator
-        ctx.fill(x0 + 12, y0 + 44, x0 + panelW - 12, y0 + 45, ((int)(0x80 * p) << 24) | 0x2A2F3A);
+        ctx.fill(x0 + 12, y0 + 48, x0 + panelW - 12, y0 + 49, ((int)(0x80 * p) << 24) | 0x2A2F3A);
 
         int tabsY = y0 + 10;
         int headerY = tabsY + 28;
