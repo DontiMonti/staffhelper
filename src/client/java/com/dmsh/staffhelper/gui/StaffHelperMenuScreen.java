@@ -124,8 +124,16 @@ public class StaffHelperMenuScreen extends Screen {
     private final Map<TextFieldWidget, Float> animatedTextFieldProgress = new IdentityHashMap<>();
     private final Map<TextFieldWidget, Boolean> animatedTextFieldTargets = new IdentityHashMap<>();
 
+    private static Text tr(String key, Object... args) {
+        return Text.translatable(key, args);
+    }
+
+    private static String ts(String key, Object... args) {
+        return tr(key, args).getString();
+    }
+
     public StaffHelperMenuScreen() {
-        super(Text.literal("StaffHelper"));
+        super(tr("screen.staffhelper.menu.title"));
     }
 
     @Override
@@ -168,7 +176,7 @@ public class StaffHelperMenuScreen extends Screen {
                 y0 + panelH - pad - 20,
                 110,
                 20,
-                Text.literal("Close"),
+                tr("gui.staffhelper.button.close"),
                 b -> beginCloseAnimation()
         ));
 
@@ -203,7 +211,7 @@ public class StaffHelperMenuScreen extends Screen {
         addDrawableChild(addInput);
 
         // Add button
-        addBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 360 + 8, blockY + 14, 90, 20, Text.literal("Add"), b -> {
+        addBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 360 + 8, blockY + 14, 90, 20, tr("gui.staffhelper.button.add"), b -> {
             String ptn = addInput.getText().trim();
             if (!ptn.isEmpty()) {
                 StaffHelperState.CONFIG.nickPatterns.add(ptn);
@@ -225,7 +233,7 @@ public class StaffHelperMenuScreen extends Screen {
         addDrawableChild(searchInput);
 
         // Clear button
-        clearBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 458 + 8, searchRowY + 14, 90, 20, Text.literal("Clear"), b -> {
+        clearBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 458 + 8, searchRowY + 14, 90, 20, tr("gui.staffhelper.button.clear"), b -> {
             searchInput.setText("");
             scroll = 0;
         }));
@@ -236,7 +244,7 @@ public class StaffHelperMenuScreen extends Screen {
                 y0 + 78,
                 120,
                 20,
-                Text.literal("Edit Hud"),
+                tr("gui.staffhelper.button.edit_hud"),
                 b -> {
                     if (tab == Tab.APPEARANCE) MinecraftClient.getInstance().setScreen(new HudEditorScreen());
                 }
@@ -286,7 +294,7 @@ public class StaffHelperMenuScreen extends Screen {
             b.setMessage(afkRenderText());
         }));
 
-        afkApplyBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 170, 110, 20, Text.literal("Apply"), b -> {
+        afkApplyBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 170, 110, 20, tr("gui.staffhelper.button.apply"), b -> {
             StaffHelperState.CONFIG.afkX1 = parseInt(pos1X.getText(), StaffHelperState.CONFIG.afkX1);
             StaffHelperState.CONFIG.afkY1 = parseInt(pos1Y.getText(), StaffHelperState.CONFIG.afkY1);
             StaffHelperState.CONFIG.afkZ1 = parseInt(pos1Z.getText(), StaffHelperState.CONFIG.afkZ1);
@@ -313,7 +321,7 @@ public class StaffHelperMenuScreen extends Screen {
         afkIgnoreInput.setDrawsBackground(false);
         addDrawableChild(afkIgnoreInput);
 
-        afkIgnoreAddBtn = addDrawableChild(new SoupButtonWidget(ignoreX + 130 + 8, ignoreY, 80, 20, Text.literal("Add"), b -> {
+        afkIgnoreAddBtn = addDrawableChild(new SoupButtonWidget(ignoreX + 130 + 8, ignoreY, 80, 20, tr("gui.staffhelper.button.add"), b -> {
             String nick = (afkIgnoreInput != null) ? afkIgnoreInput.getText().trim() : "";
             if (nick.isEmpty()) return;
             if (nick.length() < 3 || nick.length() > 16) return;
@@ -433,14 +441,14 @@ public class StaffHelperMenuScreen extends Screen {
         int themePresetGap = 8;
         int row2Y = appearanceY + 30;
 
-        themeBlueBtn = addDrawableChild(new SoupButtonWidget(appearanceX, appearanceY, themePresetW, 20, Text.literal("Theme: Blue"), b -> setTheme("BLUE")));
-        themeRedBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap), appearanceY, themePresetW, 20, Text.literal("Theme: Red"), b -> setTheme("RED")));
-        themePurpleBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 2, appearanceY, themePresetW, 20, Text.literal("Theme: Purple"), b -> setTheme("PURPLE")));
-        themeOrangeBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 3, appearanceY, themePresetW, 20, Text.literal("Theme: Orange"), b -> setTheme("ORANGE")));
-        themeGreenBtn = addDrawableChild(new SoupButtonWidget(appearanceX, row2Y, themePresetW, 20, Text.literal("Theme: Green"), b -> setTheme("GREEN")));
-        themeBrightPurpleBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap), row2Y, themePresetW, 20, Text.literal("Theme: Bright Purple"), b -> setTheme("BRIGHT_PURPLE")));
-        themePinkBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 2, row2Y, themePresetW, 20, Text.literal("Theme: Pink"), b -> setTheme("PINK")));
-        themeCustomBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 3, row2Y, themePresetW, 20, Text.literal("Theme: Custom"), b -> openCustomThemeDialog()));
+        themeBlueBtn = addDrawableChild(new SoupButtonWidget(appearanceX, appearanceY, themePresetW, 20, tr("gui.staffhelper.theme.blue"), b -> setTheme("BLUE")));
+        themeRedBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap), appearanceY, themePresetW, 20, tr("gui.staffhelper.theme.red"), b -> setTheme("RED")));
+        themePurpleBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 2, appearanceY, themePresetW, 20, tr("gui.staffhelper.theme.purple"), b -> setTheme("PURPLE")));
+        themeOrangeBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 3, appearanceY, themePresetW, 20, tr("gui.staffhelper.theme.orange"), b -> setTheme("ORANGE")));
+        themeGreenBtn = addDrawableChild(new SoupButtonWidget(appearanceX, row2Y, themePresetW, 20, tr("gui.staffhelper.theme.green"), b -> setTheme("GREEN")));
+        themeBrightPurpleBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap), row2Y, themePresetW, 20, tr("gui.staffhelper.theme.bright_purple"), b -> setTheme("BRIGHT_PURPLE")));
+        themePinkBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 2, row2Y, themePresetW, 20, tr("gui.staffhelper.theme.pink"), b -> setTheme("PINK")));
+        themeCustomBtn = addDrawableChild(new SoupButtonWidget(appearanceX + (themePresetW + themePresetGap) * 3, row2Y, themePresetW, 20, tr("gui.staffhelper.theme.custom"), b -> openCustomThemeDialog()));
 
         initCustomThemeDialog(x0, y0);
         refreshThemeButtonsState();
@@ -702,11 +710,11 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private Text afkFillText() {
-        return Text.literal("Fill: " + (StaffHelperState.CONFIG.afkFillEnabled ? "ON" : "OFF"));
+        return tr("gui.staffhelper.afk.fill", onOff(StaffHelperState.CONFIG.afkFillEnabled));
     }
 
     private Text afkOutlineText() {
-        return Text.literal("Outline: " + (StaffHelperState.CONFIG.afkOutlineEnabled ? "ON" : "OFF"));
+        return tr("gui.staffhelper.afk.outline", onOff(StaffHelperState.CONFIG.afkOutlineEnabled));
     }
 
     
@@ -734,47 +742,47 @@ public class StaffHelperMenuScreen extends Screen {
     private Text afkRenderText() {
         int mode = getAfkRenderMode();
         String state = switch (mode) {
-            case 1 -> "OUT";
-            case 2 -> "BOTH"; // safety: fill-only treated as BOTH
-            case 3 -> "BOTH";
-            default -> "OFF";
+            case 1 -> ts("gui.staffhelper.afk.render_state.out");
+            case 2 -> ts("gui.staffhelper.afk.render_state.both"); // safety: fill-only treated as BOTH
+            case 3 -> ts("gui.staffhelper.afk.render_state.both");
+            default -> ts("gui.staffhelper.afk.render_state.off");
         };
-        return Text.literal("Outline/Fill: " + state);
+        return tr("gui.staffhelper.afk.render", state);
     }
 
     private Text toggleText() {
-        return Text.literal("NickSearch: " + (StaffHelperState.CONFIG.nickSearchEnabled ? "ON" : "OFF"));
+        return tr("gui.staffhelper.nicksearch.toggle", onOff(StaffHelperState.CONFIG.nickSearchEnabled));
     }
 
     private String onOff(boolean v) {
-        return v ? "ON" : "OFF";
+        return ts(v ? "gui.staffhelper.state.on" : "gui.staffhelper.state.off");
     }
 
     private Text statsSectionText() {
-        return Text.literal("STATS GUI " + (statsExpanded ? "v" : ">"));
+        return tr("gui.staffhelper.stats.section", statsExpanded ? "v" : ">");
     }
 
     private Text autoBoxSectionText() {
-        return Text.literal("AutoBox " + (autoBoxExpanded ? "v" : ">") + " [" + autoBoxSelectionName() + "]");
+        return tr("gui.staffhelper.autobox.section", autoBoxExpanded ? "v" : ">", autoBoxSelectionName());
     }
 
-    private Text statsEnabledText() { return Text.literal("Widget: " + onOff(StaffHelperState.CONFIG.statsEnabled)); }
-    private Text statsLayoutText() { return Text.literal("Layout: " + (StaffHelperState.CONFIG.statsHorizontal ? "Horizontal" : "Vertical")); }
-    private Text statsRoleText() { return Text.literal("Show Role: " + onOff(StaffHelperState.CONFIG.statsShowRole)); }
-    private Text statsPingText() { return Text.literal("Show PING: " + onOff(StaffHelperState.CONFIG.statsShowPing)); }
-    private Text statsTpsText() { return Text.literal("Show TPS: " + onOff(StaffHelperState.CONFIG.statsShowTps)); }
-    private Text statsNowText() { return Text.literal("TPS: " + onOff(StaffHelperState.CONFIG.statsShowTpsNow)); }
-    private Text stats5mText() { return Text.literal("TPS 5M: " + onOff(StaffHelperState.CONFIG.statsShowTps5m)); }
-    private Text stats10mText() { return Text.literal("TPS 10M: " + onOff(StaffHelperState.CONFIG.statsShowTps10m)); }
-    private Text stats15mText() { return Text.literal("TPS 15M: " + onOff(StaffHelperState.CONFIG.statsShowTps15m)); }
-    private Text uiSheenText() { return Text.literal("Sheen: " + onOff(StaffHelperState.CONFIG.uiSheenAnimationEnabled)); }
+    private Text statsEnabledText() { return tr("gui.staffhelper.stats.widget", onOff(StaffHelperState.CONFIG.statsEnabled)); }
+    private Text statsLayoutText() { return tr("gui.staffhelper.stats.layout", StaffHelperState.CONFIG.statsHorizontal ? ts("gui.staffhelper.layout.horizontal") : ts("gui.staffhelper.layout.vertical")); }
+    private Text statsRoleText() { return tr("gui.staffhelper.stats.show_role", onOff(StaffHelperState.CONFIG.statsShowRole)); }
+    private Text statsPingText() { return tr("gui.staffhelper.stats.show_ping", onOff(StaffHelperState.CONFIG.statsShowPing)); }
+    private Text statsTpsText() { return tr("gui.staffhelper.stats.show_tps", onOff(StaffHelperState.CONFIG.statsShowTps)); }
+    private Text statsNowText() { return tr("gui.staffhelper.stats.tps_now", onOff(StaffHelperState.CONFIG.statsShowTpsNow)); }
+    private Text stats5mText() { return tr("gui.staffhelper.stats.tps_5m", onOff(StaffHelperState.CONFIG.statsShowTps5m)); }
+    private Text stats10mText() { return tr("gui.staffhelper.stats.tps_10m", onOff(StaffHelperState.CONFIG.statsShowTps10m)); }
+    private Text stats15mText() { return tr("gui.staffhelper.stats.tps_15m", onOff(StaffHelperState.CONFIG.statsShowTps15m)); }
+    private Text uiSheenText() { return tr("gui.staffhelper.sheen", onOff(StaffHelperState.CONFIG.uiSheenAnimationEnabled)); }
 
     private String autoBoxSelectionName() {
         int selection = getAutoBoxSelection();
         return switch (selection) {
-            case 1 -> "Box#1";
-            case 2 -> "Box#2";
-            default -> "OFF";
+            case 1 -> ts("gui.staffhelper.autobox.selection.box1");
+            case 2 -> ts("gui.staffhelper.autobox.selection.box2");
+            default -> ts("gui.staffhelper.autobox.selection.off");
         };
     }
 
@@ -817,16 +825,16 @@ public class StaffHelperMenuScreen extends Screen {
         int topY = dialogY + 72;
         int rowStep = 27;
 
-        customColor1R = addDrawableChild(new SoupIntSliderWidget(leftX, topY, sliderW, 20, "Color 1 R", 0, 255, 45, v -> onCustomSliderChanged()));
-        customColor1G = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep, sliderW, 20, "Color 1 G", 0, 255, 74, v -> onCustomSliderChanged()));
-        customColor1B = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep * 2, sliderW, 20, "Color 1 B", 0, 255, 115, v -> onCustomSliderChanged()));
+        customColor1R = addDrawableChild(new SoupIntSliderWidget(leftX, topY, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_r"), 0, 255, 45, v -> onCustomSliderChanged()));
+        customColor1G = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_g"), 0, 255, 74, v -> onCustomSliderChanged()));
+        customColor1B = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep * 2, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_b"), 0, 255, 115, v -> onCustomSliderChanged()));
 
-        customColor2R = addDrawableChild(new SoupIntSliderWidget(rightX, topY, sliderW, 20, "Color 2 R", 0, 255, 95, v -> onCustomSliderChanged()));
-        customColor2G = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep, sliderW, 20, "Color 2 G", 0, 255, 143, v -> onCustomSliderChanged()));
-        customColor2B = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep * 2, sliderW, 20, "Color 2 B", 0, 255, 214, v -> onCustomSliderChanged()));
+        customColor2R = addDrawableChild(new SoupIntSliderWidget(rightX, topY, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_r"), 0, 255, 95, v -> onCustomSliderChanged()));
+        customColor2G = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_g"), 0, 255, 143, v -> onCustomSliderChanged()));
+        customColor2B = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep * 2, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_b"), 0, 255, 214, v -> onCustomSliderChanged()));
 
-        customThemeApplyBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 196, dialogY + h - 28, 88, 20, Text.literal("Apply"), b -> applyCustomThemeDialog()));
-        customThemeCancelBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 100, dialogY + h - 28, 88, 20, Text.literal("Cancel"), b -> closeCustomThemeDialog(true)));
+        customThemeApplyBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 196, dialogY + h - 28, 88, 20, tr("gui.staffhelper.button.apply"), b -> applyCustomThemeDialog()));
+        customThemeCancelBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 100, dialogY + h - 28, 88, 20, tr("gui.staffhelper.button.cancel"), b -> closeCustomThemeDialog(true)));
 
         setCustomDialogWidgetsVisible(false);
     }
@@ -1419,8 +1427,8 @@ public class StaffHelperMenuScreen extends Screen {
         int tabsY = y0 + 10;
         int headerY = tabsY + 28;
 
-        ctx.drawText(this.textRenderer, Text.literal("StaffHelper"), x0 + 16, headerY, 0xFFFFFFFF, false);
-        ctx.drawText(this.textRenderer, Text.literal("Modern staff tools"), x0 + 16, headerY + 14, 0xFFBEBEBE, false);
+        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.title"), x0 + 16, headerY, 0xFFFFFFFF, false);
+        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.subtitle"), x0 + 16, headerY + 14, 0xFFBEBEBE, false);
 
         renderTabContent(ctx, x0, y0, mouseX, mouseY);
         if (customThemeDialogOpen) {
@@ -1441,8 +1449,8 @@ public class StaffHelperMenuScreen extends Screen {
             int blockY = headerY + 34;
             int searchRowY = blockY + 14 + 20 + 28;
 
-            ctx.drawText(this.textRenderer, Text.literal("Add pattern:"), x0 + pad, blockY + 0, textSub, false);
-            ctx.drawText(this.textRenderer, Text.literal("Search:"), x0 + pad, searchRowY + 0, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.add_pattern"), x0 + pad, blockY + 0, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.search"), x0 + pad, searchRowY + 0, textSub, false);
 
             // Textfield backgrounds (Soup-like)
             if (addInput != null) {
@@ -1453,7 +1461,7 @@ public class StaffHelperMenuScreen extends Screen {
                 drawTextFieldPanel(ctx, searchInput, 8);
             }
 
-            ctx.drawText(this.textRenderer, Text.literal("Patterns list (scrollable):"), x0 + pad, y0 + 182, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.patterns_list"), x0 + pad, y0 + 182, textSub, false);
 
             int listX = x0 + pad;
             int listY = y0 + 200;
@@ -1496,9 +1504,9 @@ public class StaffHelperMenuScreen extends Screen {
             int pad = 16;
             int baseY = y0 + 110;
 
-            ctx.drawText(this.textRenderer, Text.literal("AFK Zone"), x0 + pad, baseY - 10, textMain, false);
-            ctx.drawText(this.textRenderer, Text.literal("POS1 (X Y Z):"), x0 + pad, baseY + 6, textSub, false);
-            ctx.drawText(this.textRenderer, Text.literal("POS2 (X Y Z):"), x0 + pad, baseY + 76, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.title"), x0 + pad, baseY - 10, textMain, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.pos1"), x0 + pad, baseY + 6, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.pos2"), x0 + pad, baseY + 76, textSub, false);
 
             // Coordinate field backgrounds (derive from widget bounds so resizing works)
             int r = 8;
@@ -1510,12 +1518,13 @@ public class StaffHelperMenuScreen extends Screen {
             }
 
             ctx.drawText(this.textRenderer,
-                    Text.literal("Current: (" + StaffHelperState.CONFIG.afkX1 + " " + StaffHelperState.CONFIG.afkY1 + " " + StaffHelperState.CONFIG.afkZ1 +
-                            ") -> (" + StaffHelperState.CONFIG.afkX2 + " " + StaffHelperState.CONFIG.afkY2 + " " + StaffHelperState.CONFIG.afkZ2 + ")"),
+                    tr("gui.staffhelper.tab.afk.current",
+                            StaffHelperState.CONFIG.afkX1, StaffHelperState.CONFIG.afkY1, StaffHelperState.CONFIG.afkZ1,
+                            StaffHelperState.CONFIG.afkX2, StaffHelperState.CONFIG.afkY2, StaffHelperState.CONFIG.afkZ2),
                     x0 + pad, baseY + 210, textSub, false);
 
             ctx.drawText(this.textRenderer,
-                    Text.literal("Tip: Apply updates coords. Outline/Fill control rendering."),
+                    tr("gui.staffhelper.tab.afk.tip"),
                     x0 + pad, baseY + 230, textAccent, false);
 
             // ---- ignore list (right column) ----
@@ -1525,10 +1534,10 @@ public class StaffHelperMenuScreen extends Screen {
             int boxH = 120;
 
             ctx.drawText(this.textRenderer,
-                    Text.literal("Ignored nicks:"),
+                    tr("gui.staffhelper.tab.afk.ignored_nicks"),
                     boxX, baseY + 6, textSub, false);
             ctx.drawText(this.textRenderer,
-                    Text.literal("(excluded from /alts check and HUD output)"),
+                    tr("gui.staffhelper.tab.afk.ignored_desc"),
                     boxX, baseY + 18, textAccent, false);
 
             // Ignore input background (derive from widget bounds so resizing works)
@@ -1575,7 +1584,7 @@ public class StaffHelperMenuScreen extends Screen {
         } else if (tab == Tab.APPEARANCE) {
             int appearanceX = x0 + 16;
             int appearanceY = y0 + 126;
-            ctx.drawText(this.textRenderer, Text.literal("Theme presets"), appearanceX, appearanceY - 14, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.appearance.theme_presets"), appearanceX, appearanceY - 14, textSub, false);
         }
     }
 
@@ -1594,10 +1603,10 @@ public class StaffHelperMenuScreen extends Screen {
         int c1 = sliderRgb(customColor1R, customColor1G, customColor1B);
         int c2 = sliderRgb(customColor2R, customColor2G, customColor2B);
 
-        ctx.drawText(this.textRenderer, Text.literal("Custom Theme"), x + 14, y + 12, 0xFFFFFFFF, false);
-        ctx.drawText(this.textRenderer, Text.literal("Pick two RGB colors separately"), x + 14, y + 26, 0xFFBEBEBE, false);
-        ctx.drawText(this.textRenderer, Text.literal("Color 1"), x + 20, y + 56, 0xFFD7DEE9, false);
-        ctx.drawText(this.textRenderer, Text.literal("Color 2"), x + 224, y + 56, 0xFFD7DEE9, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.title"), x + 14, y + 12, 0xFFFFFFFF, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.subtitle"), x + 14, y + 26, 0xFFBEBEBE, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.color1"), x + 20, y + 56, 0xFFD7DEE9, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.color2"), x + 224, y + 56, 0xFFD7DEE9, false);
 
         drawColorSwatch(ctx, x + 18, y + 172, 180, 20, c1, "#" + hexColor(c1));
         drawColorSwatch(ctx, x + 222, y + 172, 180, 20, c2, "#" + hexColor(c2));
@@ -1651,8 +1660,8 @@ public class StaffHelperMenuScreen extends Screen {
         int textMain = tabTextColor(0xFFFFFFFF);
         int textSub = tabTextColor(0xFFBEBEBE);
         int textAccent = tabTextColor(0xFF6FB3FF);
-        ctx.drawText(this.textRenderer, Text.literal("ComandBuilder"), x0 + pad, y0 + 78, textMain, false);
-        ctx.drawText(this.textRenderer, Text.literal("Alias -> execute with {playername}/{time}/{reason}"), x0 + pad, y0 + 92, textSub, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.title"), x0 + pad, y0 + 78, textMain, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.subtitle"), x0 + pad, y0 + 92, textSub, false);
 
         UiChrome.drawPanel(ctx, commandBuilderListX, commandBuilderListY, commandBuilderListW, commandBuilderListH, 10, System.currentTimeMillis(), -0.10f, true);
 
@@ -1664,14 +1673,14 @@ public class StaffHelperMenuScreen extends Screen {
             if (!commandBuilderInViewport(ui)) continue;
             UiChrome.drawPanel(ctx, ui.rowX, ui.rowY, ui.rowW, ui.rowH, 8, System.currentTimeMillis(), -0.15f, false);
 
-            ctx.drawText(this.textRenderer, Text.literal("Name"), ui.rowX + 32, ui.rowY - 6 + 12, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.name"), ui.rowX + 32, ui.rowY - 6 + 12, textSub, false);
 
             if (ui.entry.expanded) {
                 if (commandBuilderWidgetInViewport(ui.aliasField)) {
-                    ctx.drawText(this.textRenderer, Text.literal("Alias"), ui.rowX + 10, ui.aliasField.getY() + 6, textSub, false);
+                    ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.alias"), ui.rowX + 10, ui.aliasField.getY() + 6, textSub, false);
                 }
                 if (commandBuilderWidgetInViewport(ui.executeField)) {
-                    ctx.drawText(this.textRenderer, Text.literal("Execute"), ui.rowX + 10, ui.executeField.getY() + 6, textSub, false);
+                    ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.execute"), ui.rowX + 10, ui.executeField.getY() + 6, textSub, false);
                 }
 
                 if (ui.entry.hasExecuteToken("{time}") && commandBuilderWidgetInViewport(ui.timeOptionsField)) {
@@ -1702,7 +1711,7 @@ public class StaffHelperMenuScreen extends Screen {
         ctx.disableScissor();
 
         if (commandBuilderUiEntries.isEmpty()) {
-            ctx.drawText(this.textRenderer, Text.literal("Use + to add your first alias command"), commandBuilderListX + 10, commandBuilderListY + 40, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.empty"), commandBuilderListX + 10, commandBuilderListY + 40, textSub, false);
         }
     }
 
@@ -1854,7 +1863,7 @@ public class StaffHelperMenuScreen extends Screen {
         private int offY = 0;
 
         public HudEditorScreen() {
-            super(Text.literal("StaffHelper HUD Editor"));
+            super(StaffHelperMenuScreen.tr("screen.staffhelper.hud_editor.title"));
         }
 
         @Override
@@ -1908,7 +1917,7 @@ public class StaffHelperMenuScreen extends Screen {
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
             int titleH = Math.max(12, Math.round(12 * afkScale));
-            Text title = Text.literal("Multi-account in zone:");
+            Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
             // ?? ???????????? ???????????? ???????????? ????????????, ?????????? ???????????? ???????????????? ?? ??????, ?????? ???????????? ?? ????????
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
@@ -1988,7 +1997,7 @@ public class StaffHelperMenuScreen extends Screen {
                 int pad = Math.max(4, Math.round(6 * afkScale));
                 int lineH = Math.max(10, Math.round(10 * afkScale));
                 int titleH = Math.max(12, Math.round(12 * afkScale));
-                Text title = Text.literal("Multi-account in zone:");
+                Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
                 String l1 = "Nick Test | 1234";
                 String l2 = "OtherNick";
 
@@ -2052,7 +2061,7 @@ public class StaffHelperMenuScreen extends Screen {
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
             int titleH = Math.max(12, Math.round(12 * afkScale));
-            Text title = Text.literal("Multi-account in zone:");
+            Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
             int wAfk = this.textRenderer.getWidth(title);
@@ -2086,7 +2095,7 @@ public class StaffHelperMenuScreen extends Screen {
             // ??????????: ???? renderBackground -> ?????????? blur crash
             ctx.fill(0, 0, this.width, this.height, 0xAA000000);
 
-            ctx.drawText(this.textRenderer, Text.literal("Drag widgets. ESC to exit."), 10, 10, 0xFFFFFFFF, false);
+            ctx.drawText(this.textRenderer, StaffHelperMenuScreen.tr("screen.staffhelper.hud_editor.tip"), 10, 10, 0xFFFFFFFF, false);
 
             // STATS preview
             com.dmsh.staffhelper.feature.StatsHudFeature.renderPreview(ctx,
@@ -2111,7 +2120,7 @@ public class StaffHelperMenuScreen extends Screen {
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
             int titleH = Math.max(12, Math.round(12 * afkScale));
-            Text title = Text.literal("Multi-account in zone:");
+            Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
 

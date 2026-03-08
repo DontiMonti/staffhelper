@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"id": "staffhelper",
 	"version": "${version}",
-	"name": "StaffHelper",
+	"name": "ElytraStaffHelper",
 	"description": "Staff helper tools for elytra.pro",
 	"authors": [
 		"DontiMonti"

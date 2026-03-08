@@ -1,4 +1,4 @@
-﻿# StaffHelper
+﻿# ElytraStaffHelper
 
 Клиентский Fabric-мод для Minecraft 1.21.8, который ускоряет работу стаффа: создание алиасов, HUD, AFK-Zone, визуальная часть для стафа.
 
@@ -104,7 +104,7 @@
 
 | Клавиша | Действие |
 |---|---|
-| `Right Shift` | Открыть меню StaffHelper |
+| `Right Shift` | Открыть меню ElytraStaffHelper |
 | `P` | Скопировать и очистить AFK-список |
 | `O` | Запустить массовую `/alts`-проверку по AFK Zone |
 
@@ -143,3 +143,4 @@ Execute: /ban {playername} 7d 3.1
 ## Автор
 
 - `DontiMonti`
+

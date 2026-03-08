@@ -49,20 +49,20 @@ public final class RemoteNickDecorationsPoller {
         started = true;
 
         if (cfg == null || !cfg.remoteDecorationsEnabled) {
-            LOGGER.info("[StaffHelper] Remote decorations disabled in config.");
+            LOGGER.info("[ElytraStaffHelper] Remote decorations disabled in config.");
             return;
         }
 
         long interval = Math.max(5, cfg.remoteDecorationsIntervalSeconds);
         if (SupabaseApi.isReadConfigured(cfg)) {
-            LOGGER.info("[StaffHelper] Remote decorations poller started (Supabase). interval={}s", interval);
+            LOGGER.info("[ElytraStaffHelper] Remote decorations poller started (Supabase). interval={}s", interval);
         } else {
             String url = normalizeGithubRawUrl(cfg.remoteDecorationsUrl);
             if (url == null || url.isBlank()) {
-                LOGGER.warn("[StaffHelper] remoteDecorationsUrl is empty. Remote decorations will not be loaded.");
+                LOGGER.warn("[ElytraStaffHelper] remoteDecorationsUrl is empty. Remote decorations will not be loaded.");
                 return;
             }
-            LOGGER.info("[StaffHelper] Remote decorations poller started (GitHub). interval={}s url={}", interval, url);
+            LOGGER.info("[ElytraStaffHelper] Remote decorations poller started (GitHub). interval={}s url={}", interval, url);
         }
 
         EXEC.scheduleAtFixedRate(() -> safePoll(cfg), 0, interval, TimeUnit.SECONDS);
@@ -100,7 +100,7 @@ public final class RemoteNickDecorationsPoller {
             }
         } catch (Exception e) {
             DebugLogStore.add("[DECOR] poll error: " + e);
-            LOGGER.debug("[StaffHelper] Failed to poll remote decorations: {}", e.toString());
+            LOGGER.debug("[ElytraStaffHelper] Failed to poll remote decorations: {}", e.toString());
         }
     }
 

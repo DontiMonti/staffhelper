@@ -51,14 +51,14 @@ public final class RemoteRolesPoller {
 
         long intervalSeconds = Math.max(5L, cfg.remoteRolesIntervalSeconds);
         if (SupabaseApi.isReadConfigured(cfg)) {
-            LOGGER.info("[StaffHelper] Remote roles poller started (Supabase). interval={}s", intervalSeconds);
+            LOGGER.info("[ElytraStaffHelper] Remote roles poller started (Supabase). interval={}s", intervalSeconds);
         } else {
             String url = normalizeGithubRawUrl(cfg.remoteRolesUrl);
             if (url == null || url.isBlank()) {
-                LOGGER.warn("[StaffHelper] remoteRolesUrl is empty. Roles will not be loaded.");
+                LOGGER.warn("[ElytraStaffHelper] remoteRolesUrl is empty. Roles will not be loaded.");
                 return;
             }
-            LOGGER.info("[StaffHelper] Remote roles poller started (GitHub). interval={}s url={}", intervalSeconds, url);
+            LOGGER.info("[ElytraStaffHelper] Remote roles poller started (GitHub). interval={}s url={}", intervalSeconds, url);
         }
 
         EXEC.scheduleAtFixedRate(() -> safePoll(cfg), 0, intervalSeconds, TimeUnit.SECONDS);
@@ -96,7 +96,7 @@ public final class RemoteRolesPoller {
             }
         } catch (Exception e) {
             DebugLogStore.add("[ROLES] poll error: " + e);
-            LOGGER.debug("[StaffHelper] Failed to poll remote roles: {}", e.toString());
+            LOGGER.debug("[ElytraStaffHelper] Failed to poll remote roles: {}", e.toString());
         }
     }
 

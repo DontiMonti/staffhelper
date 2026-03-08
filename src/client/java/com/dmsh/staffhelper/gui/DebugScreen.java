@@ -45,7 +45,7 @@ public class DebugScreen extends Screen {
     private int logsMaxX = 0;
 
     public DebugScreen() {
-        super(Text.literal("StaffHelper DEBUG"));
+        super(Text.literal("ElytraStaffHelper DEBUG"));
     }
 
     @Override

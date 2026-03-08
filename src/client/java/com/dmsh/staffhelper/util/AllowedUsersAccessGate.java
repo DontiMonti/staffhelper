@@ -39,7 +39,7 @@ public final class AllowedUsersAccessGate {
     private static final long RECHECK_INTERVAL_MS = 15_000L;
     private static final long UNKNOWN_RETRY_INTERVAL_MS = 5_000L;
     private static final long DENIED_MESSAGE_COOLDOWN_MS = 2_500L;
-    private static final String DENIED_TEXT = "[StaffHelper] \u0423 \u0432\u0430\u0441 \u043d\u0435\u0442\u0443 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0434\u0430\u043d\u043d\u043e\u043c\u0443 \u043c\u043e\u0434\u0443, \u043e\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044c \u043a DontiMonti.";
+    private static final String DENIED_TEXT = "[ElytraStaffHelper] \u0423 \u0432\u0430\u0441 \u043d\u0435\u0442\u0443 \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u0434\u0430\u043d\u043d\u043e\u043c\u0443 \u043c\u043e\u0434\u0443, \u043e\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044c \u043a DontiMonti.";
 
     private static volatile State state = State.PENDING;
     private static volatile State stateBeforeCheck = State.PENDING;
@@ -192,21 +192,21 @@ public final class AllowedUsersAccessGate {
                 RemoteNickDecorationsPoller.forcePollNow(StaffHelperState.CONFIG);
                 RemoteRolesPoller.forcePollNow(StaffHelperState.CONFIG);
             }
-            System.out.println("[StaffHelper][ACCESS] ALLOWED nick=" + checkedNick + " reason=" + result.reason);
+            System.out.println("[ElytraStaffHelper][ACCESS] ALLOWED nick=" + checkedNick + " reason=" + result.reason);
             return;
         }
 
         if (result.unknown) {
             state = stateBeforeCheck == State.ALLOWED ? State.ALLOWED : State.PENDING;
             nextCheckAtMs = System.currentTimeMillis() + UNKNOWN_RETRY_INTERVAL_MS;
-            System.out.println("[StaffHelper][ACCESS] UNKNOWN nick=" + checkedNick + " reason=" + result.reason);
+            System.out.println("[ElytraStaffHelper][ACCESS] UNKNOWN nick=" + checkedNick + " reason=" + result.reason);
             return;
         }
 
         state = State.DENIED;
         nextCheckAtMs = System.currentTimeMillis() + RECHECK_INTERVAL_MS;
         disableAllRuntimeData();
-        System.out.println("[StaffHelper][ACCESS] DENIED nick=" + checkedNick + " reason=" + result.reason);
+        System.out.println("[ElytraStaffHelper][ACCESS] DENIED nick=" + checkedNick + " reason=" + result.reason);
     }
 
     private static void disableAllRuntimeData() {

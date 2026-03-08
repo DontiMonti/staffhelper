@@ -433,7 +433,7 @@ public final class AfkZoneFeature {
 
                     banInfoByNick.put(nick, reason + " | " + id);
 
-                    System.out.println("[StaffHelper] BAN PARSED: " + nick + " -> " + reason + " | " + id);
+                    System.out.println("[ElytraStaffHelper] BAN PARSED: " + nick + " -> " + reason + " | " + id);
 
                     pendingBanNick = null;
                     pendingBanId = null;
