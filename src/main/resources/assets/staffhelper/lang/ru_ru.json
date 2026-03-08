@@ -81,7 +81,7 @@
 
   "gui.staffhelper.tab.commandbuilder.title": "ComandBuilder",
   "gui.staffhelper.tab.commandbuilder.subtitle": "Алиас -> выполнение с {playername}/{time}/{reason}",
-  "gui.staffhelper.tab.commandbuilder.name": "Название",
+  "gui.staffhelper.tab.commandbuilder.name": "",
   "gui.staffhelper.tab.commandbuilder.alias": "Алиас",
   "gui.staffhelper.tab.commandbuilder.execute": "Выполнить",
   "gui.staffhelper.tab.commandbuilder.empty": "Нажмите +, чтобы добавить первую алиас-команду",

@@ -82,7 +82,7 @@
 
   "gui.staffhelper.tab.commandbuilder.title": "ComandBuilder",
   "gui.staffhelper.tab.commandbuilder.subtitle": "Alias -> execute with {playername}/{time}/{reason}",
-  "gui.staffhelper.tab.commandbuilder.name": "Name",
+  "gui.staffhelper.tab.commandbuilder.name": "",
   "gui.staffhelper.tab.commandbuilder.alias": "Alias",
   "gui.staffhelper.tab.commandbuilder.execute": "Execute",
   "gui.staffhelper.tab.commandbuilder.empty": "Use + to add your first alias command",

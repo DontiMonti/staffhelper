@@ -315,7 +315,7 @@ public class StaffHelperMenuScreen extends Screen {
 
         reloadAfkFieldsFromConfig();
 
-        afkRenderToggleBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 140, 110, 20, afkRenderText(), b -> {
+        afkRenderToggleBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 140, 124, 22, afkRenderText(), b -> {
             // cycle: OFF -> OUTLINE -> BOTH -> OFF
             int mode = getAfkRenderMode();
             mode = switch (mode) {
@@ -329,7 +329,7 @@ public class StaffHelperMenuScreen extends Screen {
             b.setMessage(afkRenderText());
         }));
 
-        afkApplyBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 170, 110, 20, tr("gui.staffhelper.button.apply"), b -> {
+        afkApplyBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 170, 124, 22, tr("gui.staffhelper.button.apply"), b -> {
             StaffHelperState.CONFIG.afkX1 = parseInt(pos1X.getText(), StaffHelperState.CONFIG.afkX1);
             StaffHelperState.CONFIG.afkY1 = parseInt(pos1Y.getText(), StaffHelperState.CONFIG.afkY1);
             StaffHelperState.CONFIG.afkZ1 = parseInt(pos1Z.getText(), StaffHelperState.CONFIG.afkZ1);
@@ -1776,8 +1776,8 @@ public class StaffHelperMenuScreen extends Screen {
         int textMain = tabTextColor(0xFFFFFFFF);
         int textSub = tabTextColor(0xFFBEBEBE);
         int textAccent = tabTextColor(0xFF6FB3FF);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.title"), x0 + pad, y0 + 78, textMain, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.subtitle"), x0 + pad, y0 + 92, textSub, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.title"), x0 + pad, y0 + 74, textMain, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.subtitle"), x0 + pad, y0 + 88, textSub, false);
 
         UiChrome.drawPanel(ctx, commandBuilderListX, commandBuilderListY, commandBuilderListW, commandBuilderListH, 10, System.currentTimeMillis(), -0.10f, true);
 
