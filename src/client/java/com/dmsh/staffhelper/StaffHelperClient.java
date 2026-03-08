@@ -29,38 +29,33 @@ public class StaffHelperClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Config in shared state
+
         StaffHelperState.CONFIG = StaffHelperConfig.load();
 
-        // Remote nick decorations (from GitHub/raw JSON)
         RemoteNickDecorationsPoller.start(StaffHelperState.CONFIG);
-        // Remote roles (from GitHub/raw JSON)
+
         RemoteRolesPoller.start(StaffHelperState.CONFIG);
-        // Access gate via Supabase allowed_users
+
         AllowedUsersAccessGate.init();
 
-        // Keybind: open menu
         OPEN_MENU_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.staffhelper.open_menu",
                 GLFW.GLFW_KEY_RIGHT_SHIFT,
                 "category.staffhelper"
         ));
 
-        // Keybind: copy + clear AFK list
         COPY_CLEAR_AFK_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.staffhelper.copy_clear_afk",
                 GLFW.GLFW_KEY_P,
                 "category.staffhelper"
         ));
 
-        // Keybind: /alts check for everyone inside AFK zone
         ALTS_CHECK_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.staffhelper.alts_check",
                 GLFW.GLFW_KEY_O,
                 "category.staffhelper"
         ));
 
-        // Features
         StatsHudFeature.init();
         NickSearchFeature.init();
         AfkZoneFeature.init();
@@ -69,7 +64,6 @@ public class StaffHelperClient implements ClientModInitializer {
         AutoBoxFeature.init();
         UpdateNotifyFeature.init();
 
-        // Tick handlers
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (OPEN_MENU_KEY.wasPressed()) {
                 if (AllowedUsersAccessGate.ensureAccessOrNotify(client)) {
@@ -105,4 +99,3 @@ public class StaffHelperClient implements ClientModInitializer {
         });
     }
 }
-

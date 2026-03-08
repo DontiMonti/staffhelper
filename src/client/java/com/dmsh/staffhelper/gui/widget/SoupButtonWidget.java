@@ -6,14 +6,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 
-/**
- * A button that matches the "Soup-like" modern dark UI:
- * - rounded corners
- * - subtle shadow
- * - hover/active states
- *
- * Layout is unchanged vs vanilla ButtonWidget.
- */
 public class SoupButtonWidget extends ButtonWidget {
 
     private static final int TEXT = 0xFFEAEAEA;

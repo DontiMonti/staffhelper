@@ -10,12 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * Best-effort suppression of noisy server output from /alts check.
- *
- * Важно: парсер AfkZoneFeature всё равно увидит сообщения через ClientReceiveMessageEvents,
- * а миксин только прячет их от вывода в чат.
- */
 @Mixin(ChatHud.class)
 public abstract class ChatHudSuppressMixin {
 

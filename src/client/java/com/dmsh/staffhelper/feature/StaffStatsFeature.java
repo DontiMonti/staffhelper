@@ -4,13 +4,6 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 
-/**
- * Счётчик действий модерации по сообщениям чата:
- *  - "{ник} заблокировал чат" -> mute +1
- *  - "{ник} заблокировал"     -> ban  +1
- *
- * Важно: проверка на "заблокировал чат" должна идти первой, чтобы счётчики не пересекались.
- */
 public final class StaffStatsFeature {
     private StaffStatsFeature() {}
 
@@ -22,7 +15,7 @@ public final class StaffStatsFeature {
             onChatLine(message.getString());
         });
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            // some servers send moderation lines as GAME messages
+
             onChatLine(message.getString());
         });
     }
@@ -40,7 +33,6 @@ public final class StaffStatsFeature {
         String me = mc.player.getGameProfile().getName();
         if (me == null || me.isEmpty()) return;
 
-        // normalize spaces a bit
         String s = line.trim();
 
         String muteNeedle = me + " заблокировал чат";

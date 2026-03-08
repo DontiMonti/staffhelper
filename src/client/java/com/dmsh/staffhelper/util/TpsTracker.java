@@ -3,12 +3,6 @@ package com.dmsh.staffhelper.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-/**
- * Best-effort server TPS estimator.
- *
- * We hook on WorldTimeUpdate packets (usually every 20 server ticks ≈ 1s).
- * TPS is estimated as 20000ms / deltaMs, clamped to [0..20].
- */
 public final class TpsTracker {
     private TpsTracker() {}
 
@@ -33,7 +27,6 @@ public final class TpsTracker {
         long dt = now - prev;
         if (dt <= 0) return;
 
-        // world time update is typically every 20 ticks (~1s)
         double est = 20000.0 / (double) dt;
         if (est < 0) est = 0;
         if (est > 20.0) est = 20.0;

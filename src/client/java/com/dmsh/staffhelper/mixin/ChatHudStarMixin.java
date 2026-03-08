@@ -9,9 +9,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-/**
- * Добавляет звёздочки в чате, не ломая форматирование сервера.
- */
 @Mixin(ChatHud.class)
 public abstract class ChatHudStarMixin {
     @ModifyVariable(

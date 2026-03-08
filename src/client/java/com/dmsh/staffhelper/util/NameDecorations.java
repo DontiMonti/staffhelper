@@ -4,9 +4,6 @@ import net.minecraft.text.*;
 
 import java.util.*;
 
-/**
- * Decorator for nick/chat decorations (symbols etc.).
- */
 public final class NameDecorations {
     private NameDecorations() {}
 
@@ -15,9 +12,6 @@ public final class NameDecorations {
         return (m == null) ? Collections.emptyMap() : m;
     }
 
-    /**
-     * Used for TAB/name tag: keeps existing team prefixes and appends only decoration symbol.
-     */
     public static Text withDecorationIfTarget(String profileName, Text base) {
         if (!AllowedUsersAccessGate.isModAllowed()) return base;
         if (profileName == null || base == null) return base;
@@ -30,9 +24,6 @@ public final class NameDecorations {
         return Text.empty().append(base).append(buildSymbolText(d, Style.EMPTY));
     }
 
-    /**
-     * Used for chat text: inserts symbol after matching nicks while preserving styles.
-     */
     public static Text applyStarsToChat(Text in) {
         if (!AllowedUsersAccessGate.isModAllowed()) return in;
         if (in == null) return null;

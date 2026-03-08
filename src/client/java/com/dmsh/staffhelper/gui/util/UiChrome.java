@@ -4,9 +4,6 @@ import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import net.minecraft.client.gui.DrawContext;
 
-/**
- * Shared animated "modern cheat-like" panel style for HUD/widgets.
- */
 public final class UiChrome {
     private UiChrome() {}
 
@@ -52,7 +49,7 @@ public final class UiChrome {
         int inner = ModernGui.argb(24 + (int) (16 * pulse * accent), 255, 255, 255);
 
         if (shadow) {
-            // User-requested: very small shadow extent (1px).
+
             ModernGui.shadow(ctx, x, y, w, h, radius, 1, ModernGui.argb(125, 0, 0, 0));
         }
 

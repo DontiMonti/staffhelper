@@ -9,10 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * Local encryption for sensitive config values.
- * This is obfuscation-grade protection for client mods (not HSM-grade secrecy).
- */
 public final class ConfigSecretCodec {
     private ConfigSecretCodec() {}
 

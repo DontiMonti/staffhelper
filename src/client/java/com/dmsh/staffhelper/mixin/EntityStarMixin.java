@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * Adds a yellow star to the end of DontiMonti's name in places where
- * the game uses {@link Entity#getDisplayName()} (e.g. name tag above the head).
- */
 @Mixin(Entity.class)
 public abstract class EntityStarMixin {
 

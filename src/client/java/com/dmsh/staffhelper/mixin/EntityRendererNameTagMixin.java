@@ -107,7 +107,7 @@ public abstract class EntityRendererNameTagMixin<S extends EntityRenderState> {
         }
 
         matrices.push();
-        // Lift custom top label a bit to avoid overlap with main nick line.
+
         matrices.translate(0.0D, 0.32D, 0.0D);
         this.renderLabelIfPresent(state, extra, matrices, consumers, light);
         matrices.pop();

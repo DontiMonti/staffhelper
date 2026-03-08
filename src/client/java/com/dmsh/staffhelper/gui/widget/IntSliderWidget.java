@@ -5,9 +5,6 @@ import net.minecraft.text.Text;
 
 import java.util.function.IntConsumer;
 
-/**
- * Integer slider with dynamic [min..max] range.
- */
 public class IntSliderWidget extends SliderWidget {
     private final String label;
     private final IntConsumer listener;

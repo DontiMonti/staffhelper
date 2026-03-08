@@ -36,8 +36,7 @@ public class PlayerEntityRendererLabelSuppressMixin {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (state != null && state.playerName != null) {
             String rawPlayerName = state.playerName.getString();
-            // Vanilla playerName is a close-range scoreboard line (<10 blocks).
-            // Disable it to prevent duplicated/garbled extra lines like "✘ | z".
+
             NameTagDebugStore.markRenderLabel("[PlayerName:scoreboard] " + rawPlayerName, true);
             state.playerName = null;
         }

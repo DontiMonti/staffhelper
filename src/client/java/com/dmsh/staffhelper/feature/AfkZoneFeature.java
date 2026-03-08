@@ -28,54 +28,41 @@ import java.util.regex.Pattern;
 public final class AfkZoneFeature {
     private AfkZoneFeature() {}
 
-    // mainNick -> all accounts from /alts
     private static final Map<String, Set<String>> altsByMain = new HashMap<>();
 
-    // nick -> "reason | id"
     private static final Map<String, String> banInfoByNick = new HashMap<>();
 
-    // ===== /alts check keybind runtime =====
     private static final Deque<String> altsCheckQueue = new ArrayDeque<>();
     private static boolean altsCheckRunning = false;
     private static long nextAltsCommandAtMs = 0L;
-    // 0.25 sec between /alts commands (requested)
+
     private static final long ALTS_CHECK_DELAY_MS = 250L;
 
-    // show widget immediately after pressing /alts check even if we haven't found anything yet
     private static long showWidgetUntilMs = 0L;
     private static final Map<String, AnimatedHudRow> animatedHudRows = new LinkedHashMap<>();
     private static float animatedHudPanelProgress = 0.0f;
 
-    // Best-effort chat suppression for /alts output while running /alts check
     private static final Map<String, Long> hideAltsChatUntil = new HashMap<>();
     private static final long HIDE_CHAT_WINDOW_MS = 4000L;
 
-    // mainNick -> violation entry
     private static final LinkedHashMap<String, ViolationEntry> violations = new LinkedHashMap<>();
 
     private static final Set<String> onlineInZone = new HashSet<>();
 
-    // ===== /alts parsing state =====
     private static String currentScanNick = null;
     private static final Set<String> currentScanAccounts = new LinkedHashSet<>();
     private static long lastScanLineMs = 0L;
 
-    // ===== ban parsing state =====
     private static String pendingBanNick = null;
     private static String pendingBanId = null;
     private static long pendingBanUntilMs = 0L;
 
-    // /alts
     private static final Pattern P_SCAN_MAIN = Pattern.compile("^\\s*РЎРєР°РЅРёСЂРѕРІР°РЅРёРµ\\s+([A-Za-z0-9_]{3,16})\\b");
     private static final Pattern P_ANY_NICK  = Pattern.compile("@?([A-Za-z0-9_]{3,16})");
 
-    // BAN:
-    // "\n в“ {ADMIN} Р·Р°Р±Р»РѕРєРёСЂРѕРІР°Р» Nick (ЙЄбґ… 4785)\n вњЋ РџСЂРёС‡РёРЅР°: Test\n ..."
-    // Р›РѕРІРёРј Р»СЋР±С‹Рµ РІР°СЂРёР°С†РёРё "id" РІРєР»СЋС‡Р°СЏ СЋРЅРёРєРѕРґ (ЙЄбґ…), РїСЂРѕСЃС‚Рѕ РїСЂРѕРїСѓСЃРєР°СЏ РІСЃС‘ РЅРµС‡РёСЃР»РѕРІРѕРµ Рё Р·Р°Р±РёСЂР°СЏ С†РёС„СЂС‹.
     private static final Pattern P_BAN_LINE =
             Pattern.compile("(?iu)Р·Р°Р±Р»РѕРєРёСЂРѕРІР°Р»\\s+([A-Za-z0-9_]{3,16})\\s*\\(\\s*[^0-9]*\\s*(\\d+)\\s*\\)");
 
-    // РС‰РµРј "РџСЂРёС‡РёРЅР°: Test" РґР°Р¶Рµ РµСЃР»Рё РїРµСЂРµРґ СЌС‚РёРј РµСЃС‚СЊ Р·РЅР°С‡РєРё С‚РёРїР° вњЋ
     private static final Pattern P_REASON_LINE =
             Pattern.compile("(?iu)РџСЂРёС‡РёРЅР°\\s*:\\s*([^\\r\\n]+)");
 
@@ -100,7 +87,6 @@ public final class AfkZoneFeature {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null) return;
 
-        // РєРѕРїРёСЂСѓРµРј СЂРѕРІРЅРѕ С‚Рѕ, С‡С‚Рѕ РІС‹РІРѕРґРёС‚СЃСЏ РІ HUD (Р±РµР· Р·Р°РіРѕР»РѕРІРєР°)
         LinkedHashSet<String> rows = collectHudRows();
         StringBuilder out = new StringBuilder();
         for (String row : rows) {
@@ -108,11 +94,9 @@ public final class AfkZoneFeature {
         }
         mc.keyboard.setClipboard(out.toString().trim());
 
-        // Clear = РѕС‡РёСЃС‚РёС‚СЊ + РїРµСЂРµСЃС‚Р°С‚СЊ РѕС‚СЃР»РµР¶РёРІР°С‚СЊ СЌС‚Рё РЅРёРєРё
         clearAllTrackingState();
     }
 
-    /** Р—Р°РїСѓСЃРє РїСЂРѕРІРµСЂРєРё: /alts <nick> РґР»СЏ РІСЃРµС… РёРіСЂРѕРєРѕРІ РІ AFK-Р·РѕРЅРµ (РєСЂРѕРјРµ СЃРµР±СЏ) СЃ Р·Р°РґРµСЂР¶РєРѕР№ 0.5s */
     public static void startAltsCheck() {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -120,10 +104,8 @@ public final class AfkZoneFeature {
         if (StaffHelperState.CONFIG == null) return;
         if (!StaffHelperState.CONFIG.afkZoneEnabled) return;
 
-        // widget should appear immediately after pressing the keybind
         showWidgetUntilMs = System.currentTimeMillis() + 1500L;
 
-        // РЎРїРёСЃРѕРє РёРіСЂРѕРєРѕРІ РІ Р·РѕРЅРµ
         String self = mc.player.getGameProfile().getName();
         BlockPos selfPos = mc.player.getBlockPos();
         boolean selfInZone = isInsideZone(selfPos) || isInsideZone(selfPos.down());
@@ -137,14 +119,13 @@ public final class AfkZoneFeature {
             BlockPos bp = p.getBlockPos();
             if (!(isInsideZone(bp) || isInsideZone(bp.down()))) return;
 
-            // РќРёРєРѕРіРґР° РЅРµ СЃРєР°РЅРёРј СЃР°РјРѕРіРѕ СЃРµР±СЏ (С‡Р°СЃС‚Рѕ РёРјРµРЅРЅРѕ СЌС‚Рѕ Рё РІС‹РіР»СЏРґРёС‚ РєР°Рє "РѕРїРµС‡Р°С‚РєР°" РІ Р·РѕРЅРµ)
             if (name.equalsIgnoreCase(self)) return;
 
             targets.add(name);
         });
 
         if (targets.isEmpty()) {
-            // nothing to scan, but we still showed the widget for a short time (see showWidgetUntilMs)
+
             altsCheckQueue.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
@@ -152,13 +133,11 @@ public final class AfkZoneFeature {
             return;
         }
 
-        // РїРµСЂРµР·Р°РїСѓСЃРє РѕС‡РµСЂРµРґРё
         altsCheckQueue.clear();
         altsCheckQueue.addAll(targets);
         altsCheckRunning = true;
         nextAltsCommandAtMs = 0L;
 
-        // РЅР°С‡РЅС‘Рј РЅРѕРІСѓСЋ СЃРµСЃСЃРёСЋ вЂ” СЃС‚Р°СЂС‹Рµ РѕРєРЅР° СЃРєСЂС‹С‚РёСЏ РЅРµ РЅСѓР¶РЅС‹
         hideAltsChatUntil.clear();
     }
 
@@ -166,7 +145,7 @@ public final class AfkZoneFeature {
         if (!altsCheckRunning) return;
 
         if (StaffHelperState.CONFIG == null || !StaffHelperState.CONFIG.afkZoneEnabled) {
-            // РµСЃР»Рё Р·РѕРЅСѓ РѕС‚РєР»СЋС‡РёР»Рё вЂ” СЃС‚РѕРї
+
             altsCheckQueue.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
@@ -182,7 +161,6 @@ public final class AfkZoneFeature {
 
         long now = System.currentTimeMillis();
 
-        // РµСЃР»Рё РѕС‡РµСЂРµРґСЊ РїСѓСЃС‚Р°СЏ вЂ” Р¶РґС‘Рј, РїРѕРєР° Р·Р°РєРѕРЅС‡РёС‚СЃСЏ РїРѕСЃР»РµРґРЅРёР№ /alts РІС‹РІРѕРґ
         if (altsCheckQueue.isEmpty()) {
             if (currentScanNick == null) {
                 altsCheckRunning = false;
@@ -191,10 +169,9 @@ public final class AfkZoneFeature {
             return;
         }
 
-        // РЅРµ С€Р»С‘Рј СЃР»РµРґСѓСЋС‰РёР№ /alts, РїРѕРєР° РЅРµ Р·Р°РєРѕРЅС‡РёР»СЃСЏ РїСЂРµРґС‹РґСѓС‰РёР№ СЃРєР°РЅ
         if (currentScanNick != null) {
             if ((now - lastScanLineMs) > 1200L) {
-                // С‚Р°Р№РјР°СѓС‚ вЂ” С„РѕСЂСЃ-С„РёРЅРёС€, С‡С‚РѕР±С‹ РЅРµ Р·Р°РІРёСЃРЅСѓС‚СЊ
+
                 finalizeScanIfAny();
             } else {
                 return;
@@ -210,14 +187,12 @@ public final class AfkZoneFeature {
             return;
         }
 
-        // mark chat suppression window for this nick
         hideAltsChatUntil.put(target, now + HIDE_CHAT_WINDOW_MS);
 
-        // send "/alts <nick>" without showing our own message (server output may still appear, mixin hides)
         try {
             client.player.networkHandler.sendChatCommand("alts " + target);
         } catch (Throwable t) {
-            // fallback
+
             client.player.networkHandler.sendChatMessage("/alts " + target);
         }
 
@@ -225,13 +200,12 @@ public final class AfkZoneFeature {
     }
 
     private static void clearAllTrackingState() {
-        // main state
+
         violations.clear();
         altsByMain.clear();
         banInfoByNick.clear();
         onlineInZone.clear();
 
-        // parsers state
         currentScanNick = null;
         currentScanAccounts.clear();
         lastScanLineMs = 0L;
@@ -240,7 +214,6 @@ public final class AfkZoneFeature {
         pendingBanId = null;
         pendingBanUntilMs = 0L;
 
-        // /alts check state
         altsCheckQueue.clear();
         altsCheckRunning = false;
         nextAltsCommandAtMs = 0L;
@@ -263,28 +236,24 @@ public final class AfkZoneFeature {
         return false;
     }
 
-    /** РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РјРёРєСЃРёРЅРѕРј: СЃРєСЂС‹РІР°С‚СЊ Р»Рё СЃРѕРѕР±С‰РµРЅРёРµ РІ С‡Р°С‚Рµ (Р»СѓС‡С€РёР№ РІР°СЂРёР°РЅС‚ вЂ” Р±РµР· СЃРїР°РјР° РѕС‚ /alts check). */
     public static boolean shouldSuppressChatMessage(String message) {
         if (!AllowedUsersAccessGate.isModAllowed()) return false;
         if (message == null || message.isBlank()) return false;
         if (!altsCheckRunning && hideAltsChatUntil.isEmpty()) return false;
 
         long now = System.currentTimeMillis();
-        // С‡РёСЃС‚РёРј РїСЂРѕСЃСЂРѕС‡РµРЅРЅС‹Рµ РѕРєРЅР°
+
         hideAltsChatUntil.entrySet().removeIf(e -> e.getValue() == null || e.getValue() < now);
         if (hideAltsChatUntil.isEmpty() && !altsCheckRunning) return false;
 
-        // СѓР±РёСЂР°РµРј С†РІРµС‚-РєРѕРґС‹, С‡С‚РѕР±С‹ РЅР°РґС‘Р¶РЅРµРµ РјР°С‚С‡РёС‚СЊ
         String clean = message.replaceAll("В§.", "");
 
-        // 1) РІСЃРµРіРґР° РїСЂСЏС‡РµРј СЃС‚СЂРѕРєРё "РЎРєР°РЅРёСЂРѕРІР°РЅРёРµ <nick>" РґР»СЏ С‚РµС…, РєРѕРіРѕ СЃРєР°РЅРёРј
         if (clean.contains("РЎРєР°РЅРёСЂРѕРІР°РЅРёРµ")) {
             for (String nick : hideAltsChatUntil.keySet()) {
                 if (nick != null && clean.contains(nick)) return true;
             }
         }
 
-        // 2) СЃС‚СЂРѕРєР° СЃРѕ СЃРїРёСЃРєРѕРј "a, b, c" вЂ” С‚РѕР¶Рµ РїСЂСЏС‡РµРј (РѕРЅР° РІСЃРµРіРґР° СЃРѕРґРµСЂР¶РёС‚ mainNick)
         if (clean.contains(",")) {
             for (String nick : hideAltsChatUntil.keySet()) {
                 if (nick != null && clean.contains(nick)) return true;
@@ -301,10 +270,8 @@ public final class AfkZoneFeature {
         }
         if (StaffHelperState.CONFIG == null) return;
 
-        // /alts check runner
         tickAltsCheck(client);
 
-        // auto finalize scan (РµСЃР»Рё СЃРµСЂРІРµСЂ РЅРµ РїСЂРёСЃР»Р°Р» СЏРІРЅС‹Р№ РєРѕРЅРµС†)
         if (currentScanNick != null && (System.currentTimeMillis() - lastScanLineMs) > 1200L) {
             finalizeScanIfAny();
         }
@@ -326,12 +293,10 @@ public final class AfkZoneFeature {
             }
         });
 
-        // recompute violations based on known /alts
         for (Map.Entry<String, Set<String>> e : altsByMain.entrySet()) {
             String main = e.getKey();
             Set<String> allRaw = e.getValue();
 
-            // С„РёР»СЊС‚СЂСѓРµРј РёРіРЅРѕСЂ-Р»РёСЃС‚
             LinkedHashSet<String> all = new LinkedHashSet<>();
             for (String n : allRaw) {
                 if (n == null) continue;
@@ -344,7 +309,6 @@ public final class AfkZoneFeature {
 
             ViolationEntry ve = violations.get(main);
 
-            // СЃРѕР·РґР°С‘Рј Р·Р°РїРёСЃСЊ С‚РѕР»СЊРєРѕ РєРѕРіРґР° РІРїРµСЂРІС‹Рµ РїРѕР№РјР°Р»Рё 2+ РІ Р·РѕРЅРµ
             if (ve == null) {
                 if (countInZone >= 2) {
                     ve = new ViolationEntry(main);
@@ -354,7 +318,6 @@ public final class AfkZoneFeature {
                 }
             }
 
-            // вњ… Р·Р°РїРёСЃСЊ СѓР¶Рµ РµСЃС‚СЊ вЂ” РѕР±РЅРѕРІР»СЏРµРј СЃРїРёСЃРєРё РІСЃРµРіРґР° (РґР°Р¶Рµ РµСЃР»Рё СЃРµР№С‡Р°СЃ < 2)
             ve.allAccounts.clear();
             ve.allAccounts.addAll(all);
 
@@ -378,23 +341,14 @@ public final class AfkZoneFeature {
                 && pos.getZ() >= minZ && pos.getZ() <= maxZ;
     }
 
-    // ===== Chat parsing =====
-
-    /**
-     * РЎРµСЂРІРµСЂ РїСЂРёСЃС‹Р»Р°РµС‚ Р±Р°РЅ РёРЅРѕРіРґР° РѕРґРЅРёРј СЃРѕРѕР±С‰РµРЅРёРµРј, РІРЅСѓС‚СЂРё РєРѕС‚РѕСЂРѕРіРѕ РµСЃС‚СЊ \n.
-     * РџРѕСЌС‚РѕРјСѓ СЂРµР¶РµРј РЅР° СЃС‚СЂРѕРєРё Рё РїР°СЂСЃРёРј РєР°Р¶РґСѓСЋ РѕС‚РґРµР»СЊРЅРѕ.
-     */
     private static void onChatMessage(String msg) {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (msg == null || msg.isBlank()) return;
 
-        // СѓР±РёСЂР°РµРј С†РІРµС‚-РєРѕРґС‹
         String cleanMsg = msg.replaceAll("В§.", "");
 
-        // вњ… Р’РђР–РќРћ: СЃРµСЂРІРµСЂ РєР»Р°РґС‘С‚ \n РєР°Рє РґРІР° СЃРёРјРІРѕР»Р° "\\n" вЂ” РїСЂРµРІСЂР°С‰Р°РµРј РІ СЂРµР°Р»СЊРЅС‹Рµ РїРµСЂРµРЅРѕСЃС‹
         cleanMsg = cleanMsg.replace("\\n", "\n");
 
-        // С‚РµРїРµСЂСЊ split СЂР°Р±РѕС‚Р°РµС‚ Рё РїРѕ СЂРµР°Р»СЊРЅС‹Рј РїРµСЂРµРЅРѕСЃР°Рј
         String[] parts = cleanMsg.split("\\R");
         for (String p : parts) {
             String line = p.trim();
@@ -402,13 +356,9 @@ public final class AfkZoneFeature {
         }
     }
 
-    /**
-     * РџР°СЂСЃРёРЅРі РѕРґРЅРѕР№ СЃС‚СЂРѕРєРё (СѓР¶Рµ Р±РµР· С†РІРµС‚-РєРѕРґРѕРІ, СѓР¶Рµ trim()).
-     */
     private static void onChatLine(String clean) {
         long now = System.currentTimeMillis();
 
-        // ---- Ban parsing ----
         Matcher mb = P_BAN_LINE.matcher(clean);
         if (mb.find()) {
             pendingBanNick = mb.group(1);
@@ -427,7 +377,6 @@ public final class AfkZoneFeature {
                 if (mr.find()) {
                     String reason = mr.group(1).trim();
 
-                    // вњ… СЃРѕС…СЂР°РЅСЏРµРј Р»РѕРєР°Р»СЊРЅРѕ, С‡С‚РѕР±С‹ РЅРµ РїРµС‡Р°С‚Р°С‚СЊ null
                     String nick = pendingBanNick;
                     String id = pendingBanId;
 
@@ -443,7 +392,6 @@ public final class AfkZoneFeature {
             }
         }
 
-        // ---- /alts parsing ----
         Matcher start = P_SCAN_MAIN.matcher(clean);
         if (start.find()) {
             finalizeScanIfAny();
@@ -457,10 +405,7 @@ public final class AfkZoneFeature {
         }
 
         if (currentScanNick != null) {
-            // Р’Р°Р¶РЅРѕ: РїРѕРєР° РёРґС‘С‚ СЃРєР°РЅ, РІ С‡Р°С‚ РјРѕРіСѓС‚ РїСЂРёР»РµС‚Р°С‚СЊ РІРѕРѕР±С‰Рµ Р»СЋР±С‹Рµ СЃС‚СЂРѕРєРё (РІ С‚РѕРј С‡РёСЃР»Рµ СЃ РЅР°С€РёРј РЅРёРєРѕРј).
-            // Р§С‚РѕР±С‹ РЅРµ Р»РѕРІРёС‚СЊ "Р»РѕР¶РЅС‹Рµ Р°Р»С‚С‹", РїСЂРёРЅРёРјР°РµРј С‚РѕР»СЊРєРѕ СЃС‚СЂРѕРєРё, РїРѕС…РѕР¶РёРµ РЅР° РІС‹РІРѕРґ /alts:
-            //  - СЃС‚СЂРѕРєР° СЃРѕРґРµСЂР¶РёС‚ СЃРєР°РЅРёСЂСѓРµРјС‹Р№ РЅРёРє (РґСѓР±Р»СЊ РёР»Рё СЃРїРёСЃРѕРє, РіРґРµ РѕРЅ РїСЂРёСЃСѓС‚СЃС‚РІСѓРµС‚)
-            //  - РёР»Рё СЌС‚Рѕ СЏРІРЅС‹Р№ СЃРїРёСЃРѕРє С‡РµСЂРµР· Р·Р°РїСЏС‚СѓСЋ
+
             boolean looksLikeAltsLine = clean.contains(currentScanNick) || clean.contains(",");
             if (!looksLikeAltsLine) return;
 
@@ -475,7 +420,6 @@ public final class AfkZoneFeature {
             }
             if (any) lastScanLineMs = now;
 
-            // РµСЃР»Рё РїСЂРёС€Р»Р° СЃС‚СЂРѕРєР° РІРёРґР° "main, alt1, alt2" вЂ” СЃСЂР°Р·Сѓ Р·Р°РІРµСЂС€Р°РµРј
             if (any && clean.contains(",")) {
                 finalizeScanIfAny();
             }
@@ -500,7 +444,6 @@ public final class AfkZoneFeature {
         lastScanLineMs = 0L;
     }
 
-    // ===== HUD =====
     private static LinkedHashSet<String> collectHudRows() {
         LinkedHashSet<String> rows = new LinkedHashSet<>();
 
@@ -512,7 +455,6 @@ public final class AfkZoneFeature {
                 boolean inZone = ve.inZoneNow.contains(nick);
                 String ban = banInfoByNick.get(nick);
 
-                // РїРѕРєР°Р·С‹РІР°РµРј РµСЃР»Рё РѕРЅ РІ Р·РѕРЅРµ РР›Р СѓР¶Рµ РµСЃС‚СЊ РёРЅС„Р° Рѕ Р±Р°РЅРµ
                 if (!inZone && ban == null) continue;
 
                 rows.add(ban == null ? nick : (nick + " " + ban));
@@ -557,7 +499,6 @@ public final class AfkZoneFeature {
         drawHudBox(ctx, mc, x, y, title);
     }
 
-    // HUD style block
     private static void drawHudBox(DrawContext ctx, MinecraftClient mc, int x, int y, Text title) {
         float scale = getAfkBoxScale();
         int pad = Math.max(4, Math.round(6 * scale));
@@ -646,9 +587,6 @@ public final class AfkZoneFeature {
         return 1.0f - (inv * inv * inv);
     }
 
-
-    // СЃС‚РёР»СЊ "РєР°Рє NickSearch": РєРѕСЂРѕР±РєР° + Р±РѕСЂРґРµСЂ + С‚РµРєСЃС‚ РІРЅСѓС‚СЂРё
-
     private static float getAfkBoxScale() {
         if (StaffHelperState.CONFIG == null) return 1.0f;
         float v = StaffHelperState.CONFIG.afkBoxScale;
@@ -656,7 +594,6 @@ public final class AfkZoneFeature {
         return Math.max(0.6f, Math.min(2.0f, v));
     }
 
-    // ===== World render =====
     private static void renderZone(MatrixStack matrices, Vec3d cameraPos, VertexConsumerProvider consumers) {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (StaffHelperState.CONFIG == null) return;
@@ -664,7 +601,6 @@ public final class AfkZoneFeature {
 
         boolean outline = StaffHelperState.CONFIG.afkOutlineEnabled;
 
-        // fill РЅРёРєРѕРіРґР° РЅРµ СЂРёСЃСѓРµРј Р±РµР· outline
         boolean fillEnabled = StaffHelperState.CONFIG.afkFillEnabled && outline;
 
         if (!outline && !fillEnabled) return;
@@ -719,7 +655,6 @@ public final class AfkZoneFeature {
         int order = 0;
     }
 
-    // ===== Drawing helpers =====
     private static void drawOutlinedBox(MatrixStack matrices, VertexConsumer vc, Box b,
                                         float r, float g, float bl, float a) {
         float x1 = (float) b.minX, y1 = (float) b.minY, z1 = (float) b.minZ;

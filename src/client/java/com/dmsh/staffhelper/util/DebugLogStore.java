@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** In-memory debug log for remote requests/responses. */
 public final class DebugLogStore {
     private DebugLogStore() {}
 

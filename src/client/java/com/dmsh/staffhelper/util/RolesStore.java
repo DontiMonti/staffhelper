@@ -5,13 +5,12 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-/** Thread-safe store for staff roles loaded from remote JSON/Supabase. */
 public final class RolesStore {
     private RolesStore() {}
 
     public static final int DEFAULT_ROLE_COLOR = 0x7ED3FF;
 
-    private static volatile Map<String, RoleInfo> roles = Collections.emptyMap(); // lower(nick) -> role info
+    private static volatile Map<String, RoleInfo> roles = Collections.emptyMap();
 
     public static void setRoleEntries(Map<String, RoleInfo> newRoles) {
         if (newRoles == null) return;
@@ -59,7 +58,7 @@ public final class RolesStore {
 
     private static String normalizeNick(String s) {
         if (s == null || s.isBlank()) return null;
-        // Strip Minecraft formatting chars and keep only valid nick chars.
+
         String clean = s.replaceAll("§.", "").replaceAll("[^A-Za-z0-9_]", "");
         if (clean.isBlank()) return null;
         return clean.toLowerCase(Locale.ROOT);

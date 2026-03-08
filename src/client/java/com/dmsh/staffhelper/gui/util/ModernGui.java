@@ -2,10 +2,6 @@ package com.dmsh.staffhelper.gui.util;
 
 import net.minecraft.client.gui.DrawContext;
 
-/**
- * Версионно-устойчивые утилиты рисования (без RenderPipelines/Tessellator).
- * Всё построено на DrawContext.fill и простых градиентах/скруглениях.
- */
 public final class ModernGui {
     private ModernGui() {}
 
@@ -28,14 +24,12 @@ public final class ModernGui {
         return v < 0 ? 0 : (v > 1 ? 1 : v);
     }
 
-    /** Простая easeOutCubic */
     public static float easeOut(float t) {
         t = clamp01(t);
         float p = 1f - t;
         return 1f - p*p*p;
     }
 
-    /** Мягкая тень: несколько расширяющихся прямоугольников с убывающей альфой */
     public static void shadow(DrawContext ctx, int x, int y, int w, int h, int radius, int spread, int colorARGB) {
         for (int i = spread; i >= 1; i--) {
             float k = (float)i / (float)spread;
@@ -45,7 +39,6 @@ public final class ModernGui {
         }
     }
 
-    /** Скруглённый прямоугольник (scanline, без шейдеров). */
     public static void roundedRect(DrawContext ctx, int x, int y, int w, int h, int radius, int colorARGB) {
         if (w <= 0 || h <= 0) return;
         if (radius <= 0) {
@@ -54,13 +47,11 @@ public final class ModernGui {
         }
         int r = Math.min(radius, Math.min(w, h) / 2);
 
-        // center
         ctx.fill(x + r, y, x + w - r, y + h, colorARGB);
-        // left/right bars
+
         ctx.fill(x, y + r, x + r, y + h - r, colorARGB);
         ctx.fill(x + w - r, y + r, x + w, y + h - r, colorARGB);
 
-        // corners as scanlines
         for (int dy = 0; dy < r; dy++) {
             int yyTop = y + dy;
             int yyBot = y + h - 1 - dy;
@@ -73,22 +64,19 @@ public final class ModernGui {
         }
     }
 
-    /** Скруглённая рамка (толщина 1). */
     public static void roundedOutline(DrawContext ctx, int x, int y, int w, int h, int radius, int colorARGB) {
-        // top/bottom
+
         roundedRect(ctx, x, y, w, 1, radius, colorARGB);
         roundedRect(ctx, x, y + h - 1, w, 1, radius, colorARGB);
-        // left/right
+
         roundedRect(ctx, x, y, 1, h, radius, colorARGB);
         roundedRect(ctx, x + w - 1, y, 1, h, radius, colorARGB);
     }
 
-    /** Скруглённый градиент (вертикальный). */
     public static void roundedVerticalGradient(DrawContext ctx, int x, int y, int w, int h, int radius, int topColor, int bottomColor) {
         if (w <= 0 || h <= 0) return;
         int r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
 
-        // gradient fill line-by-line to keep it stable
         for (int i = 0; i < h; i++) {
             float t = (h <= 1) ? 1f : (float)i / (float)(h - 1);
             int c = lerpColor(topColor, bottomColor, t);
@@ -98,7 +86,6 @@ public final class ModernGui {
             int insetL = 0;
             int insetR = 0;
 
-            // apply rounded corners on top/bottom ranges
             if (r > 0) {
                 if (i < r) {
                     int dy = i;
@@ -117,7 +104,6 @@ public final class ModernGui {
         }
     }
 
-    /** Простой стеклянный хайлайт: тонкая полоска сверху */
     public static void topHighlight(DrawContext ctx, int x, int y, int w, int radius, int colorARGB) {
         roundedRect(ctx, x + 1, y + 1, w - 2, 2, radius, colorARGB);
     }

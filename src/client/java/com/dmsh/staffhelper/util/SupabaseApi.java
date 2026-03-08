@@ -15,9 +15,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Small helper for Supabase REST URL/header building.
- */
 public final class SupabaseApi {
     private SupabaseApi() {}
 
@@ -84,7 +81,7 @@ public final class SupabaseApi {
     public static String allowedUsersSelectUrl(StaffHelperConfig cfg, String table, String nick, boolean force) {
         if (!isReadConfigured(cfg)) return null;
         String normalizedNick = nick == null ? "" : nick.trim();
-        // Use case-insensitive lookup because Minecraft nicknames are often compared without case.
+
         String url = restTableUrl(cfg, table) + "?select=nick&nick=ilike." + encode(normalizedNick) + "&limit=1";
         return force ? appendCacheBust(url) : url;
     }
@@ -148,8 +145,7 @@ public final class SupabaseApi {
     }
 
     public static String appendCacheBust(String url) {
-        // PostgREST treats unknown query parameters as filters and may return 400 (PGRST100).
-        // For Supabase REST endpoints we rely on no-cache headers instead of query cache-busting.
+
         return url;
     }
 

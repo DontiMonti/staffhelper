@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/** Small STATS HUD panel (position editable in HUD editor). */
 public final class StatsHudFeature {
     private StatsHudFeature() {}
 

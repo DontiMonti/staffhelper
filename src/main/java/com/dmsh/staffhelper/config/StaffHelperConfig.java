@@ -15,18 +15,15 @@ public class StaffHelperConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("staffhelper.json");
 
-    // NickSearch
     public boolean nickSearchEnabled = true;
     public int nickWidgetX = 8;
     public int nickWidgetY = 8;
     public List<String> nickPatterns = new ArrayList<>();
     public List<String> nickIgnoreNicks = new ArrayList<>();
 
-    // Vanish HUD
     public int vanishWidgetX = 8;
     public int vanishWidgetY = 40;
 
-    // STATS HUD (top-left panel)
     public boolean statsEnabled = true;
     public int statsWidgetX = 8;
     public int statsWidgetY = 8;
@@ -42,52 +39,41 @@ public class StaffHelperConfig {
     public float nickBoxScale = 1.0f;
     public float vanishBoxScale = 1.0f;
     public float afkBoxScale = 1.0f;
-    // AutoBox module: 0 = OFF, 1 = Box#1, 2 = Box#2
+
     public int autoBoxSelection = 0;
     public String autoBoxCommandBox1 = "/move boxsmp";
     public String autoBoxCommandBox2 = "/move box2";
 
-    // UI theme
-    // Available: BLUE, RED, PURPLE, ORANGE, GREEN, BRIGHT_PURPLE, PINK, CUSTOM
     public String uiTheme = "BLUE";
     public int uiCustomColor1 = 0x2D4A73;
     public int uiCustomColor2 = 0x5F8FD6;
     public boolean uiSheenAnimationEnabled = true;
 
-    // AFK Zone
     public boolean afkZoneEnabled = true;
 
-    // Rendering toggles
     public boolean afkOutlineEnabled = true;
     public boolean afkFillEnabled = false;
 
-    // POS1 / POS2 (block coords)
     public int afkX1 = 0, afkY1 = 64, afkZ1 = 0;
     public int afkX2 = 0, afkY2 = 64, afkZ2 = 0;
 
-    // AFK list HUD position
     public int afkListX = 8;
     public int afkListY = 90;
 
-    // AFK ignore list
     public List<String> afkIgnoreNicks = new ArrayList<>();
 
-    // Command Builder
     public List<CommandBuilderEntry> commandBuilders = new ArrayList<>();
 
-    // Remote nick decorations (GitHub/raw JSON)
     public boolean remoteDecorationsEnabled = true;
-    // NOTE: GitHub raw URLs must NOT include /refs/heads/...
+
     public String remoteDecorationsUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/main/staffhelper_decorations.json";
     public int remoteDecorationsIntervalSeconds = 5;
 
-    // Remote roles (GitHub/raw JSON)
     public String remoteRolesUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_roles.json";
     public int remoteRolesIntervalSeconds = 5;
-    // Remote update feed (GitHub/raw JSON fallback)
+
     public String remoteUpdatesUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_updates.json";
 
-    // Supabase integration
     public String supabaseProjectUrl = defaultSupabaseProjectUrl();
     public String supabaseAnonKey = defaultSupabaseAnonKey();
     public String supabaseWriteKey = "";
@@ -99,7 +85,6 @@ public class StaffHelperConfig {
     public String supabaseAllowedUsersTable = "allowed_users";
     public boolean supabaseUseActiveFilter = true;
 
-    // Creator-only menu access (Ctrl+Alt+F6)
     public String creatorNick = "DontiMonti";
     public String creatorUuid = "";
 

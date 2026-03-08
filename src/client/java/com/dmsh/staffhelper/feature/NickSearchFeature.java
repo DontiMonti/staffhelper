@@ -173,7 +173,6 @@ public class NickSearchFeature {
         }
     }
 
-    // Preview helpers for HUD editor
     public static int getWidgetWidthPreview() {
         return getWidgetWidth(getScale());
     }
@@ -223,7 +222,6 @@ public class NickSearchFeature {
         }
     }
 
-    // Matching logic
     private static boolean matchesAny(List<String> patterns, String name) {
         for (String p : patterns) {
             if (matches(p, name)) return true;

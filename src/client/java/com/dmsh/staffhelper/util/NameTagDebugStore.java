@@ -4,9 +4,6 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-/**
- * Stores the latest nametag processing snapshot for DebugScreen.
- */
 public final class NameTagDebugStore {
     private NameTagDebugStore() {}
 

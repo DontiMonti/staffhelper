@@ -85,7 +85,6 @@ public abstract class AdvancedChatBoxSuggestorMixin {
         Object advancedMerged = toAdvancedSuggestions(brigadierMerged);
         if (advancedMerged != null) return advancedMerged;
 
-        // Fallback: try constructing AdvancedSuggestions(range, list) directly.
         try {
             Class<?> clazz = Class.forName("io.github.darkkronicle.advancedchatbox.chat.AdvancedSuggestions");
             return clazz.getConstructor(StringRange.class, List.class).newInstance(targetRange, merged);

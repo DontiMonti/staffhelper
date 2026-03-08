@@ -46,11 +46,9 @@ public class StaffHelperMenuScreen extends Screen {
     private ButtonWidget nickIgnoreAddBtn;
     private int nickIgnoreScroll = 0;
 
-    // AFK fields
     private TextFieldWidget pos1X, pos1Y, pos1Z;
     private TextFieldWidget pos2X, pos2Y, pos2Z;
 
-    // AFK ignore list UI
     private TextFieldWidget afkIgnoreInput;
     private ButtonWidget afkIgnoreAddBtn;
     private int afkIgnoreScroll = 0;
@@ -116,7 +114,6 @@ public class StaffHelperMenuScreen extends Screen {
 
     private int scroll = 0;
 
-    // Command Builder tab UI
     private ButtonWidget commandBuilderAddBtn;
     private final List<CommandBuilderUiEntry> commandBuilderUiEntries = new ArrayList<>();
     private int commandBuilderScroll = 0;
@@ -147,7 +144,6 @@ public class StaffHelperMenuScreen extends Screen {
         int pad = 16;
         int tabsY = y0 + 10;
 
-        // Tabs
         int tabX = x0 + pad;
         tabNickBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 125, 20, Text.literal("NickSearch"), b -> {
             switchTab(Tab.NICKSEARCH);
@@ -173,7 +169,6 @@ public class StaffHelperMenuScreen extends Screen {
             switchTab(Tab.APPEARANCE);
         }));
 
-        // Close
         closeBtn = addDrawableChild(new SoupButtonWidget(
                 x0 + panelW - pad - 110,
                 y0 + panelH - pad - 20,
@@ -183,12 +178,10 @@ public class StaffHelperMenuScreen extends Screen {
                 b -> beginCloseAnimation()
         ));
 
-        // layout rows for Nick tab
         int headerY = tabsY + 28;
         int blockY = headerY + 34;
         int searchRowY = blockY + 14 + 20 + 28;
 
-        // Toggle (NickSearch)
         toggleBtn = addDrawableChild(new SoupButtonWidget(
                 x0 + pad + 360 + 8 + 90 + 8,
                 blockY + 14,
@@ -202,7 +195,6 @@ public class StaffHelperMenuScreen extends Screen {
                 }
         ));
 
-        // Add input
         addInput = new CenteredTextFieldWidget(this.textRenderer,
                 x0 + pad,
                 blockY + 14,
@@ -213,7 +205,6 @@ public class StaffHelperMenuScreen extends Screen {
         addInput.setDrawsBackground(false);
         addDrawableChild(addInput);
 
-        // Add button
         addBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 360 + 8, blockY + 14, 90, 20, tr("gui.staffhelper.button.add"), b -> {
             String ptn = addInput.getText().trim();
             if (!ptn.isEmpty()) {
@@ -224,7 +215,6 @@ public class StaffHelperMenuScreen extends Screen {
             }
         }));
 
-        // Search input
         searchInput = new CenteredTextFieldWidget(this.textRenderer,
                 x0 + pad,
                 searchRowY + 14,
@@ -235,7 +225,6 @@ public class StaffHelperMenuScreen extends Screen {
         searchInput.setDrawsBackground(false);
         addDrawableChild(searchInput);
 
-        // Clear button
         clearBtn = addDrawableChild(new SoupButtonWidget(x0 + pad + 458 + 8, searchRowY + 14, 90, 20, tr("gui.staffhelper.button.clear"), b -> {
             searchInput.setText("");
             scroll = 0;
@@ -273,7 +262,6 @@ public class StaffHelperMenuScreen extends Screen {
             clampNickIgnoreScroll();
         }));
 
-        // HUD editor button
         hudEditorBtn = addDrawableChild(new SoupButtonWidget(
                 x0 + 16,
                 y0 + 78,
@@ -297,7 +285,6 @@ public class StaffHelperMenuScreen extends Screen {
                 }
         ));
 
-        // ===== AFK ZONE TAB UI =====
         int afkBaseY = y0 + 110;
 
         pos1X = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 60, afkBaseY + 20, 90, 20, Text.literal(""));
@@ -316,13 +303,13 @@ public class StaffHelperMenuScreen extends Screen {
         reloadAfkFieldsFromConfig();
 
         afkRenderToggleBtn = addDrawableChild(new SoupButtonWidget(x0 + pad, afkBaseY + 140, 124, 22, afkRenderText(), b -> {
-            // cycle: OFF -> OUTLINE -> BOTH -> OFF
+
             int mode = getAfkRenderMode();
             mode = switch (mode) {
-                case 0 -> 1;      // OFF -> OUTLINE
-                case 1 -> 3;      // OUTLINE -> BOTH
-                case 2 -> 3;      // (safety) FILL -> BOTH
-                default -> 0;     // BOTH -> OFF
+                case 0 -> 1;
+                case 1 -> 3;
+                case 2 -> 3;
+                default -> 0;
             };
             setAfkRenderMode(mode);
             StaffHelperState.CONFIG.save();
@@ -342,7 +329,6 @@ public class StaffHelperMenuScreen extends Screen {
             reloadAfkFieldsFromConfig();
         }));
 
-        // ---- AFK ignore list (right column) ----
         int ignoreX = x0 + pad + 370;
         int ignoreY = afkBaseY + 34;
 
@@ -376,10 +362,8 @@ public class StaffHelperMenuScreen extends Screen {
             clampIgnoreScroll();
         }));
 
-        // ===== COMMAND BUILDER TAB UI =====
         initCommandBuilderUi(x0, y0, pad);
 
-        // ===== MODULES TAB UI =====
         int modulesX = x0 + pad;
         int modulesY = y0 + 96;
         int modulesRightX = modulesX + 304;
@@ -469,7 +453,6 @@ public class StaffHelperMenuScreen extends Screen {
         autoBoxExpandProgress = autoBoxExpanded ? 1.0f : 0.0f;
         applyModulesLayout();
 
-        // ===== APPEARANCE TAB UI =====
         int appearanceX = x0 + pad;
         int appearanceY = y0 + 126;
         int themePresetW = 141;
@@ -752,10 +735,6 @@ public class StaffHelperMenuScreen extends Screen {
         return tr("gui.staffhelper.afk.outline", onOff(StaffHelperState.CONFIG.afkOutlineEnabled));
     }
 
-    
-
-    // ===== AFK zone render mode (combined button) =====
-    // mode bits: 1 = outline, 2 = fill
     private int getAfkRenderMode() {
         if (StaffHelperState.CONFIG == null) return 0;
         int m = 0;
@@ -768,7 +747,7 @@ public class StaffHelperMenuScreen extends Screen {
         if (StaffHelperState.CONFIG == null) return;
         boolean outline = (mode & 1) != 0;
         boolean fill = (mode & 2) != 0;
-        // ?????????????? ???? ???????????????? fill ?????? outline (?????????? "?????????? ??????????" ?????? ?????????????????????? ??????????????)
+
         if (fill) outline = true;
         StaffHelperState.CONFIG.afkOutlineEnabled = outline;
         StaffHelperState.CONFIG.afkFillEnabled = fill;
@@ -778,7 +757,7 @@ public class StaffHelperMenuScreen extends Screen {
         int mode = getAfkRenderMode();
         String state = switch (mode) {
             case 1 -> ts("gui.staffhelper.afk.render_state.out");
-            case 2 -> ts("gui.staffhelper.afk.render_state.both"); // safety: fill-only treated as BOTH
+            case 2 -> ts("gui.staffhelper.afk.render_state.both");
             case 3 -> ts("gui.staffhelper.afk.render_state.both");
             default -> ts("gui.staffhelper.afk.render_state.off");
         };
@@ -1140,7 +1119,6 @@ public class StaffHelperMenuScreen extends Screen {
         boolean modules = (tab == Tab.MODULES);
         boolean appearance = (tab == Tab.APPEARANCE);
 
-        // Nick tab
         setVisibleActiveAnimated(addInput, nick);
         setVisibleActive(addBtn, nick);
         setVisibleActiveAnimated(searchInput, nick);
@@ -1149,7 +1127,6 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActive(nickIgnoreAddBtn, nick);
         setVisibleActive(toggleBtn, nick);
 
-        // AFK tab
         setVisibleActiveAnimated(pos1X, afk);
         setVisibleActiveAnimated(pos1Y, afk);
         setVisibleActiveAnimated(pos1Z, afk);
@@ -1157,13 +1134,12 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActiveAnimated(pos2Y, afk);
         setVisibleActiveAnimated(pos2Z, afk);
         setVisibleActive(afkRenderToggleBtn, afk);
-        
+
         setVisibleActive(afkApplyBtn, afk);
 
         setVisibleActiveAnimated(afkIgnoreInput, afk);
         setVisibleActive(afkIgnoreAddBtn, afk);
 
-        // CommandBuilder tab
         setVisibleActive(commandBuilderAddBtn, commandBuilder);
         for (CommandBuilderUiEntry ui : commandBuilderUiEntries) {
             boolean visibleRow = commandBuilder && commandBuilderInViewport(ui);
@@ -1178,7 +1154,6 @@ public class StaffHelperMenuScreen extends Screen {
             setVisibleActive(ui.reasonOptionsField, showExpanded && ui.entry.hasExecuteToken("{reason}") && commandBuilderWidgetInViewport(ui.reasonOptionsField));
         }
 
-        // Modules tab
         setVisibleActive(statsSectionBtn, modules && moduleInViewport(statsSectionBtn));
         float statsVisual = modules ? easeInOutCubic(statsExpandProgress) : 0.0f;
         boolean statsDetailsVisible = modules && statsVisual > 0.08f;
@@ -1206,7 +1181,6 @@ public class StaffHelperMenuScreen extends Screen {
         setModuleButtonState(autoBoxBox1Btn, autoBoxDetailsVisible && moduleInViewport(autoBoxBox1Btn), autoBoxDetailsActive && moduleInViewport(autoBoxBox1Btn), autoBoxAlpha);
         setModuleButtonState(autoBoxBox2Btn, autoBoxDetailsVisible && moduleInViewport(autoBoxBox2Btn), autoBoxDetailsActive && moduleInViewport(autoBoxBox2Btn), autoBoxAlpha);
 
-        // Appearance tab
         setVisibleActive(hudEditorBtn, appearance);
         setVisibleActive(uiSheenToggleBtn, appearance);
         setVisibleActive(themeBlueBtn, appearance);
@@ -1253,9 +1227,7 @@ public class StaffHelperMenuScreen extends Screen {
         if (customThemeDialogOpen) {
             return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         }
-        // Resize ALL text boxes using mouse wheel when hovered.
-        // (Some MC versions do not forward scroll events to TextFieldWidget reliably,
-        // so we handle it at the screen level.)
+
         if (verticalAmount != 0 && tab != Tab.COMMANDBUILDER) {
             for (var child : this.children()) {
                 if (child instanceof net.minecraft.client.gui.widget.TextFieldWidget tf) {
@@ -1430,7 +1402,6 @@ public class StaffHelperMenuScreen extends Screen {
             }
         }
 
-        // AFK ignore list remove (x)
         if (tab == Tab.AFKZONE && button == 0) {
             int x0 = (this.width - panelW) / 2;
             int y0 = (this.height - panelH) / 2 + getUiOffsetY();
@@ -1501,7 +1472,6 @@ public class StaffHelperMenuScreen extends Screen {
 
         UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, System.currentTimeMillis(), 0.10f, true, false);
 
-        // subtle top separator
         ctx.fill(x0 + 12, y0 + 48, x0 + panelW - 12, y0 + 49, ((int)(0x80 * p) << 24) | 0x2A2F3A);
 
         int tabsY = y0 + 10;
@@ -1532,7 +1502,6 @@ public class StaffHelperMenuScreen extends Screen {
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.add_pattern"), x0 + pad, blockY + 0, textSub, false);
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.search"), x0 + pad, searchRowY + 0, textSub, false);
 
-            // Textfield backgrounds (Soup-like)
             if (addInput != null) {
                 drawTextFieldPanel(ctx, addInput, 8);
             }
@@ -1624,9 +1593,8 @@ public class StaffHelperMenuScreen extends Screen {
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.pos1"), x0 + pad, baseY + 6, textSub, false);
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.pos2"), x0 + pad, baseY + 76, textSub, false);
 
-            // Coordinate field backgrounds (derive from widget bounds so resizing works)
             int r = 8;
-            // These fields are regular TextFieldWidget in some builds; keep it generic.
+
             TextFieldWidget[] coords = new TextFieldWidget[]{pos1X, pos1Y, pos1Z, pos2X, pos2Y, pos2Z};
             for (TextFieldWidget tf : coords) {
                 if (tf == null) continue;
@@ -1643,7 +1611,6 @@ public class StaffHelperMenuScreen extends Screen {
                     tr("gui.staffhelper.tab.afk.tip"),
                     x0 + pad, baseY + 230, textAccent, false);
 
-            // ---- ignore list (right column) ----
             int boxX = x0 + pad + 370;
             int boxY = baseY + 68;
             int boxW = 218;
@@ -1656,7 +1623,6 @@ public class StaffHelperMenuScreen extends Screen {
                     tr("gui.staffhelper.tab.afk.ignored_desc"),
                     boxX, baseY + 18, textAccent, false);
 
-            // Ignore input background (derive from widget bounds so resizing works)
             if (afkIgnoreInput != null) {
                 drawTextFieldPanel(ctx, afkIgnoreInput, 8);
             }
@@ -1988,7 +1954,6 @@ public class StaffHelperMenuScreen extends Screen {
         return false;
     }
 
-    // HUD Editor Screen (?????????????? NickSearch + AFK List)
     public static class HudEditorScreen extends Screen {
         private enum DragTarget { NONE, STATS, NICK, AFK_LIST, VANISH }
 
@@ -2004,7 +1969,6 @@ public class StaffHelperMenuScreen extends Screen {
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
 
-            // 0) STATS widget hitbox
             int xStats = StaffHelperState.CONFIG.statsWidgetX;
             int yStats = StaffHelperState.CONFIG.statsWidgetY;
             int wStats = com.dmsh.staffhelper.feature.StatsHudFeature.getPreviewWidth(MinecraftClient.getInstance());
@@ -2017,7 +1981,6 @@ public class StaffHelperMenuScreen extends Screen {
                 return true;
             }
 
-            // 1) NickSearch widget hitbox
             int wNick = NickSearchFeature.getWidgetWidthPreview();
             int hNick = NickSearchFeature.getWidgetHeightPreview(5);
             int xNick = StaffHelperState.CONFIG.nickWidgetX;
@@ -2030,7 +1993,6 @@ public class StaffHelperMenuScreen extends Screen {
                 return true;
             }
 
-            // 2) Vanish widget hitbox
             int xVanish = StaffHelperState.CONFIG.vanishWidgetX;
             int yVanish = StaffHelperState.CONFIG.vanishWidgetY;
             int wVanish = com.dmsh.staffhelper.feature.VanishFeature.getPreviewWidth(this.textRenderer);
@@ -2043,7 +2005,6 @@ public class StaffHelperMenuScreen extends Screen {
                 return true;
             }
 
-            // 3) AFK list hitbox (?????????????????????? ?? ?????????????????? HUD-??????????????)
             int xAfk = StaffHelperState.CONFIG.afkListX;
             int yAfk = StaffHelperState.CONFIG.afkListY;
 
@@ -2052,7 +2013,7 @@ public class StaffHelperMenuScreen extends Screen {
             int lineH = Math.max(10, Math.round(10 * afkScale));
             int titleH = Math.max(12, Math.round(12 * afkScale));
             Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
-            // ?? ???????????? ???????????? ???????????? ????????????, ?????????? ???????????? ???????????????? ?? ??????, ?????? ???????????? ?? ????????
+
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
 
@@ -2226,27 +2187,23 @@ public class StaffHelperMenuScreen extends Screen {
 
         @Override
         public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
-            // ??????????: ???? renderBackground -> ?????????? blur crash
+
             ctx.fill(0, 0, this.width, this.height, 0xAA000000);
 
             ctx.drawText(this.textRenderer, StaffHelperMenuScreen.tr("screen.staffhelper.hud_editor.tip"), 10, 10, 0xFFFFFFFF, false);
 
-            // STATS preview
             com.dmsh.staffhelper.feature.StatsHudFeature.renderPreview(ctx,
                     StaffHelperState.CONFIG.statsWidgetX,
                     StaffHelperState.CONFIG.statsWidgetY);
 
-            // NickSearch preview
             NickSearchFeature.renderWidgetPreview(ctx,
                     StaffHelperState.CONFIG.nickWidgetX,
                     StaffHelperState.CONFIG.nickWidgetY);
 
-            // Vanish preview
             com.dmsh.staffhelper.feature.VanishFeature.renderPreview(ctx,
                     StaffHelperState.CONFIG.vanishWidgetX,
                     StaffHelperState.CONFIG.vanishWidgetY);
 
-            // AFK list preview (?????????? ?????? ?? NickSearch: ?????????????? + ????????????)
             int x = StaffHelperState.CONFIG.afkListX;
             int y = StaffHelperState.CONFIG.afkListY;
 
@@ -2287,4 +2244,3 @@ public class StaffHelperMenuScreen extends Screen {
         }
     }
 }
-

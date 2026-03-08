@@ -19,7 +19,6 @@ public class PlayerListEntryDisplayNameMixin {
         String name = self.getProfile().getName();
         Text original = cir.getReturnValue();
 
-        // если сервер не прислал displayName — собираем имя так же, как ванила (с префиксами/титулами от Team)
         if (original == null) {
             Text base = Text.literal(name);
             Team team = self.getScoreboardTeam();

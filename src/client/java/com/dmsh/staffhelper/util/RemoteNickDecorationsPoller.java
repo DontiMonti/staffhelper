@@ -23,9 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Polls nick decorations from Supabase REST (preferred) or old GitHub raw JSON fallback.
- */
 public final class RemoteNickDecorationsPoller {
     private RemoteNickDecorationsPoller() {}
 
@@ -159,7 +156,7 @@ public final class RemoteNickDecorationsPoller {
                 }
 
                 if (SupabaseApi.isMissingTable(resp.statusCode(), body)) {
-                    break; // try next table candidate
+                    break;
                 }
                 if (SupabaseApi.isMissingActiveColumn(resp.statusCode(), body) && withActive) {
                     if (cfg.supabaseUseActiveFilter) {
@@ -167,7 +164,7 @@ public final class RemoteNickDecorationsPoller {
                         cfg.save();
                         DebugLogStore.add("[DECOR][SUPA] active-filter disabled (column missing).");
                     }
-                    continue; // retry same table without active
+                    continue;
                 }
             }
         }

@@ -3,11 +3,6 @@ package com.dmsh.staffhelper.util;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * Потокобезопасное хранилище декораций, которое обновляется из удалённого JSON.
- *
- * Map key: lower-case nick
- */
 public final class NickDecorationsStore {
     private NickDecorationsStore() {}
 

@@ -23,9 +23,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Polls staff roles from Supabase REST (preferred) or old GitHub raw JSON fallback.
- */
 public final class RemoteRolesPoller {
     private RemoteRolesPoller() {}
 
@@ -153,7 +150,7 @@ public final class RemoteRolesPoller {
                 }
 
                 if (SupabaseApi.isMissingTable(resp.statusCode(), body)) {
-                    break; // try next table candidate
+                    break;
                 }
                 if (SupabaseApi.isMissingActiveColumn(resp.statusCode(), body) && withActive) {
                     if (cfg.supabaseUseActiveFilter) {
@@ -161,7 +158,7 @@ public final class RemoteRolesPoller {
                         cfg.save();
                         DebugLogStore.add("[ROLES][SUPA] active-filter disabled (column missing).");
                     }
-                    continue; // retry same table without active
+                    continue;
                 }
             }
         }

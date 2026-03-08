@@ -16,21 +16,15 @@ import net.minecraft.util.Formatting;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Shows a small HUD widget when vanish is enabled for the current player.
- * Detects server messages like:
- * "исчезновение Включено для <nick>" / "исчезновение Отключено для <nick>".
- */
 public final class VanishFeature {
     private VanishFeature() {}
 
     private static boolean vanishEnabled = false;
 
     private static final int PAD = 6;
-    private static final int BOX_H = 14 + 10; // 1 line
+    private static final int BOX_H = 14 + 10;
     private static final Text LINE = Text.literal("⚗ ваниш включен").formatted(Formatting.GREEN);
 
-    // "... исчезновение Включено для DontiMonti"
     private static final Pattern P_VANISH_ON =
             Pattern.compile("(?iu).*исчезновение\\s+Включено\\s+для\\s+([A-Za-z0-9_]{3,16}).*");
     private static final Pattern P_VANISH_OFF =
@@ -44,9 +38,6 @@ public final class VanishFeature {
                 onChatMessage(message.getString())
         );
 
-        // При смене сервера (/queue, /hub и т.п.) ваниш обычно сбрасывается сервером,
-        // но клиент не всегда получает сообщение "Отключено". Поэтому сбрасываем плашку
-        // при переподключении/отключении.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> clear());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clear());
 
@@ -62,7 +53,7 @@ public final class VanishFeature {
     }
 
     public static int getBoxWidth(TextRenderer tr) {
-        // делаем ширину по фактической длине текста, чтобы плашка не была слишком длинной
+
         int pad = Math.max(4, Math.round(PAD * getScale()));
         return tr.getWidth(LINE) + pad * 2;
     }
@@ -113,9 +104,8 @@ public final class VanishFeature {
         }
         if (msg == null || msg.isBlank()) return;
 
-        // strip colors
         String clean = msg.replaceAll("§.", "");
-        // server may send "\\n" as literal chars
+
         clean = clean.replace("\\n", "\n");
 
         String[] parts = clean.split("\\R");

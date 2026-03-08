@@ -22,9 +22,6 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Runtime access control based on Supabase table "allowed_users".
- */
 public final class AllowedUsersAccessGate {
     private AllowedUsersAccessGate() {}
 
@@ -257,4 +254,3 @@ public final class AllowedUsersAccessGate {
         }
     }
 }
-

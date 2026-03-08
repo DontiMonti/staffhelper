@@ -7,6 +7,6 @@ public class StaffHelper implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        // пока пусто; если позже появятся общие вещи — будут тут
+
     }
 }
