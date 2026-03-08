@@ -3,7 +3,7 @@
 	"id": "staffhelper",
 	"version": "${version}",
 	"name": "StaffHelper",
-	"description": "Staff helper tools",
+	"description": "Staff helper tools for elytra.pro",
 	"authors": [
 		"DontiMonti"
 	],
