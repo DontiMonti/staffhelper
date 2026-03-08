@@ -36,7 +36,7 @@ public final class AfkZoneFeature {
     private static boolean altsCheckRunning = false;
     private static long nextAltsCommandAtMs = 0L;
 
-    private static final long ALTS_CHECK_DELAY_MS = 250L;
+    private static final long ALTS_CHECK_DELAY_MS = 900L;
 
     private static long showWidgetUntilMs = 0L;
     private static final Map<String, AnimatedHudRow> animatedHudRows = new LinkedHashMap<>();
@@ -57,14 +57,17 @@ public final class AfkZoneFeature {
     private static String pendingBanId = null;
     private static long pendingBanUntilMs = 0L;
 
-    private static final Pattern P_SCAN_MAIN = Pattern.compile("^\\s*РЎРєР°РЅРёСЂРѕРІР°РЅРёРµ\\s+([A-Za-z0-9_]{3,16})\\b");
+    private static final Pattern P_SCAN_MAIN = Pattern.compile("(?iu)^\\s*сканирование\\s+([A-Za-z0-9_]{3,16})\\b");
+    private static final Pattern P_HISTORY_LINE = Pattern.compile("(?iu)^\\s*история\\s+игрока\\b");
     private static final Pattern P_ANY_NICK  = Pattern.compile("@?([A-Za-z0-9_]{3,16})");
+    private static final Pattern P_SINGLE_NICK_LINE = Pattern.compile("^\\s*@?([A-Za-z0-9_]{3,16})\\s*$");
+    private static final Pattern P_FORMAT_CODE = Pattern.compile("(?i)§[0-9A-FK-ORX]");
 
     private static final Pattern P_BAN_LINE =
-            Pattern.compile("(?iu)Р·Р°Р±Р»РѕРєРёСЂРѕРІР°Р»\\s+([A-Za-z0-9_]{3,16})\\s*\\(\\s*[^0-9]*\\s*(\\d+)\\s*\\)");
+            Pattern.compile("(?iu)заблокировал(?:\\s+чат)?\\s+([A-Za-z0-9_]{3,16})\\s*\\(\\s*[^0-9]*\\s*(\\d+)\\s*\\)");
 
     private static final Pattern P_REASON_LINE =
-            Pattern.compile("(?iu)РџСЂРёС‡РёРЅР°\\s*:\\s*([^\\r\\n]+)");
+            Pattern.compile("(?iu)причина\\s*:\\s*([^\\r\\n]+)");
 
     public static void init() {
         ClientReceiveMessageEvents.CHAT.register((message, signed, sender, params, receptionTimestamp) ->
@@ -236,6 +239,20 @@ public final class AfkZoneFeature {
         return false;
     }
 
+    private static String stripFormattingCodes(String text) {
+        if (text == null || text.isEmpty()) return "";
+        String normalized = text.replace("В§", "§");
+        return P_FORMAT_CODE.matcher(normalized).replaceAll("");
+    }
+
+    private static boolean isNickInZoneNow(String nick) {
+        if (nick == null || nick.isBlank()) return false;
+        for (String onlineNick : onlineInZone) {
+            if (onlineNick != null && onlineNick.equalsIgnoreCase(nick)) return true;
+        }
+        return false;
+    }
+
     public static boolean shouldSuppressChatMessage(String message) {
         if (!AllowedUsersAccessGate.isModAllowed()) return false;
         if (message == null || message.isBlank()) return false;
@@ -246,9 +263,9 @@ public final class AfkZoneFeature {
         hideAltsChatUntil.entrySet().removeIf(e -> e.getValue() == null || e.getValue() < now);
         if (hideAltsChatUntil.isEmpty() && !altsCheckRunning) return false;
 
-        String clean = message.replaceAll("В§.", "");
+        String clean = stripFormattingCodes(message);
 
-        if (clean.contains("РЎРєР°РЅРёСЂРѕРІР°РЅРёРµ")) {
+        if (P_SCAN_MAIN.matcher(clean).find()) {
             for (String nick : hideAltsChatUntil.keySet()) {
                 if (nick != null && clean.contains(nick)) return true;
             }
@@ -258,6 +275,10 @@ public final class AfkZoneFeature {
             for (String nick : hideAltsChatUntil.keySet()) {
                 if (nick != null && clean.contains(nick)) return true;
             }
+        }
+
+        if (currentScanNick != null && P_SINGLE_NICK_LINE.matcher(clean).matches()) {
+            return true;
         }
 
         return false;
@@ -305,7 +326,7 @@ public final class AfkZoneFeature {
             }
 
             int countInZone = 0;
-            for (String n : all) if (onlineInZone.contains(n)) countInZone++;
+            for (String n : all) if (isNickInZoneNow(n)) countInZone++;
 
             ViolationEntry ve = violations.get(main);
 
@@ -322,7 +343,7 @@ public final class AfkZoneFeature {
             ve.allAccounts.addAll(all);
 
             ve.inZoneNow.clear();
-            for (String n : all) if (onlineInZone.contains(n)) ve.inZoneNow.add(n);
+            for (String n : all) if (isNickInZoneNow(n)) ve.inZoneNow.add(n);
 
             ve.lastUpdateMs = System.currentTimeMillis();
         }
@@ -345,7 +366,7 @@ public final class AfkZoneFeature {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (msg == null || msg.isBlank()) return;
 
-        String cleanMsg = msg.replaceAll("В§.", "");
+        String cleanMsg = stripFormattingCodes(msg);
 
         cleanMsg = cleanMsg.replace("\\n", "\n");
 
@@ -406,8 +427,25 @@ public final class AfkZoneFeature {
 
         if (currentScanNick != null) {
 
-            boolean looksLikeAltsLine = clean.contains(currentScanNick) || clean.contains(",");
+            if (P_HISTORY_LINE.matcher(clean).find()) {
+                finalizeScanIfAny();
+                return;
+            }
+
+            Matcher singleNickMatcher = P_SINGLE_NICK_LINE.matcher(clean);
+            boolean singleNickOnly = singleNickMatcher.matches();
+            boolean looksLikeAltsLine = clean.contains(currentScanNick) || clean.contains(",") || singleNickOnly;
             if (!looksLikeAltsLine) return;
+
+            if (singleNickOnly) {
+                String nick = singleNickMatcher.group(1);
+                if (nick != null && !isIgnoredNick(nick)) {
+                    currentScanAccounts.add(nick);
+                    lastScanLineMs = now;
+                }
+                finalizeScanIfAny();
+                return;
+            }
 
             Matcher m = P_ANY_NICK.matcher(clean);
             boolean any = false;
@@ -415,8 +453,8 @@ public final class AfkZoneFeature {
                 String nick = m.group(1);
                 if (nick != null && !isIgnoredNick(nick)) {
                     currentScanAccounts.add(nick);
+                    any = true;
                 }
-                any = true;
             }
             if (any) lastScanLineMs = now;
 
