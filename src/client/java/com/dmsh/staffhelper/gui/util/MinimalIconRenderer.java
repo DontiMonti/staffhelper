@@ -82,9 +82,8 @@ public final class MinimalIconRenderer {
         int accentAlpha = (accent >>> 24) & 0xFF;
 
         if (accentAlpha > 0) {
-            int shadowOffset = Math.max(1, Math.round(textureSize * 0.06f));
-            int shadowColor = withAlpha(accent, Math.max(44, Math.round(accentAlpha * 0.60f)));
-            drawTexture(ctx, icon.texture(), drawX + shadowOffset, drawY + shadowOffset, textureSize, shadowColor);
+            int underlayColor = withAlpha(accent, Math.min(52, Math.max(18, Math.round(accentAlpha * 0.22f))));
+            drawTexture(ctx, icon.texture(), drawX, drawY, textureSize, underlayColor);
         }
 
         drawTexture(ctx, icon.texture(), drawX, drawY, textureSize, color);
