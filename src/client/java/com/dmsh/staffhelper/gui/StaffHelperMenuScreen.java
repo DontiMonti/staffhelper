@@ -128,6 +128,9 @@ public class StaffHelperMenuScreen extends Screen {
     private float customPickerHue = 0.0f;
     private float customPickerSat = 0.0f;
     private float customPickerVal = 0.0f;
+    private float customGradientAngleDeg = 90.0f;
+    private float customGradientAngleBeforeOpen = 90.0f;
+    private boolean customDraggingAngle = false;
     private boolean statsExpanded = false;
     private boolean autoBoxExpanded = false;
     private float statsExpandProgress = 0.0f;
@@ -929,7 +932,7 @@ public class StaffHelperMenuScreen extends Screen {
                 dialogY + 220,
                 100,
                 20,
-                Text.literal("+ Color"),
+                tr("gui.staffhelper.custom_theme.add_color"),
                 b -> addCustomGradientStop()
         ));
         customStopRemoveBtn = addDrawableChild(new SoupButtonWidget(
@@ -937,7 +940,7 @@ public class StaffHelperMenuScreen extends Screen {
                 dialogY + 220,
                 100,
                 20,
-                Text.literal("- Color"),
+                tr("gui.staffhelper.custom_theme.remove_color"),
                 b -> removeCustomGradientStop()
         ));
 
@@ -951,6 +954,7 @@ public class StaffHelperMenuScreen extends Screen {
         customThemeBeforeOpen = currentTheme();
         customColor1BeforeOpen = StaffHelperState.CONFIG.uiCustomColor1;
         customColor2BeforeOpen = StaffHelperState.CONFIG.uiCustomColor2;
+        customGradientAngleBeforeOpen = normalizeAngleDeg(StaffHelperState.CONFIG.uiCustomGradientAngle);
         customGradientBeforeOpen.clear();
         customGradientBeforeOpen.addAll(copyStops(StaffHelperState.CONFIG.uiCustomGradientStops));
 
@@ -958,6 +962,7 @@ public class StaffHelperMenuScreen extends Screen {
         customGradientDraft.addAll(copyStops(StaffHelperState.CONFIG.uiCustomGradientStops));
         normalizeDraftStops();
         customSelectedStopIndex = Math.max(0, Math.min(customSelectedStopIndex, customGradientDraft.size() - 1));
+        customGradientAngleDeg = normalizeAngleDeg(StaffHelperState.CONFIG.uiCustomGradientAngle);
         syncPickerFromSelectedStop();
         syncHexFieldFromSelectedStop();
         applyDraftToConfig();
@@ -981,11 +986,13 @@ public class StaffHelperMenuScreen extends Screen {
             StaffHelperState.CONFIG.uiTheme = customThemeBeforeOpen;
             StaffHelperState.CONFIG.uiCustomColor1 = customColor1BeforeOpen;
             StaffHelperState.CONFIG.uiCustomColor2 = customColor2BeforeOpen;
+            StaffHelperState.CONFIG.uiCustomGradientAngle = customGradientAngleBeforeOpen;
             StaffHelperState.CONFIG.uiCustomGradientStops = copyStops(customGradientBeforeOpen);
             StaffHelperState.CONFIG.save();
         }
         customDraggingSv = false;
         customDraggingHue = false;
+        customDraggingAngle = false;
         customDraggingStopIndex = -1;
         customThemeDialogOpen = false;
         setCustomDialogWidgetsVisible(false);
@@ -1101,6 +1108,7 @@ public class StaffHelperMenuScreen extends Screen {
     private void applyDraftToConfig() {
         normalizeDraftStops();
         StaffHelperState.CONFIG.uiCustomGradientStops = copyStops(customGradientDraft);
+        StaffHelperState.CONFIG.uiCustomGradientAngle = normalizeAngleDeg(customGradientAngleDeg);
         StaffHelperConfig.UiGradientStop first = customGradientDraft.get(0);
         StaffHelperConfig.UiGradientStop last = customGradientDraft.get(customGradientDraft.size() - 1);
         StaffHelperState.CONFIG.uiCustomColor1 = clampRgb(first.color);
@@ -1224,6 +1232,13 @@ public class StaffHelperMenuScreen extends Screen {
         return Math.min(1.0f, value);
     }
 
+    private static float normalizeAngleDeg(float value) {
+        if (Float.isNaN(value) || Float.isInfinite(value)) return 90.0f;
+        float out = value % 360.0f;
+        if (out < 0.0f) out += 360.0f;
+        return out;
+    }
+
     private static List<StaffHelperConfig.UiGradientStop> copyStops(List<StaffHelperConfig.UiGradientStop> source) {
         List<StaffHelperConfig.UiGradientStop> out = new ArrayList<>();
         if (source == null) return out;
@@ -1255,6 +1270,11 @@ public class StaffHelperMenuScreen extends Screen {
     private int customGradientY() { return customDialogY() + 76; }
     private int customGradientW() { return 208; }
     private int customGradientH() { return 16; }
+    private int customAngleCenterX() { return customDialogX() + 317; }
+    private int customAngleCenterY() { return customDialogY() + 184; }
+    private int customAnglePreviewSize() { return 72; }
+    private int customAngleRingRadius() { return 24; }
+    private int customAngleRingHit() { return 8; }
 
     private boolean handleCustomThemePointerPressed(double mouseX, double mouseY) {
         normalizeDraftStops();
@@ -1304,6 +1324,12 @@ public class StaffHelperMenuScreen extends Screen {
             return true;
         }
 
+        if (isInsideCustomAngleRing(mouseX, mouseY)) {
+            customDraggingAngle = true;
+            updateAngleFromMouse(mouseX, mouseY);
+            return true;
+        }
+
         return false;
     }
 
@@ -1320,12 +1346,17 @@ public class StaffHelperMenuScreen extends Screen {
             moveSelectedStopToMouseX(mouseX);
             return true;
         }
+        if (customDraggingAngle) {
+            updateAngleFromMouse(mouseX, mouseY);
+            return true;
+        }
         return false;
     }
 
     private void handleCustomThemePointerReleased() {
         customDraggingSv = false;
         customDraggingHue = false;
+        customDraggingAngle = false;
         customDraggingStopIndex = -1;
     }
 
@@ -1343,6 +1374,27 @@ public class StaffHelperMenuScreen extends Screen {
         int hueW = customHueW();
         customPickerHue = clamp01((float) ((mouseX - hueX) / (double) Math.max(1, hueW - 1)));
         applyPickerToSelectedStop();
+    }
+
+    private boolean isInsideCustomAngleRing(double mouseX, double mouseY) {
+        int cx = customAngleCenterX();
+        int cy = customAngleCenterY();
+        int radius = customAngleRingRadius();
+        int hit = customAngleRingHit();
+        double dx = mouseX - cx;
+        double dy = mouseY - cy;
+        double dist = Math.sqrt((dx * dx) + (dy * dy));
+        return dist >= (radius - hit) && dist <= (radius + hit);
+    }
+
+    private void updateAngleFromMouse(double mouseX, double mouseY) {
+        int cx = customAngleCenterX();
+        int cy = customAngleCenterY();
+        double dx = mouseX - cx;
+        double dy = mouseY - cy;
+        if (Math.abs(dx) <= 0.001 && Math.abs(dy) <= 0.001) return;
+        customGradientAngleDeg = normalizeAngleDeg((float) Math.toDegrees(Math.atan2(dy, dx)));
+        applyDraftToConfig();
     }
 
     private int nearestStopIndex(double mouseX) {

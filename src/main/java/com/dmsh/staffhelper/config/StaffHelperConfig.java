@@ -48,6 +48,7 @@ public class StaffHelperConfig {
     public int uiCustomColor1 = 0x2D4A73;
     public int uiCustomColor2 = 0x5F8FD6;
     public List<UiGradientStop> uiCustomGradientStops = defaultCustomGradientStops(uiCustomColor1, uiCustomColor2);
+    public float uiCustomGradientAngle = 90.0f;
     public boolean uiSheenAnimationEnabled = true;
 
     public boolean afkZoneEnabled = true;
@@ -130,6 +131,7 @@ public class StaffHelperConfig {
         uiCustomColor1 = clampRgb(uiCustomColor1, 0x2D4A73);
         uiCustomColor2 = clampRgb(uiCustomColor2, 0x5F8FD6);
         uiCustomGradientStops = normalizeCustomGradientStops(uiCustomGradientStops, uiCustomColor1, uiCustomColor2);
+        uiCustomGradientAngle = normalizeAngle(uiCustomGradientAngle);
         if (!uiCustomGradientStops.isEmpty()) {
             uiCustomColor1 = uiCustomGradientStops.get(0).color;
             uiCustomColor2 = uiCustomGradientStops.get(uiCustomGradientStops.size() - 1).color;
@@ -276,6 +278,13 @@ public class StaffHelperConfig {
         if (Float.isNaN(value)) return 0.0f;
         if (value < 0.0f) return 0.0f;
         return Math.min(1.0f, value);
+    }
+
+    private static float normalizeAngle(float value) {
+        if (Float.isNaN(value) || Float.isInfinite(value)) return 90.0f;
+        float out = value % 360.0f;
+        if (out < 0.0f) out += 360.0f;
+        return out;
     }
 
     private static String decodeSecretAtRuntime(String plainOrEncoded, String encryptedField) {

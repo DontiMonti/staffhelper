@@ -184,6 +184,13 @@ public final class UiChrome {
         return v < 0f ? 0f : Math.min(v, 1f);
     }
 
+    private static float normalizeAngle(float value) {
+        if (Float.isNaN(value) || Float.isInfinite(value)) return 90.0f;
+        float out = value % 360.0f;
+        if (out < 0.0f) out += 360.0f;
+        return out;
+    }
+
     private static int clamp255(int value) {
         if (value < 0) return 0;
         return Math.min(255, value);
@@ -240,11 +247,26 @@ public final class UiChrome {
         int c2 = cfg != null ? clampRgb(cfg.uiCustomColor2, 0x5F8FD6) : 0x5F8FD6;
 
         List<StaffHelperConfig.UiGradientStop> stops = normalizedCustomStops(cfg, c1, c2);
-        int accent = sampleGradientColor(stops, 0.55f);
-        int topShade = sampleGradientColor(stops, 0.20f);
-        int bottomShade = sampleGradientColor(stops, 0.88f);
-        int top = mixRgb(0x1A1A20, topShade, 0.12f);
-        int bottom = mixRgb(0x141419, bottomShade, 0.08f);
+        float angleDeg = normalizeAngle(cfg != null ? cfg.uiCustomGradientAngle : 90.0f);
+        float rad = (float) Math.toRadians(angleDeg);
+        float dirX = (float) Math.cos(rad);
+        float dirY = (float) Math.sin(rad);
+
+        // Project gradient direction to panel colors so all custom stops affect the theme.
+        float topSample = clamp01(0.5f + ((-0.44f * dirY) + (-0.20f * dirX)));
+        float bottomSample = clamp01(0.5f + ((0.44f * dirY) + (0.20f * dirX)));
+        if (Math.abs(bottomSample - topSample) < 0.06f) {
+            topSample = clamp01(topSample - 0.12f);
+            bottomSample = clamp01(bottomSample + 0.12f);
+        }
+
+        int topShade = sampleGradientColor(stops, topSample);
+        int bottomShade = sampleGradientColor(stops, bottomSample);
+        int accent = sampleGradientColor(stops, clamp01((topSample + bottomSample) * 0.5f));
+
+        // Make custom palette tint stronger so added colors are visible in the menu.
+        int top = mixRgb(0x1A1A20, topShade, 0.34f);
+        int bottom = mixRgb(0x141419, bottomShade, 0.26f);
 
         return new ThemePalette(
                 (top >> 16) & 0xFF, (top >> 8) & 0xFF, top & 0xFF,
