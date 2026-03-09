@@ -20,16 +20,36 @@ public final class UiChrome {
         if (text == null) {
             return uiLiteral("");
         }
-        return text.copy().styled(style -> style.withFont(UI_FONT));
+        MutableText copy = text.copy();
+        if (!canUseUiFont(copy.getString())) {
+            return copy;
+        }
+        return copy.styled(style -> style.withFont(UI_FONT));
     }
 
     public static MutableText uiLiteral(String value) {
-        return Text.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(UI_FONT));
+        String safeValue = value == null ? "" : value;
+        if (!canUseUiFont(safeValue)) {
+            return Text.literal(safeValue);
+        }
+        return Text.literal(safeValue).setStyle(Style.EMPTY.withFont(UI_FONT));
     }
 
     public static void drawText(DrawContext ctx, TextRenderer renderer, Text text, int x, int y, int color, boolean shadow) {
         if (ctx == null || renderer == null) return;
         ctx.drawText(renderer, uiText(text), x, y, color, shadow);
+    }
+
+    private static boolean canUseUiFont(String value) {
+        if (value == null || value.isEmpty()) return true;
+        return value.codePoints().allMatch(UiChrome::isAsciiUiGlyph);
+    }
+
+    private static boolean isAsciiUiGlyph(int codePoint) {
+        return codePoint == '\n'
+                || codePoint == '\r'
+                || codePoint == '\t'
+                || (codePoint >= 0x20 && codePoint <= 0x7E);
     }
 
     public static void drawPanel(DrawContext ctx, int x, int y, int w, int h, int radius, long nowMs) {
