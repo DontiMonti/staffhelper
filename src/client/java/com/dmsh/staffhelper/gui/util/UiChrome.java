@@ -4,52 +4,25 @@ import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class UiChrome {
     private UiChrome() {}
-    private static final Identifier UI_FONT = Identifier.of("staffhelper", "inter");
 
     public static Text uiText(Text text) {
-        if (text == null) {
-            return uiLiteral("");
-        }
-        MutableText copy = text.copy();
-        if (!canUseUiFont(copy.getString())) {
-            return copy;
-        }
-        return copy.styled(style -> style.withFont(UI_FONT));
+        return text == null ? uiLiteral("") : text.copy();
     }
 
-    public static MutableText uiLiteral(String value) {
-        String safeValue = value == null ? "" : value;
-        if (!canUseUiFont(safeValue)) {
-            return Text.literal(safeValue);
-        }
-        return Text.literal(safeValue).setStyle(Style.EMPTY.withFont(UI_FONT));
+    public static Text uiLiteral(String value) {
+        return Text.literal(value == null ? "" : value);
     }
 
     public static void drawText(DrawContext ctx, TextRenderer renderer, Text text, int x, int y, int color, boolean shadow) {
         if (ctx == null || renderer == null) return;
-        ctx.drawText(renderer, uiText(text), x, y, color, shadow);
-    }
-
-    private static boolean canUseUiFont(String value) {
-        if (value == null || value.isEmpty()) return true;
-        return value.codePoints().allMatch(UiChrome::isAsciiUiGlyph);
-    }
-
-    private static boolean isAsciiUiGlyph(int codePoint) {
-        return codePoint == '\n'
-                || codePoint == '\r'
-                || codePoint == '\t'
-                || (codePoint >= 0x20 && codePoint <= 0x7E);
+        ctx.drawText(renderer, text == null ? uiLiteral("") : text, x, y, color, shadow);
     }
 
     public static void drawPanel(DrawContext ctx, int x, int y, int w, int h, int radius, long nowMs) {
