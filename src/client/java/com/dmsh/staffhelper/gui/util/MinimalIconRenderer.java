@@ -1,12 +1,29 @@
 package com.dmsh.staffhelper.gui.util;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
+import com.dmsh.staffhelper.StaffHelper;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 public final class MinimalIconRenderer {
     private static final int GRID = 16;
+    private static final int TEXTURE_SIZE = 64;
+    private static final IconTexture PROFILE_ICON = new IconTexture(
+            Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/profile.png"),
+            0.04f
+    );
+    private static final IconTexture TAG_ICON = new IconTexture(
+            Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/tag.png"),
+            0.06f
+    );
+    private static final IconTexture TPS_ICON = new IconTexture(
+            Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/tps.png"),
+            0.02f
+    );
+    private static final IconTexture SIGNAL_ICON = new IconTexture(
+            Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/signal.png"),
+            0.08f
+    );
 
     public enum Glyph {
         SEARCH,
@@ -29,8 +46,9 @@ public final class MinimalIconRenderer {
 
     public static void draw(DrawContext ctx, Glyph glyph, int x, int y, int size, int color, int accent) {
         if (ctx == null || glyph == null || size <= 0) return;
-        if (glyph == Glyph.TPS) {
-            drawTpsLabel(ctx, x, y, size, color, accent);
+        IconTexture icon = textureFor(glyph);
+        if (icon != null) {
+            drawTexturedIcon(ctx, icon, x, y, size, color, accent);
             return;
         }
         GridPainter painter = new GridPainter(ctx, x, y, size);
@@ -40,12 +58,55 @@ public final class MinimalIconRenderer {
             case COMMAND -> drawCommand(painter, color, accent);
             case MODULES -> drawModules(painter, color, accent);
             case SLIDERS -> drawSliders(painter, color, accent);
-            case PROFILE -> drawProfile(painter, color, accent);
-            case TAG -> drawTag(painter, color, accent);
-            case SIGNAL -> drawSignal(painter, color, accent);
-            case TPS -> {
+            case PROFILE, TAG, SIGNAL, TPS -> {
             }
         }
+    }
+
+    private static IconTexture textureFor(Glyph glyph) {
+        return switch (glyph) {
+            case PROFILE -> PROFILE_ICON;
+            case TAG -> TAG_ICON;
+            case TPS -> TPS_ICON;
+            case SIGNAL -> SIGNAL_ICON;
+            default -> null;
+        };
+    }
+
+    private static void drawTexturedIcon(DrawContext ctx, IconTexture icon, int x, int y, int size, int color, int accent) {
+        int drawSize = Math.max(1, size);
+        int inset = Math.max(0, Math.round(drawSize * icon.insetRatio()));
+        int textureSize = Math.max(1, drawSize - (inset * 2));
+        int drawX = x + inset;
+        int drawY = y + inset;
+        int accentAlpha = (accent >>> 24) & 0xFF;
+
+        if (accentAlpha > 0) {
+            int shadowOffset = Math.max(1, Math.round(textureSize * 0.06f));
+            int shadowColor = withAlpha(accent, Math.max(44, Math.round(accentAlpha * 0.60f)));
+            drawTexture(ctx, icon.texture(), drawX + shadowOffset, drawY + shadowOffset, textureSize, shadowColor);
+        }
+
+        drawTexture(ctx, icon.texture(), drawX, drawY, textureSize, color);
+    }
+
+    private static void drawTexture(DrawContext ctx, Identifier texture, int x, int y, int size, int color) {
+        if (size <= 0) return;
+        ctx.drawTexture(
+                RenderPipelines.GUI_TEXTURED,
+                texture,
+                x,
+                y,
+                0.0f,
+                0.0f,
+                size,
+                size,
+                TEXTURE_SIZE,
+                TEXTURE_SIZE,
+                TEXTURE_SIZE,
+                TEXTURE_SIZE,
+                color
+        );
     }
 
     private static void drawSearch(GridPainter p, int color, int accent) {
@@ -83,55 +144,9 @@ public final class MinimalIconRenderer {
         p.dot(7, 11, 3, accent);
     }
 
-    private static void drawProfile(GridPainter p, int color, int accent) {
-        p.outline(5, 2, 6, 6, 3, color);
-        p.fill(4, 10, 8, 2, 1, color);
-        p.fill(3, 11, 10, 3, 2, color);
-    }
-
-    private static void drawTag(GridPainter p, int color, int accent) {
-        p.diagUp(3, 7, 5, color);
-        p.diagDown(7, 3, 5, color);
-        p.diagDown(3, 7, 5, color);
-        p.diagUp(7, 11, 5, color);
-        p.dot(9, 5, 2, accent);
-    }
-
-    private static void drawSignal(GridPainter p, int color, int accent) {
-        p.vBottom(1, 10, 14, color);
-        p.vBottom(8, 8, 14, color);
-        p.vBottom(11, 6, 14, accent);
-        p.vBottom(14, 4, 14, accent);
-    }
-
-    private static void drawTpsLabel(DrawContext ctx, int x, int y, int size, int color, int accent) {
-        MinecraftClient mc = MinecraftClient.getInstance();
-        if (mc == null || mc.textRenderer == null) return;
-
-        TextRenderer renderer = mc.textRenderer;
-        Text label = Text.literal("TPS");
-        int textWidth = renderer.getWidth(label);
-        int textHeight = renderer.fontHeight;
-        float scale = Math.min(size / (float) textWidth, size / (float) textHeight);
-        scale = Math.max(0.58f, Math.min(1.0f, scale));
-
-        float scaledWidth = textWidth * scale;
-        float scaledHeight = textHeight * scale;
-        float drawX = x + ((size - scaledWidth) / 2.0f);
-        float drawY = y + ((size - scaledHeight) / 2.0f);
-        float shadowOffset = Math.max(0.45f, scale * 0.8f);
-
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(drawX + shadowOffset, drawY + shadowOffset);
-        ctx.getMatrices().scale(scale, scale);
-        ctx.drawText(renderer, label, 0, 0, accent, false);
-        ctx.getMatrices().popMatrix();
-
-        ctx.getMatrices().pushMatrix();
-        ctx.getMatrices().translate(drawX, drawY);
-        ctx.getMatrices().scale(scale, scale);
-        ctx.drawText(renderer, label, 0, 0, color, false);
-        ctx.getMatrices().popMatrix();
+    private static int withAlpha(int color, int alpha) {
+        int clamped = Math.max(0, Math.min(255, alpha));
+        return (clamped << 24) | (color & 0x00FFFFFF);
     }
 
     private static final class GridPainter {
@@ -191,22 +206,6 @@ public final class MinimalIconRenderer {
             ModernGui.roundedRect(ctx, x1, y1, w, stroke, Math.max(1, stroke / 2), color);
         }
 
-        private void v(int ux, int uy, int heightUnits, int color) {
-            int x1 = cx(ux);
-            int y1 = cy(uy);
-            int y2 = cy(uy + heightUnits);
-            int h = Math.max(stroke, y2 - y1);
-            ModernGui.roundedRect(ctx, x1, y1, stroke, h, Math.max(1, stroke / 2), color);
-        }
-
-        private void vBottom(int ux, int topUnit, int bottomUnit, int color) {
-            int x1 = cx(ux);
-            int y1 = cy(topUnit);
-            int y2 = cy(bottomUnit);
-            int h = Math.max(stroke, y2 - y1);
-            ModernGui.roundedRect(ctx, x1, y1, stroke, h, Math.max(1, stroke / 2), color);
-        }
-
         private void dot(int ux, int uy, int units, int color) {
             int sizePx = Math.max(stroke, span(units));
             int x1 = cx(ux);
@@ -226,4 +225,6 @@ public final class MinimalIconRenderer {
             }
         }
     }
+
+    private record IconTexture(Identifier texture, float insetRatio) {}
 }
