@@ -222,37 +222,23 @@ public final class StatsHudFeature {
 
         int cursorX = x + outerPad;
         int cursorY = y + outerPad;
+        for (AnimatedStatsChip chip : chips) {
+            if (chip.progress <= 0.01f) continue;
+            float chipVisual = easeOutCubic(chip.progress) * panelVisual;
+            if (chipVisual <= 0.01f) continue;
 
-        int sx1 = x + 1;
-        int sy1 = y + 1;
-        int sx2 = x + w - 1;
-        int sy2 = y + h - 1;
-        if (sx2 > sx1 && sy2 > sy1) {
-            ctx.enableScissor(sx1, sy1, sx2, sy2);
-        }
-        try {
-            for (AnimatedStatsChip chip : chips) {
-                if (chip.progress <= 0.01f) continue;
-                float chipVisual = easeOutCubic(chip.progress) * panelVisual;
-                if (chipVisual <= 0.01f) continue;
+            int chipW = getChipWidth(mc, cfg, chip.text);
+            int offset = Math.round((1.0f - chipVisual) * 8.0f);
+            int alpha = Math.max(0, Math.min(255, Math.round(255 * chipVisual)));
 
-                int chipW = getChipWidth(mc, cfg, chip.text);
-                int offset = Math.round((1.0f - chipVisual) * 8.0f);
-                int alpha = Math.max(0, Math.min(255, Math.round(255 * chipVisual)));
+            int drawX = cfg.statsHorizontal ? cursorX + offset : x + outerPad + offset;
+            int drawY = cursorY;
+            drawStatChip(ctx, mc, cfg, drawX, drawY, chipW, chipH, chip.text, alpha, chipVisual);
 
-                int drawX = cfg.statsHorizontal ? cursorX + offset : x + outerPad + offset;
-                int drawY = cursorY;
-                drawStatChip(ctx, mc, cfg, drawX, drawY, chipW, chipH, chip.text, alpha, chipVisual);
-
-                if (cfg.statsHorizontal) {
-                    cursorX += chipW + gap;
-                } else {
-                    cursorY += chipH + gap;
-                }
-            }
-        } finally {
-            if (sx2 > sx1 && sy2 > sy1) {
-                ctx.disableScissor();
+            if (cfg.statsHorizontal) {
+                cursorX += chipW + gap;
+            } else {
+                cursorY += chipH + gap;
             }
         }
     }
