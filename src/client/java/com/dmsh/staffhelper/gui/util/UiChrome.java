@@ -14,7 +14,7 @@ import java.util.List;
 
 public final class UiChrome {
     private UiChrome() {}
-    private static final Identifier UI_FONT = Identifier.ofVanilla("uniform");
+    private static final Identifier UI_FONT = Identifier.ofVanilla("default");
 
     public static Text uiText(Text text) {
         if (text == null) {

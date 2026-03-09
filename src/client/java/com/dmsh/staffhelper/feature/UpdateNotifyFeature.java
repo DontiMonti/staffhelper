@@ -12,6 +12,7 @@ import com.google.gson.JsonParser;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -33,10 +34,11 @@ public final class UpdateNotifyFeature {
     private UpdateNotifyFeature() {}
 
     private static final String LEGACY_UPDATES_URL = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_updates.json";
-    private static final String MSG_UPDATE_REQUIRED =
-            "[SH] \u0412\u044b\u0448\u043b\u0430 \u043d\u043e\u0432\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f \u043c\u043e\u0434\u0430, \u0441\u043a\u0430\u0447\u0430\u0439\u0442\u0435 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0432 \u0441\u0442\u0430\u0444-\u0447\u0430\u0442\u0435 \u0438\u043b\u0438 \u043e\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044c \u043a DontiMonti.";
+    private static final String RELEASES_URL = "https://github.com/DontiMonti/staffhelper/releases";
+    private static final String MSG_UPDATE_REQUIRED_PREFIX = "[ESH] Вышла новая мода, скачайте её здесь ";
+    private static final String TITLE_UPDATE_REQUIRED = "Нужно обновить ElytraStaffhelper";
     private static final String MSG_LOCAL_ABOVE_REMOTE =
-            "[SH] \u0422\u044b \u0433\u0434\u0435 \u0432\u0437\u044f\u043b \u044d\u0442\u0443 \u0432\u0435\u0440\u0441\u0438\u044e \u0447\u0443\u043c\u0431\u0430? \u0422\u044b \u0447\u0435 \u0434\u043e\u0444\u0438\u0433\u0430 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a?";
+            "[ESH] Ты где взял эту версию чумба? Ты че дофига разработчик?";
     private static final String DEBUG_OLD_LOCAL_VERSION = "0.0.1";
     private static final String DEBUG_FUTURE_LOCAL_VERSION = "999.0.0";
     private static final String DEBUG_REMOTE_FALLBACK_VERSION = "1.0.0";
@@ -121,7 +123,12 @@ public final class UpdateNotifyFeature {
                 if (!bypassNoticeDedup && !markNoticeIfFirst("LOWER|" + localVersion + "|" + remoteVersion)) return;
                 client.execute(() -> {
                     if (client.player != null) {
-                        client.player.sendMessage(Text.literal(MSG_UPDATE_REQUIRED).formatted(Formatting.GREEN), false);
+                        client.player.sendMessage(buildUpdateRequiredMessage(), false);
+                        if (client.inGameHud != null) {
+                            client.inGameHud.setTitleTicks(0, 60, 0);
+                            client.inGameHud.setSubtitle(Text.empty());
+                            client.inGameHud.setTitle(Text.literal(TITLE_UPDATE_REQUIRED).formatted(Formatting.RED));
+                        }
                     }
                 });
             } else if (cmp > 0) {
@@ -134,6 +141,15 @@ public final class UpdateNotifyFeature {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    private static Text buildUpdateRequiredMessage() {
+        Text clickable = Text.literal("ТЫК")
+                .styled(style -> style
+                        .withColor(Formatting.AQUA)
+                        .withUnderline(true)
+                        .withClickEvent(new ClickEvent.OpenUrl(URI.create(RELEASES_URL))));
+        return Text.literal(MSG_UPDATE_REQUIRED_PREFIX).append(clickable);
     }
 
     private static String fetchRemoteVersion(StaffHelperConfig cfg) throws Exception {

@@ -211,7 +211,6 @@ public final class StatsHudFeature {
             y = Math.max(0, Math.min(y, screenH - h));
         }
 
-        UiChrome.drawPanel(ctx, x, y, w, h, 8, System.currentTimeMillis(), 0.12f, true, false);
         drawAnimatedChips(ctx, mc, x, y, w, h, cfg, chips, panelVisual);
     }
 
@@ -285,7 +284,6 @@ public final class StatsHudFeature {
             y = Math.max(0, Math.min(y, screenH - h));
         }
 
-        UiChrome.drawPanel(ctx, x, y, w, h, 8, System.currentTimeMillis(), 0.10f, true, false);
         drawStaticChips(ctx, mc, x, y, cfg, chips);
     }
 
@@ -395,7 +393,7 @@ public final class StatsHudFeature {
     }
 
     private static int getOuterPad(StaffHelperConfig cfg) {
-        return Math.max(3, Math.round(6 * clampScale(cfg.statsBoxScale)));
+        return 0;
     }
 
     private static int getChipPadX(StaffHelperConfig cfg) {
