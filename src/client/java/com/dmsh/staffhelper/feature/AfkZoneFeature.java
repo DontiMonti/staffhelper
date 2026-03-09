@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
@@ -33,6 +34,7 @@ public final class AfkZoneFeature {
     private static final Map<String, String> banInfoByNick = new HashMap<>();
 
     private static final Deque<String> altsCheckQueue = new ArrayDeque<>();
+    private static final Set<String> altsCheckedThisRun = new HashSet<>();
     private static boolean altsCheckRunning = false;
     private static long nextAltsCommandAtMs = 0L;
 
@@ -106,34 +108,17 @@ public final class AfkZoneFeature {
 
         showWidgetUntilMs = System.currentTimeMillis() + 1500L;
 
-        String self = mc.player.getGameProfile().getName();
-        BlockPos selfPos = mc.player.getBlockPos();
-        boolean selfInZone = isInsideZone(selfPos) || isInsideZone(selfPos.down());
+        altsCheckQueue.clear();
+        altsCheckedThisRun.clear();
+        enqueueZoneTargets(mc);
 
-        LinkedHashSet<String> targets = new LinkedHashSet<>();
-        mc.world.getPlayers().forEach(p -> {
-            String name = p.getGameProfile().getName();
-            if (name == null) return;
-            if (isIgnoredNick(name)) return;
+        if (altsCheckQueue.isEmpty()) {
 
-            BlockPos bp = p.getBlockPos();
-            if (!(isInsideZone(bp) || isInsideZone(bp.down()))) return;
-
-            if (name.equalsIgnoreCase(self)) return;
-
-            targets.add(name);
-        });
-
-        if (targets.isEmpty()) {
-
-            altsCheckQueue.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
             return;
         }
 
-        altsCheckQueue.clear();
-        altsCheckQueue.addAll(targets);
         altsCheckRunning = true;
         nextAltsCommandAtMs = 0L;
     }
@@ -144,6 +129,7 @@ public final class AfkZoneFeature {
         if (StaffHelperState.CONFIG == null || !StaffHelperState.CONFIG.afkZoneEnabled) {
 
             altsCheckQueue.clear();
+            altsCheckedThisRun.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
             return;
@@ -151,6 +137,7 @@ public final class AfkZoneFeature {
 
         if (client == null || client.player == null || client.world == null) {
             altsCheckQueue.clear();
+            altsCheckedThisRun.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
             return;
@@ -158,19 +145,20 @@ public final class AfkZoneFeature {
 
         long now = System.currentTimeMillis();
 
-        if (altsCheckQueue.isEmpty()) {
-            if (currentScanNick == null) {
-                altsCheckRunning = false;
-                nextAltsCommandAtMs = 0L;
-            }
-            return;
-        }
-
         if (currentScanNick != null) {
             if ((now - lastScanLineMs) > 1200L) {
 
                 finalizeScanIfAny();
             } else {
+                return;
+            }
+        }
+
+        if (altsCheckQueue.isEmpty()) {
+            enqueueZoneTargets(client);
+            if (altsCheckQueue.isEmpty()) {
+                altsCheckRunning = false;
+                nextAltsCommandAtMs = 0L;
                 return;
             }
         }
@@ -183,6 +171,8 @@ public final class AfkZoneFeature {
             nextAltsCommandAtMs = now + ALTS_CHECK_DELAY_MS;
             return;
         }
+
+        altsCheckedThisRun.add(target.toLowerCase(Locale.ROOT));
 
         try {
             client.player.networkHandler.sendChatCommand("alts " + target);
@@ -210,6 +200,7 @@ public final class AfkZoneFeature {
         pendingBanUntilMs = 0L;
 
         altsCheckQueue.clear();
+        altsCheckedThisRun.clear();
         altsCheckRunning = false;
         nextAltsCommandAtMs = 0L;
         showWidgetUntilMs = 0L;
@@ -244,6 +235,35 @@ public final class AfkZoneFeature {
         return false;
     }
 
+    private static void enqueueZoneTargets(MinecraftClient client) {
+        if (client == null || client.player == null || client.world == null) return;
+        String self = client.player.getGameProfile().getName();
+        if (self == null) self = "";
+        for (AbstractClientPlayerEntity p : client.world.getPlayers()) {
+            if (p == null || p.getGameProfile() == null) continue;
+            String name = p.getGameProfile().getName();
+            if (name == null || name.isBlank()) continue;
+            if (name.equalsIgnoreCase(self)) continue;
+            if (isIgnoredNick(name)) continue;
+            if (!isPlayerInZone(p)) continue;
+
+            String key = name.toLowerCase(Locale.ROOT);
+            if (altsCheckedThisRun.contains(key)) continue;
+            if (currentScanNick != null && currentScanNick.equalsIgnoreCase(name)) continue;
+            if (containsIgnoreCase(altsCheckQueue, name)) continue;
+
+            altsCheckQueue.addLast(name);
+        }
+    }
+
+    private static boolean containsIgnoreCase(Deque<String> queue, String nick) {
+        if (queue == null || queue.isEmpty() || nick == null) return false;
+        for (String q : queue) {
+            if (q != null && q.equalsIgnoreCase(nick)) return true;
+        }
+        return false;
+    }
+
     private static void tickUpdate(MinecraftClient client) {
         if (!AllowedUsersAccessGate.isModAllowed()) {
             clearAllTrackingState();
@@ -265,11 +285,10 @@ public final class AfkZoneFeature {
 
         onlineInZone.clear();
         client.world.getPlayers().forEach(p -> {
-            BlockPos bp = p.getBlockPos();
             String name = p.getGameProfile().getName();
             if (name == null) return;
             if (isIgnoredNick(name)) return;
-            if (isInsideZone(bp) || isInsideZone(bp.down())) {
+            if (isPlayerInZone(p)) {
                 onlineInZone.add(name);
             }
         });
@@ -320,6 +339,19 @@ public final class AfkZoneFeature {
         return pos.getX() >= minX && pos.getX() <= maxX
                 && pos.getY() >= minY && pos.getY() <= maxY
                 && pos.getZ() >= minZ && pos.getZ() <= maxZ;
+    }
+
+    private static boolean isPlayerInZone(AbstractClientPlayerEntity player) {
+        if (player == null || StaffHelperState.CONFIG == null) return false;
+
+        int x1 = StaffHelperState.CONFIG.afkX1, y1 = StaffHelperState.CONFIG.afkY1, z1 = StaffHelperState.CONFIG.afkZ1;
+        int x2 = StaffHelperState.CONFIG.afkX2, y2 = StaffHelperState.CONFIG.afkY2, z2 = StaffHelperState.CONFIG.afkZ2;
+        int minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+        int minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+        int minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);
+
+        Box zoneBox = new Box(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
+        return player.getBoundingBox().intersects(zoneBox);
     }
 
     private static void onChatMessage(String msg) {
