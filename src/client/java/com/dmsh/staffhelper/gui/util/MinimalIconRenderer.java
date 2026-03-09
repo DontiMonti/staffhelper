@@ -1,6 +1,9 @@
 package com.dmsh.staffhelper.gui.util;
 
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.text.Text;
 
 public final class MinimalIconRenderer {
     private static final int GRID = 16;
@@ -26,6 +29,10 @@ public final class MinimalIconRenderer {
 
     public static void draw(DrawContext ctx, Glyph glyph, int x, int y, int size, int color, int accent) {
         if (ctx == null || glyph == null || size <= 0) return;
+        if (glyph == Glyph.TPS) {
+            drawTpsLabel(ctx, x, y, size, color, accent);
+            return;
+        }
         GridPainter painter = new GridPainter(ctx, x, y, size);
         switch (glyph) {
             case SEARCH -> drawSearch(painter, color, accent);
@@ -36,7 +43,8 @@ public final class MinimalIconRenderer {
             case PROFILE -> drawProfile(painter, color, accent);
             case TAG -> drawTag(painter, color, accent);
             case SIGNAL -> drawSignal(painter, color, accent);
-            case TPS -> drawTps(painter, color, accent);
+            case TPS -> {
+            }
         }
     }
 
@@ -47,11 +55,10 @@ public final class MinimalIconRenderer {
     }
 
     private static void drawMapPin(GridPainter p, int color, int accent) {
-        p.outline(3, 1, 10, 10, 5, color);
-        p.v(7, 8, 4, color);
-        p.diagDown(6, 11, 2, color);
-        p.diagUp(7, 12, 2, color);
-        p.dot(6, 5, 2, accent);
+        p.outline(3, 3, 10, 10, 3, color);
+        p.h(5, 5, 6, accent);
+        p.diagUp(5, 10, 6, accent);
+        p.h(5, 10, 6, accent);
     }
 
     private static void drawCommand(GridPainter p, int color, int accent) {
@@ -78,31 +85,53 @@ public final class MinimalIconRenderer {
 
     private static void drawProfile(GridPainter p, int color, int accent) {
         p.outline(5, 2, 6, 6, 3, color);
-        p.fill(4, 10, 8, 2, 1, accent);
+        p.fill(4, 10, 8, 2, 1, color);
         p.fill(3, 11, 10, 3, 2, color);
     }
 
     private static void drawTag(GridPainter p, int color, int accent) {
-        p.outline(2, 4, 9, 8, 3, color);
-        p.diagDown(10, 4, 3, color);
-        p.diagUp(10, 11, 3, color);
-        p.dot(4, 7, 2, accent);
+        p.diagUp(3, 7, 5, color);
+        p.diagDown(7, 3, 5, color);
+        p.diagDown(3, 7, 5, color);
+        p.diagUp(7, 11, 5, color);
+        p.dot(9, 5, 2, accent);
     }
 
     private static void drawSignal(GridPainter p, int color, int accent) {
-        p.vBottom(2, 10, 14, color);
-        p.vBottom(6, 8, 14, color);
-        p.vBottom(10, 6, 14, accent);
-        p.vBottom(13, 4, 14, accent);
+        p.vBottom(1, 10, 14, color);
+        p.vBottom(8, 8, 14, color);
+        p.vBottom(11, 6, 14, accent);
+        p.vBottom(14, 4, 14, accent);
     }
 
-    private static void drawTps(GridPainter p, int color, int accent) {
-        p.h(1, 10, 3, color);
-        p.diagUp(4, 10, 3, accent);
-        p.diagDown(7, 8, 4, accent);
-        p.diagUp(10, 11, 3, color);
-        p.h(12, 8, 3, color);
-        p.dot(11, 7, 2, accent);
+    private static void drawTpsLabel(DrawContext ctx, int x, int y, int size, int color, int accent) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc == null || mc.textRenderer == null) return;
+
+        TextRenderer renderer = mc.textRenderer;
+        Text label = Text.literal("TPS");
+        int textWidth = renderer.getWidth(label);
+        int textHeight = renderer.fontHeight;
+        float scale = Math.min(size / (float) textWidth, size / (float) textHeight);
+        scale = Math.max(0.58f, Math.min(1.0f, scale));
+
+        float scaledWidth = textWidth * scale;
+        float scaledHeight = textHeight * scale;
+        float drawX = x + ((size - scaledWidth) / 2.0f);
+        float drawY = y + ((size - scaledHeight) / 2.0f);
+        float shadowOffset = Math.max(0.45f, scale * 0.8f);
+
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(drawX + shadowOffset, drawY + shadowOffset);
+        ctx.getMatrices().scale(scale, scale);
+        ctx.drawText(renderer, label, 0, 0, accent, false);
+        ctx.getMatrices().popMatrix();
+
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(drawX, drawY);
+        ctx.getMatrices().scale(scale, scale);
+        ctx.drawText(renderer, label, 0, 0, color, false);
+        ctx.getMatrices().popMatrix();
     }
 
     private static final class GridPainter {
