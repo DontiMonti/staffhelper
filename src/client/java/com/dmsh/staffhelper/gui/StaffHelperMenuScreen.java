@@ -43,6 +43,11 @@ public class StaffHelperMenuScreen extends Screen {
     private static final int MODULE_COLUMN_GAP = 14;
     private static final int APPEARANCE_PRESET_W = 136;
     private static final int APPEARANCE_PRESET_GAP = 6;
+    private static final int MENU_TITLE_Y = 14;
+    private static final float MENU_TITLE_SCALE = 1.24f;
+    private static final int NICK_LIST_TOP_Y = 220;
+    private static final int NICK_LIST_BOTTOM_PAD = 44;
+    private static final int NICK_PATTERN_LIST_W = RIGHT_COLUMN_X_OFFSET - 8;
 
     private float openProgress = 0f;
     private int openingOffsetY = 0;
@@ -351,7 +356,7 @@ public class StaffHelperMenuScreen extends Screen {
                 }
         ));
         uiSheenToggleBtn = addDrawableChild(new SoupButtonWidget(
-                x0 + 160,
+                x0 + CONTENT_PAD + 120 + 8,
                 y0 + 78,
                 170,
                 20,
@@ -365,12 +370,12 @@ public class StaffHelperMenuScreen extends Screen {
 
         int afkBaseY = y0 + 110;
 
-        pos1X = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 60, afkBaseY + 20, 90, 20, Text.literal(""));
-        pos1Y = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 160, afkBaseY + 20, 90, 20, Text.literal(""));
-        pos1Z = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 260, afkBaseY + 20, 90, 20, Text.literal(""));
-        pos2X = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 60, afkBaseY + 90, 90, 20, Text.literal(""));
-        pos2Y = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 160, afkBaseY + 90, 90, 20, Text.literal(""));
-        pos2Z = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 260, afkBaseY + 90, 90, 20, Text.literal(""));
+        pos1X = new CenteredTextFieldWidget(this.textRenderer, x0 + pad, afkBaseY + 20, 90, 20, Text.literal(""));
+        pos1Y = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 100, afkBaseY + 20, 90, 20, Text.literal(""));
+        pos1Z = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 200, afkBaseY + 20, 90, 20, Text.literal(""));
+        pos2X = new CenteredTextFieldWidget(this.textRenderer, x0 + pad, afkBaseY + 90, 90, 20, Text.literal(""));
+        pos2Y = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 100, afkBaseY + 90, 90, 20, Text.literal(""));
+        pos2Z = new CenteredTextFieldWidget(this.textRenderer, x0 + pad + 200, afkBaseY + 90, 90, 20, Text.literal(""));
 
         for (TextFieldWidget tf : new TextFieldWidget[]{pos1X, pos1Y, pos1Z, pos2X, pos2Y, pos2Z}) {
             tf.setMaxLength(12);
@@ -1723,9 +1728,9 @@ public class StaffHelperMenuScreen extends Screen {
 
             int pad = CONTENT_PAD;
             int patternListX = x0 + pad;
-            int patternListY = y0 + 200;
-            int patternListW = 362;
-            int patternListH = panelH - 200 - pad - 30;
+            int patternListY = y0 + NICK_LIST_TOP_Y;
+            int patternListW = NICK_PATTERN_LIST_W;
+            int patternListH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
             if (uiMouseX >= patternListX && uiMouseX <= patternListX + patternListW && uiMouseY >= patternListY && uiMouseY <= patternListY + patternListH) {
                 scroll -= (int) Math.signum(verticalAmount) * 18;
                 clampScroll();
@@ -1733,9 +1738,9 @@ public class StaffHelperMenuScreen extends Screen {
             }
 
             int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
-            int ignoreBoxY = y0 + 220;
+            int ignoreBoxY = y0 + NICK_LIST_TOP_Y;
             int ignoreBoxW = RIGHT_COLUMN_W;
-            int ignoreBoxH = panelH - 220 - pad - 30;
+            int ignoreBoxH = patternListH;
             if (uiMouseX >= ignoreBoxX && uiMouseX <= ignoreBoxX + ignoreBoxW && uiMouseY >= ignoreBoxY && uiMouseY <= ignoreBoxY + ignoreBoxH) {
                 nickIgnoreScroll -= (int) Math.signum(verticalAmount) * 18;
                 clampNickIgnoreScroll();
@@ -1817,9 +1822,9 @@ public class StaffHelperMenuScreen extends Screen {
 
             int pad = CONTENT_PAD;
             int listX = x0 + pad;
-            int listY = y0 + 200;
-            int listW = 362;
-            int listH = panelH - 200 - pad - 30;
+            int listY = y0 + NICK_LIST_TOP_Y;
+            int listW = NICK_PATTERN_LIST_W;
+            int listH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
 
             if (uiMouseX >= listX && uiMouseX <= listX + listW && uiMouseY >= listY && uiMouseY <= listY + listH) {
                 int rowH = 18;
@@ -1848,9 +1853,9 @@ public class StaffHelperMenuScreen extends Screen {
             }
 
             int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
-            int ignoreBoxY = y0 + 220;
+            int ignoreBoxY = y0 + NICK_LIST_TOP_Y;
             int ignoreBoxW = RIGHT_COLUMN_W;
-            int ignoreBoxH = panelH - 220 - pad - 30;
+            int ignoreBoxH = listH;
             if (uiMouseX >= ignoreBoxX && uiMouseX <= ignoreBoxX + ignoreBoxW && uiMouseY >= ignoreBoxY && uiMouseY <= ignoreBoxY + ignoreBoxH) {
                 int rowH = 18;
                 int localY = (int) (uiMouseY - ignoreBoxY) + nickIgnoreScroll;
@@ -1973,15 +1978,16 @@ public class StaffHelperMenuScreen extends Screen {
         pushMenuScale(ctx);
         UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, now, 0.10f, true, false);
 
-        int lineColor = ModernGui.lerpColor(UiChrome.outlineColor(130), UiChrome.accentColor(118), 0.22f);
-        lineColor = tabTextColor(lineColor);
-        ctx.fill(x0 + 12, y0 + 48, x0 + panelW - 12, y0 + 49, lineColor);
         UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false, false);
         ctx.fill(x0 + SIDEBAR_X_OFFSET + SIDEBAR_W - 1, y0 + 54, x0 + SIDEBAR_X_OFFSET + SIDEBAR_W, y0 + panelH - 12, tabTextColor(UiChrome.outlineColor(106)));
 
-        int headerY = y0 + 38;
-        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.title"), x0 + CONTENT_PAD, headerY, tabTextColor(UiChrome.mainTextColor(252)), false);
-        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.subtitle"), x0 + CONTENT_PAD, headerY + 14, tabTextColor(UiChrome.mutedTextColor(234)), false);
+        int titleX = x0 + CONTENT_PAD;
+        int titleY = y0 + MENU_TITLE_Y;
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(titleX, titleY);
+        ctx.getMatrices().scale(MENU_TITLE_SCALE, MENU_TITLE_SCALE);
+        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.title"), 0, 0, tabTextColor(UiChrome.mainTextColor(252)), false);
+        ctx.getMatrices().popMatrix();
 
         renderTabContent(ctx, x0, y0, uiMouseX, uiMouseY);
         if (customThemeDialogOpen) {
@@ -2021,9 +2027,9 @@ public class StaffHelperMenuScreen extends Screen {
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.ignored_nicks"), x0 + pad + RIGHT_COLUMN_X_OFFSET, y0 + 182, textSub, false);
 
             int listX = x0 + pad;
-            int listY = y0 + 200;
-            int listW = 362;
-            int listH = panelH - 200 - pad - 30;
+            int listY = y0 + NICK_LIST_TOP_Y;
+            int listW = NICK_PATTERN_LIST_W;
+            int listH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
 
             UiChrome.drawPanel(ctx, listX, listY, listW, listH, 10, System.currentTimeMillis(), -0.10f, true);
 
@@ -2056,9 +2062,9 @@ public class StaffHelperMenuScreen extends Screen {
             ctx.disableScissor();
 
             int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
-            int ignoreBoxY = y0 + 220;
+            int ignoreBoxY = y0 + NICK_LIST_TOP_Y;
             int ignoreBoxW = RIGHT_COLUMN_W;
-            int ignoreBoxH = panelH - 220 - pad - 30;
+            int ignoreBoxH = listH;
             UiChrome.drawPanel(ctx, ignoreBoxX, ignoreBoxY, ignoreBoxW, ignoreBoxH, 10, System.currentTimeMillis(), -0.10f, true);
 
             List<String> ignoreList = sortedNickIgnoreList();
@@ -2387,9 +2393,7 @@ public class StaffHelperMenuScreen extends Screen {
     private void clampScroll() {
         List<String> list = filteredList();
         int rowH = 18;
-
-        int pad = CONTENT_PAD;
-        int listH = panelH - 200 - pad - 30;
+        int listH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
 
         int contentH = list.size() * rowH;
         int maxScroll = Math.max(0, contentH - listH);
@@ -2401,7 +2405,7 @@ public class StaffHelperMenuScreen extends Screen {
     private void clampNickIgnoreScroll() {
         List<String> list = sortedNickIgnoreList();
         int rowH = 18;
-        int boxH = panelH - 220 - CONTENT_PAD - 30;
+        int boxH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
         int contentH = list.size() * rowH;
         int maxScroll = Math.max(0, contentH - boxH);
         if (nickIgnoreScroll < 0) nickIgnoreScroll = 0;
