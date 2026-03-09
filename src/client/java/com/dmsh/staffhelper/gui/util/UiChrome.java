@@ -5,23 +5,26 @@ import com.dmsh.staffhelper.config.StaffHelperConfig;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class UiChrome {
     private UiChrome() {}
+    private static final Identifier UI_FONT = Identifier.of("staffhelper", "inter");
 
     public static Text uiText(Text text) {
         if (text == null) {
             return uiLiteral("");
         }
-        return text.copy();
+        return text.copy().styled(style -> style.withFont(UI_FONT));
     }
 
     public static MutableText uiLiteral(String value) {
-        return Text.literal(value == null ? "" : value);
+        return Text.literal(value == null ? "" : value).setStyle(Style.EMPTY.withFont(UI_FONT));
     }
 
     public static void drawText(DrawContext ctx, TextRenderer renderer, Text text, int x, int y, int color, boolean shadow) {
