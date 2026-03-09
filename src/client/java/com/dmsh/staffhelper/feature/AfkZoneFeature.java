@@ -42,9 +42,6 @@ public final class AfkZoneFeature {
     private static final Map<String, AnimatedHudRow> animatedHudRows = new LinkedHashMap<>();
     private static float animatedHudPanelProgress = 0.0f;
 
-    private static final Map<String, Long> hideAltsChatUntil = new HashMap<>();
-    private static final long HIDE_CHAT_WINDOW_MS = 4000L;
-
     private static final LinkedHashMap<String, ViolationEntry> violations = new LinkedHashMap<>();
 
     private static final Set<String> onlineInZone = new HashSet<>();
@@ -132,7 +129,6 @@ public final class AfkZoneFeature {
             altsCheckQueue.clear();
             altsCheckRunning = false;
             nextAltsCommandAtMs = 0L;
-            hideAltsChatUntil.clear();
             return;
         }
 
@@ -140,8 +136,6 @@ public final class AfkZoneFeature {
         altsCheckQueue.addAll(targets);
         altsCheckRunning = true;
         nextAltsCommandAtMs = 0L;
-
-        hideAltsChatUntil.clear();
     }
 
     private static void tickAltsCheck(MinecraftClient client) {
@@ -190,8 +184,6 @@ public final class AfkZoneFeature {
             return;
         }
 
-        hideAltsChatUntil.put(target, now + HIDE_CHAT_WINDOW_MS);
-
         try {
             client.player.networkHandler.sendChatCommand("alts " + target);
         } catch (Throwable t) {
@@ -220,7 +212,6 @@ public final class AfkZoneFeature {
         altsCheckQueue.clear();
         altsCheckRunning = false;
         nextAltsCommandAtMs = 0L;
-        hideAltsChatUntil.clear();
         showWidgetUntilMs = 0L;
         animatedHudRows.clear();
         animatedHudPanelProgress = 0.0f;
@@ -250,37 +241,6 @@ public final class AfkZoneFeature {
         for (String onlineNick : onlineInZone) {
             if (onlineNick != null && onlineNick.equalsIgnoreCase(nick)) return true;
         }
-        return false;
-    }
-
-    public static boolean shouldSuppressChatMessage(String message) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return false;
-        if (message == null || message.isBlank()) return false;
-        if (!altsCheckRunning && hideAltsChatUntil.isEmpty()) return false;
-
-        long now = System.currentTimeMillis();
-
-        hideAltsChatUntil.entrySet().removeIf(e -> e.getValue() == null || e.getValue() < now);
-        if (hideAltsChatUntil.isEmpty() && !altsCheckRunning) return false;
-
-        String clean = stripFormattingCodes(message);
-
-        if (P_SCAN_MAIN.matcher(clean).find()) {
-            for (String nick : hideAltsChatUntil.keySet()) {
-                if (nick != null && clean.contains(nick)) return true;
-            }
-        }
-
-        if (clean.contains(",")) {
-            for (String nick : hideAltsChatUntil.keySet()) {
-                if (nick != null && clean.contains(nick)) return true;
-            }
-        }
-
-        if (currentScanNick != null && P_SINGLE_NICK_LINE.matcher(clean).matches()) {
-            return true;
-        }
-
         return false;
     }
 
