@@ -120,8 +120,12 @@ public final class MinimalIconRenderer {
             this.stroke = Math.max(1, Math.round(this.size / 8.0f));
         }
 
-        private int c(int unit) {
+        private int cx(int unit) {
             return this.x + Math.round((unit / (float) GRID) * this.size);
+        }
+
+        private int cy(int unit) {
+            return this.y + Math.round((unit / (float) GRID) * this.size);
         }
 
         private int span(int units) {
@@ -129,10 +133,10 @@ public final class MinimalIconRenderer {
         }
 
         private void fill(int ux, int uy, int uw, int uh, int radiusUnits, int color) {
-            int x1 = c(ux);
-            int y1 = c(uy);
-            int x2 = c(ux + uw);
-            int y2 = c(uy + uh);
+            int x1 = cx(ux);
+            int y1 = cy(uy);
+            int x2 = cx(ux + uw);
+            int y2 = cy(uy + uh);
             int w = Math.max(1, x2 - x1);
             int h = Math.max(1, y2 - y1);
             int radius = Math.max(1, Math.min(Math.min(w, h) / 2, span(radiusUnits)));
@@ -140,10 +144,10 @@ public final class MinimalIconRenderer {
         }
 
         private void outline(int ux, int uy, int uw, int uh, int radiusUnits, int color) {
-            int x1 = c(ux);
-            int y1 = c(uy);
-            int x2 = c(ux + uw);
-            int y2 = c(uy + uh);
+            int x1 = cx(ux);
+            int y1 = cy(uy);
+            int x2 = cx(ux + uw);
+            int y2 = cy(uy + uh);
             int w = Math.max(1, x2 - x1);
             int h = Math.max(1, y2 - y1);
             int radius = Math.max(1, Math.min(Math.min(w, h) / 2, span(radiusUnits)));
@@ -151,33 +155,33 @@ public final class MinimalIconRenderer {
         }
 
         private void h(int ux, int uy, int lengthUnits, int color) {
-            int x1 = c(ux);
-            int y1 = c(uy);
-            int x2 = c(ux + lengthUnits);
+            int x1 = cx(ux);
+            int y1 = cy(uy);
+            int x2 = cx(ux + lengthUnits);
             int w = Math.max(stroke, x2 - x1);
             ModernGui.roundedRect(ctx, x1, y1, w, stroke, Math.max(1, stroke / 2), color);
         }
 
         private void v(int ux, int uy, int heightUnits, int color) {
-            int x1 = c(ux);
-            int y1 = c(uy);
-            int y2 = c(uy + heightUnits);
+            int x1 = cx(ux);
+            int y1 = cy(uy);
+            int y2 = cy(uy + heightUnits);
             int h = Math.max(stroke, y2 - y1);
             ModernGui.roundedRect(ctx, x1, y1, stroke, h, Math.max(1, stroke / 2), color);
         }
 
         private void vBottom(int ux, int topUnit, int bottomUnit, int color) {
-            int x1 = c(ux);
-            int y1 = c(topUnit);
-            int y2 = c(bottomUnit);
+            int x1 = cx(ux);
+            int y1 = cy(topUnit);
+            int y2 = cy(bottomUnit);
             int h = Math.max(stroke, y2 - y1);
             ModernGui.roundedRect(ctx, x1, y1, stroke, h, Math.max(1, stroke / 2), color);
         }
 
         private void dot(int ux, int uy, int units, int color) {
             int sizePx = Math.max(stroke, span(units));
-            int x1 = c(ux);
-            int y1 = c(uy);
+            int x1 = cx(ux);
+            int y1 = cy(uy);
             ModernGui.roundedRect(ctx, x1, y1, sizePx, sizePx, Math.max(1, sizePx / 2), color);
         }
 
