@@ -10,6 +10,7 @@ import com.dmsh.staffhelper.feature.UpdateNotifyFeature;
 import com.dmsh.staffhelper.feature.VanishFeature;
 import com.dmsh.staffhelper.gui.DebugScreen;
 import com.dmsh.staffhelper.gui.StaffHelperMenuScreen;
+import com.dmsh.staffhelper.gui.util.SmoothUiShader;
 import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import com.dmsh.staffhelper.util.RemoteNickDecorationsPoller;
 import com.dmsh.staffhelper.util.RemoteRolesPoller;
@@ -29,6 +30,7 @@ public class StaffHelperClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        SmoothUiShader.init();
 
         StaffHelperState.CONFIG = StaffHelperConfig.load();
 

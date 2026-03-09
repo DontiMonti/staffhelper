@@ -37,6 +37,9 @@ public final class UpdateNotifyFeature {
             "[SH] \u0412\u044b\u0448\u043b\u0430 \u043d\u043e\u0432\u0430\u044f \u0432\u0435\u0440\u0441\u0438\u044f \u043c\u043e\u0434\u0430, \u0441\u043a\u0430\u0447\u0430\u0439\u0442\u0435 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0435 \u0432 \u0441\u0442\u0430\u0444-\u0447\u0430\u0442\u0435 \u0438\u043b\u0438 \u043e\u0431\u0440\u0430\u0442\u0438\u0442\u0435\u0441\u044c \u043a DontiMonti.";
     private static final String MSG_LOCAL_ABOVE_REMOTE =
             "[SH] \u0422\u044b \u0433\u0434\u0435 \u0432\u0437\u044f\u043b \u044d\u0442\u0443 \u0432\u0435\u0440\u0441\u0438\u044e \u0447\u0443\u043c\u0431\u0430? \u0422\u044b \u0447\u0435 \u0434\u043e\u0444\u0438\u0433\u0430 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a?";
+    private static final String DEBUG_OLD_LOCAL_VERSION = "0.0.1";
+    private static final String DEBUG_FUTURE_LOCAL_VERSION = "999.0.0";
+    private static final String DEBUG_REMOTE_FALLBACK_VERSION = "1.0.0";
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -65,29 +68,64 @@ public final class UpdateNotifyFeature {
         EXEC.execute(() -> checkAndNotify(mc));
     }
 
+    public static void simulateOldVersionNotice() {
+        forceCheckNowWithLocalOverride(DEBUG_OLD_LOCAL_VERSION);
+    }
+
+    public static void simulateFutureVersionNotice() {
+        forceCheckNowWithLocalOverride(DEBUG_FUTURE_LOCAL_VERSION);
+    }
+
+    private static void forceCheckNowWithLocalOverride(String simulatedLocalVersion) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc == null) return;
+        String version = simulatedLocalVersion == null ? "" : simulatedLocalVersion.trim();
+        if (version.isEmpty()) return;
+        EXEC.execute(() -> checkAndNotify(mc, version, true, true));
+    }
+
     private static void checkAndNotify(MinecraftClient client) {
+        checkAndNotify(client, null, false, false);
+    }
+
+    private static void checkAndNotify(
+            MinecraftClient client,
+            String localVersionOverride,
+            boolean bypassNoticeDedup,
+            boolean allowDebugRemoteFallback
+    ) {
         if (!AllowedUsersAccessGate.isModAllowed()) return;
         try {
-            String localVersion = FabricLoader.getInstance()
-                    .getModContainer("staffhelper")
-                    .map(c -> c.getMetadata().getVersion().getFriendlyString())
-                    .orElse(null);
+            String localVersion = localVersionOverride;
+            if (localVersion == null || localVersion.isBlank()) {
+                localVersion = FabricLoader.getInstance()
+                        .getModContainer("staffhelper")
+                        .map(c -> c.getMetadata().getVersion().getFriendlyString())
+                        .orElse(null);
+            }
             if (localVersion == null || localVersion.isBlank()) return;
 
             StaffHelperConfig cfg = StaffHelperState.CONFIG;
             String remoteVersion = fetchRemoteVersion(cfg);
+            if ((remoteVersion == null || remoteVersion.isBlank()) && allowDebugRemoteFallback) {
+                remoteVersion = DEBUG_REMOTE_FALLBACK_VERSION;
+                DebugLogStore.add("[UPDATE][DEBUG] remote fallback version=" + remoteVersion);
+            }
             if (remoteVersion == null || remoteVersion.isBlank()) return;
+            if (localVersionOverride != null && !localVersionOverride.isBlank()) {
+                DebugLogStore.add("[UPDATE][DEBUG] local override version=" + localVersionOverride + ", remote=" + remoteVersion);
+            }
 
             int cmp = compareVersions(localVersion, remoteVersion);
             if (cmp < 0) {
-                if (!markNoticeIfFirst("LOWER|" + localVersion + "|" + remoteVersion)) return;
+                if (!bypassNoticeDedup && !markNoticeIfFirst("LOWER|" + localVersion + "|" + remoteVersion)) return;
                 client.execute(() -> {
                     if (client.player != null) {
                         client.player.sendMessage(Text.literal(MSG_UPDATE_REQUIRED).formatted(Formatting.GREEN), false);
                     }
                 });
             } else if (cmp > 0) {
-                if (!markNoticeIfFirst("HIGHER|" + localVersion + "|" + remoteVersion)) return;
+                if (!bypassNoticeDedup && !markNoticeIfFirst("HIGHER|" + localVersion + "|" + remoteVersion)) return;
                 client.execute(() -> {
                     if (client.player != null) {
                         client.player.sendMessage(Text.literal(MSG_LOCAL_ABOVE_REMOTE).formatted(Formatting.YELLOW), false);

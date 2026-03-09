@@ -7,118 +7,93 @@ public final class GuiRenderUtils {
     private GuiRenderUtils() {}
 
     public static void roundedRect(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int argb) {
-        if (r <= 0) {
-            ctx.fill(x1, y1, x2, y2, argb);
-            return;
-        }
-
         int w = x2 - x1;
         int h = y2 - y1;
-        int rr = Math.min(r, Math.min(w, h) / 2);
-
-        ctx.fill(x1 + rr, y1, x2 - rr, y2, argb);
-        ctx.fill(x1, y1 + rr, x1 + rr, y2 - rr, argb);
-        ctx.fill(x2 - rr, y1 + rr, x2, y2 - rr, argb);
-
-        cornerTL(ctx, x1 + rr, y1 + rr, rr, argb);
-        cornerTR(ctx, x2 - rr, y1 + rr, rr, argb);
-        cornerBR(ctx, x2 - rr, y2 - rr, rr, argb);
-        cornerBL(ctx, x1 + rr, y2 - rr, rr, argb);
+        if (w <= 0 || h <= 0) return;
+        ModernGui.roundedRect(ctx, x1, y1, w, h, Math.max(0, r), argb);
     }
 
     public static void roundedRectTop(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int argb) {
-        if (r <= 0) {
+        int w = x2 - x1;
+        int h = y2 - y1;
+        if (w <= 0 || h <= 0) return;
+
+        int rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        if (rr <= 0) {
             ctx.fill(x1, y1, x2, y2, argb);
             return;
         }
-        int w = x2 - x1;
-        int h = y2 - y1;
-        int rr = Math.min(r, Math.min(w, h) / 2);
 
-        ctx.fill(x1, y1 + rr, x2, y2, argb);
-
-        ctx.fill(x1 + rr, y1, x2 - rr, y1 + rr, argb);
-
-        cornerTL(ctx, x1 + rr, y1 + rr, rr, argb);
-        cornerTR(ctx, x2 - rr, y1 + rr, rr, argb);
+        int bandBottom = Math.min(y2, y1 + rr + 2);
+        try {
+            ctx.enableScissor(x1, y1, x2, bandBottom);
+            ModernGui.roundedRect(ctx, x1, y1, w, h, rr, argb);
+        } finally {
+            ctx.disableScissor();
+        }
+        int flatStart = Math.min(y2, y1 + rr);
+        if (flatStart < y2) {
+            ctx.fill(x1, flatStart, x2, y2, argb);
+        }
     }
 
     public static void roundedRectBottom(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int argb) {
-        if (r <= 0) {
+        int w = x2 - x1;
+        int h = y2 - y1;
+        if (w <= 0 || h <= 0) return;
+
+        int rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        if (rr <= 0) {
             ctx.fill(x1, y1, x2, y2, argb);
             return;
         }
-        int w = x2 - x1;
-        int h = y2 - y1;
-        int rr = Math.min(r, Math.min(w, h) / 2);
 
-        ctx.fill(x1, y1, x2, y2 - rr, argb);
-
-        ctx.fill(x1 + rr, y2 - rr, x2 - rr, y2, argb);
-
-        cornerBL(ctx, x1 + rr, y2 - rr, rr, argb);
-        cornerBR(ctx, x2 - rr, y2 - rr, rr, argb);
+        int bandTop = Math.max(y1, y2 - rr - 2);
+        try {
+            ctx.enableScissor(x1, bandTop, x2, y2);
+            ModernGui.roundedRect(ctx, x1, y1, w, h, rr, argb);
+        } finally {
+            ctx.disableScissor();
+        }
+        int flatEnd = Math.max(y1, y2 - rr);
+        if (flatEnd > y1) {
+            ctx.fill(x1, y1, x2, flatEnd, argb);
+        }
     }
 
     public static void roundedOutline(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int thickness, int argb) {
-        if (thickness <= 0) return;
+        int w = x2 - x1;
+        int h = y2 - y1;
+        if (w <= 0 || h <= 0 || thickness <= 0) return;
 
-        roundedRect(ctx, x1, y1, x2, y1 + thickness, r, argb);
+        int layers = Math.max(1, Math.min(6, thickness));
+        int alpha = (argb >>> 24) & 0xFF;
+        for (int i = 0; i < layers; i++) {
+            int nx = x1 + i;
+            int ny = y1 + i;
+            int nw = w - (i * 2);
+            int nh = h - (i * 2);
+            if (nw <= 0 || nh <= 0) break;
 
-        roundedRect(ctx, x1, y2 - thickness, x2, y2, r, argb);
-
-        roundedRect(ctx, x1, y1, x1 + thickness, y2, r, argb);
-
-        roundedRect(ctx, x2 - thickness, y1, x2, y2, r, argb);
+            float fade = 1.0f - (i / (float) Math.max(1, layers)) * 0.40f;
+            int layerAlpha = clamp255(Math.round(alpha * fade));
+            int layerColor = (layerAlpha << 24) | (argb & 0x00FFFFFF);
+            SmoothUiShader.drawRoundedOutline(ctx, nx, ny, nw, nh, Math.max(0, r - i), 1, layerColor);
+        }
     }
 
     public static void shadow(DrawContext ctx, int x1, int y1, int x2, int y2, int r, int layers, int maxAlpha) {
-        layers = Math.max(1, Math.min(layers, 12));
-        maxAlpha = Math.max(0, Math.min(maxAlpha, 255));
-        for (int i = 1; i <= layers; i++) {
-            int a = (int) (maxAlpha * (1f - (i - 1f) / layers));
-            int color = (a << 24);
-            roundedRect(ctx, x1 - i, y1 - i, x2 + i, y2 + i, r + i, color);
-        }
+        int w = x2 - x1;
+        int h = y2 - y1;
+        if (w <= 0 || h <= 0) return;
+
+        int spread = Math.max(1, Math.min(16, layers));
+        int color = (clamp255(maxAlpha) << 24);
+        SmoothUiShader.drawRoundedGlow(ctx, x1, y1, w, h, r, spread, color);
     }
 
-    private static void cornerTL(DrawContext ctx, int cx, int cy, int r, int argb) {
-
-        for (int y = 0; y < r; y++) {
-            int dy = r - 1 - y;
-            int dx = (int) Math.ceil(Math.sqrt((double) r * (double) r - (double) dy * (double) dy));
-            int yPix = cy - r + y;
-            ctx.fill(cx - r, yPix, cx - r + dx, yPix + 1, argb);
-        }
-    }
-
-    private static void cornerTR(DrawContext ctx, int cx, int cy, int r, int argb) {
-
-        for (int y = 0; y < r; y++) {
-            int dy = r - 1 - y;
-            int dx = (int) Math.ceil(Math.sqrt((double) r * (double) r - (double) dy * (double) dy));
-            int yPix = cy - r + y;
-            ctx.fill(cx + r - dx, yPix, cx + r, yPix + 1, argb);
-        }
-    }
-
-    private static void cornerBR(DrawContext ctx, int cx, int cy, int r, int argb) {
-
-        for (int y = 0; y < r; y++) {
-            int dy = y;
-            int dx = (int) Math.ceil(Math.sqrt((double) r * (double) r - (double) dy * (double) dy));
-            int yPix = cy + y;
-            ctx.fill(cx + r - dx, yPix, cx + r, yPix + 1, argb);
-        }
-    }
-
-    private static void cornerBL(DrawContext ctx, int cx, int cy, int r, int argb) {
-
-        for (int y = 0; y < r; y++) {
-            int dy = y;
-            int dx = (int) Math.ceil(Math.sqrt((double) r * (double) r - (double) dy * (double) dy));
-            int yPix = cy + y;
-            ctx.fill(cx - r, yPix, cx - r + dx, yPix + 1, argb);
-        }
+    private static int clamp255(int value) {
+        if (value < 0) return 0;
+        return Math.min(255, value);
     }
 }

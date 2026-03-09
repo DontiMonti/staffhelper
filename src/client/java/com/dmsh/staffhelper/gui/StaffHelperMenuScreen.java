@@ -4,10 +4,10 @@ import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.feature.NickSearchFeature;
 import com.dmsh.staffhelper.gui.util.GuiRenderUtils;
+import com.dmsh.staffhelper.gui.util.ModernGui;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.gui.widget.CenteredTextFieldWidget;
-import com.dmsh.staffhelper.gui.widget.IntSliderWidget;
-import com.dmsh.staffhelper.gui.widget.SoupIntSliderWidget;
+import com.dmsh.staffhelper.gui.widget.IconTabButtonWidget;
 import com.dmsh.staffhelper.gui.widget.SoupButtonWidget;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -27,8 +27,22 @@ public class StaffHelperMenuScreen extends Screen {
 
     private enum Tab { NICKSEARCH, AFKZONE, COMMANDBUILDER, MODULES, APPEARANCE }
     private Tab tab = Tab.NICKSEARCH;
-    private static final int CUSTOM_DIALOG_W = 420;
-    private static final int CUSTOM_DIALOG_H = 266;
+    private static final int CUSTOM_DIALOG_W = 436;
+    private static final int CUSTOM_DIALOG_H = 304;
+    private static final int SIDEBAR_X_OFFSET = 6;
+    private static final int SIDEBAR_W = 30;
+    private static final int SIDEBAR_ICON_SIZE = 20;
+    private static final int PANEL_BASE_SHIFT_Y = -18;
+    private static final float MENU_BASE_SCALE = 0.92f;
+    private static final float MENU_MIN_SCALE = 0.74f;
+    private static final int MENU_MARGIN = 20;
+    private static final int CONTENT_PAD = SIDEBAR_X_OFFSET + SIDEBAR_W + 10;
+    private static final int RIGHT_COLUMN_X_OFFSET = 350;
+    private static final int RIGHT_COLUMN_W = 218;
+    private static final int MODULE_COLUMN_W = 266;
+    private static final int MODULE_COLUMN_GAP = 14;
+    private static final int APPEARANCE_PRESET_W = 136;
+    private static final int APPEARANCE_PRESET_GAP = 6;
 
     private float openProgress = 0f;
     private int openingOffsetY = 0;
@@ -39,6 +53,7 @@ public class StaffHelperMenuScreen extends Screen {
 
     private final int panelW = 620;
     private final int panelH = 380;
+    private float menuScale = MENU_BASE_SCALE;
 
     private TextFieldWidget addInput;
     private TextFieldWidget searchInput;
@@ -53,11 +68,11 @@ public class StaffHelperMenuScreen extends Screen {
     private ButtonWidget afkIgnoreAddBtn;
     private int afkIgnoreScroll = 0;
 
-    private SoupButtonWidget tabNickBtn;
-    private SoupButtonWidget tabAfkBtn;
-    private SoupButtonWidget tabCommandBuilderBtn;
-    private SoupButtonWidget tabModulesBtn;
-    private SoupButtonWidget tabAppearanceBtn;
+    private IconTabButtonWidget tabNickBtn;
+    private IconTabButtonWidget tabAfkBtn;
+    private IconTabButtonWidget tabCommandBuilderBtn;
+    private IconTabButtonWidget tabModulesBtn;
+    private IconTabButtonWidget tabAppearanceBtn;
 
     private ButtonWidget addBtn;
     private ButtonWidget clearBtn;
@@ -89,18 +104,25 @@ public class StaffHelperMenuScreen extends Screen {
     private SoupButtonWidget themePinkBtn;
     private SoupButtonWidget themeCustomBtn;
 
-    private IntSliderWidget customColor1R;
-    private IntSliderWidget customColor1G;
-    private IntSliderWidget customColor1B;
-    private IntSliderWidget customColor2R;
-    private IntSliderWidget customColor2G;
-    private IntSliderWidget customColor2B;
+    private TextFieldWidget customHexInput;
+    private SoupButtonWidget customStopAddBtn;
+    private SoupButtonWidget customStopRemoveBtn;
     private SoupButtonWidget customThemeApplyBtn;
     private SoupButtonWidget customThemeCancelBtn;
     private boolean customThemeDialogOpen = false;
+    private boolean customHexEditInternal = false;
     private String customThemeBeforeOpen = "BLUE";
     private int customColor1BeforeOpen = 0x2D4A73;
     private int customColor2BeforeOpen = 0x5F8FD6;
+    private final List<StaffHelperConfig.UiGradientStop> customGradientDraft = new ArrayList<>();
+    private final List<StaffHelperConfig.UiGradientStop> customGradientBeforeOpen = new ArrayList<>();
+    private int customSelectedStopIndex = 0;
+    private boolean customDraggingSv = false;
+    private boolean customDraggingHue = false;
+    private int customDraggingStopIndex = -1;
+    private float customPickerHue = 0.0f;
+    private float customPickerSat = 0.0f;
+    private float customPickerVal = 0.0f;
     private boolean statsExpanded = false;
     private boolean autoBoxExpanded = false;
     private float statsExpandProgress = 0.0f;
@@ -125,7 +147,7 @@ public class StaffHelperMenuScreen extends Screen {
     private final Map<TextFieldWidget, Boolean> animatedTextFieldTargets = new IdentityHashMap<>();
 
     private static Text tr(String key, Object... args) {
-        return Text.translatable(key, args);
+        return UiChrome.uiText(Text.translatable(key, args));
     }
 
     private static String ts(String key, Object... args) {
@@ -136,49 +158,105 @@ public class StaffHelperMenuScreen extends Screen {
         super(tr("screen.staffhelper.menu.title"));
     }
 
+    private void recalculateMenuScale() {
+        float fitW = (this.width - (MENU_MARGIN * 2.0f)) / (float) panelW;
+        float fitH = (this.height - (MENU_MARGIN * 2.0f)) / (float) panelH;
+        float fit = Math.min(1.0f, Math.min(fitW, fitH));
+        if (Float.isNaN(fit) || fit <= 0.0f) fit = MENU_BASE_SCALE;
+        menuScale = Math.max(MENU_MIN_SCALE, Math.min(MENU_BASE_SCALE, fit));
+    }
+
+    private int panelBaseX() {
+        return (this.width - panelW) / 2;
+    }
+
+    private int panelBaseY() {
+        return ((this.height - panelH) / 2) + PANEL_BASE_SHIFT_Y;
+    }
+
+    private float panelScaleCenterX() {
+        return panelBaseX() + (panelW / 2.0f);
+    }
+
+    private float panelScaleCenterY() {
+        return panelBaseY() + getUiOffsetY() + (panelH / 2.0f);
+    }
+
+    private void pushMenuScale(DrawContext ctx) {
+        float scale = Math.max(MENU_MIN_SCALE, Math.min(1.0f, menuScale));
+        float cx = panelScaleCenterX();
+        float cy = panelScaleCenterY();
+        ctx.getMatrices().pushMatrix();
+        ctx.getMatrices().translate(cx, cy);
+        ctx.getMatrices().scale(scale, scale);
+        ctx.getMatrices().translate(-cx, -cy);
+    }
+
+    private void popMenuScale(DrawContext ctx) {
+        ctx.getMatrices().popMatrix();
+    }
+
+    private double toMenuSpaceX(double mouseX) {
+        float scale = Math.max(MENU_MIN_SCALE, Math.min(1.0f, menuScale));
+        if (Math.abs(scale - 1.0f) <= 0.0001f) return mouseX;
+        float cx = panelScaleCenterX();
+        return cx + ((mouseX - cx) / scale);
+    }
+
+    private double toMenuSpaceY(double mouseY) {
+        float scale = Math.max(MENU_MIN_SCALE, Math.min(1.0f, menuScale));
+        if (Math.abs(scale - 1.0f) <= 0.0001f) return mouseY;
+        float cy = panelScaleCenterY();
+        return cy + ((mouseY - cy) / scale);
+    }
+
     @Override
     protected void init() {
-        int x0 = (this.width - panelW) / 2;
-        int y0 = (this.height - panelH) / 2;
+        recalculateMenuScale();
+        int x0 = panelBaseX();
+        int y0 = panelBaseY();
 
-        int pad = 16;
-        int tabsY = y0 + 10;
+        int pad = CONTENT_PAD;
+        int sidebarX = x0 + SIDEBAR_X_OFFSET;
+        int sidebarTopY = y0 + 58;
+        int tabX = sidebarX + ((SIDEBAR_W - SIDEBAR_ICON_SIZE) / 2);
+        int tabY = sidebarTopY + 8;
+        int tabGap = 7;
 
-        int tabX = x0 + pad;
-        tabNickBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 125, 20, Text.literal("NickSearch"), b -> {
+        tabNickBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.NICKSEARCH, b -> {
             switchTab(Tab.NICKSEARCH);
         }));
-        tabX += 125 + 8;
+        tabY += SIDEBAR_ICON_SIZE + tabGap;
 
-        tabAfkBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 105, 20, Text.literal("AFK Zone"), b -> {
+        tabAfkBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.AFKZONE, b -> {
             switchTab(Tab.AFKZONE);
         }));
-        tabX += 105 + 8;
+        tabY += SIDEBAR_ICON_SIZE + tabGap;
 
-        tabCommandBuilderBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 145, 20, Text.literal("ComandBuilder"), b -> {
+        tabCommandBuilderBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.COMMANDBUILDER, b -> {
             switchTab(Tab.COMMANDBUILDER);
         }));
-        tabX += 145 + 8;
+        tabY += SIDEBAR_ICON_SIZE + tabGap;
 
-        tabModulesBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 90, 20, Text.literal("Modules"), b -> {
+        tabModulesBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.MODULES, b -> {
             switchTab(Tab.MODULES);
         }));
-        tabX += 90 + 8;
+        tabY += SIDEBAR_ICON_SIZE + tabGap;
 
-        tabAppearanceBtn = addDrawableChild(new SoupButtonWidget(tabX, tabsY, 100, 20, Text.literal("Appearance"), b -> {
+        tabAppearanceBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.APPEARANCE, b -> {
             switchTab(Tab.APPEARANCE);
         }));
 
         closeBtn = addDrawableChild(new SoupButtonWidget(
-                x0 + panelW - pad - 110,
-                y0 + panelH - pad - 20,
+                x0 + panelW - 16 - 110,
+                y0 + panelH - 16 - 20,
                 110,
                 20,
                 tr("gui.staffhelper.button.close"),
                 b -> beginCloseAnimation()
         ));
 
-        int headerY = tabsY + 28;
+        int headerY = y0 + 38;
         int blockY = headerY + 34;
         int searchRowY = blockY + 14 + 20 + 28;
 
@@ -230,7 +308,7 @@ public class StaffHelperMenuScreen extends Screen {
             scroll = 0;
         }));
 
-        int nickIgnoreX = x0 + pad + 370;
+        int nickIgnoreX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
         int nickIgnoreInputY = y0 + 196;
         nickIgnoreInput = new CenteredTextFieldWidget(this.textRenderer,
                 nickIgnoreX,
@@ -263,7 +341,7 @@ public class StaffHelperMenuScreen extends Screen {
         }));
 
         hudEditorBtn = addDrawableChild(new SoupButtonWidget(
-                x0 + 16,
+                x0 + CONTENT_PAD,
                 y0 + 78,
                 120,
                 20,
@@ -273,7 +351,7 @@ public class StaffHelperMenuScreen extends Screen {
                 }
         ));
         uiSheenToggleBtn = addDrawableChild(new SoupButtonWidget(
-                x0 + 144,
+                x0 + 160,
                 y0 + 78,
                 170,
                 20,
@@ -329,7 +407,7 @@ public class StaffHelperMenuScreen extends Screen {
             reloadAfkFieldsFromConfig();
         }));
 
-        int ignoreX = x0 + pad + 370;
+        int ignoreX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
         int ignoreY = afkBaseY + 34;
 
         afkIgnoreInput = new CenteredTextFieldWidget(this.textRenderer,
@@ -366,14 +444,14 @@ public class StaffHelperMenuScreen extends Screen {
 
         int modulesX = x0 + pad;
         int modulesY = y0 + 96;
-        int modulesRightX = modulesX + 304;
+        int modulesRightX = modulesX + MODULE_COLUMN_W + MODULE_COLUMN_GAP;
         modulesListX = modulesX;
         modulesListY = modulesY;
         modulesListW = panelW - pad * 2;
         modulesListH = panelH - 112;
         int rowY = modulesY + 26;
 
-        statsSectionBtn = addDrawableChild(new SoupButtonWidget(modulesX, modulesY, 280, 20, statsSectionText(), b -> {
+        statsSectionBtn = addDrawableChild(new SoupButtonWidget(modulesX, modulesY, MODULE_COLUMN_W, 20, statsSectionText(), b -> {
             statsExpanded = !statsExpanded;
             b.setMessage(statsSectionText());
             updateTabVisibility();
@@ -435,17 +513,18 @@ public class StaffHelperMenuScreen extends Screen {
         }));
         rowY += 24;
 
-        autoBoxSectionBtn = addDrawableChild(new SoupButtonWidget(modulesRightX, rowY, 280, 20, autoBoxSectionText(), b -> {
+        autoBoxSectionBtn = addDrawableChild(new SoupButtonWidget(modulesRightX, rowY, MODULE_COLUMN_W, 20, autoBoxSectionText(), b -> {
             autoBoxExpanded = !autoBoxExpanded;
             b.setMessage(autoBoxSectionText());
             updateTabVisibility();
         }));
         rowY += 24;
 
-        autoBoxBox1Btn = addDrawableChild(new SoupButtonWidget(modulesRightX + 14, rowY, 126, 20, Text.literal("Box#1"), b -> {
+        int autoBoxChoiceW = 111;
+        autoBoxBox1Btn = addDrawableChild(new SoupButtonWidget(modulesRightX + 14, rowY, autoBoxChoiceW, 20, Text.literal("Box#1"), b -> {
             setAutoBoxSelection(1);
         }));
-        autoBoxBox2Btn = addDrawableChild(new SoupButtonWidget(modulesRightX + 154, rowY, 126, 20, Text.literal("Box#2"), b -> {
+        autoBoxBox2Btn = addDrawableChild(new SoupButtonWidget(modulesRightX + 14 + autoBoxChoiceW + 8, rowY, autoBoxChoiceW, 20, Text.literal("Box#2"), b -> {
             setAutoBoxSelection(2);
         }));
         refreshAutoBoxButtonsState();
@@ -455,8 +534,8 @@ public class StaffHelperMenuScreen extends Screen {
 
         int appearanceX = x0 + pad;
         int appearanceY = y0 + 126;
-        int themePresetW = 141;
-        int themePresetGap = 8;
+        int themePresetW = APPEARANCE_PRESET_W;
+        int themePresetGap = APPEARANCE_PRESET_GAP;
         int row2Y = appearanceY + 30;
 
         themeBlueBtn = addDrawableChild(new SoupButtonWidget(appearanceX, appearanceY, themePresetW, 20, tr("gui.staffhelper.theme.blue"), b -> setTheme("BLUE")));
@@ -833,19 +912,29 @@ public class StaffHelperMenuScreen extends Screen {
         int dialogX = x0 + (panelW - w) / 2;
         int dialogY = y0 + (panelH - h) / 2;
 
-        int leftX = dialogX + 18;
-        int rightX = dialogX + 222;
-        int sliderW = 180;
-        int topY = dialogY + 72;
-        int rowStep = 27;
+        customHexInput = new CenteredTextFieldWidget(this.textRenderer, dialogX + 14, dialogY + 258, 126, 20, Text.empty());
+        customHexInput.setDrawsBackground(false);
+        customHexInput.setMaxLength(7);
+        customHexInput.setSuggestion("#RRGGBB");
+        customHexInput.setChangedListener(this::onCustomHexChanged);
+        addDrawableChild(customHexInput);
 
-        customColor1R = addDrawableChild(new SoupIntSliderWidget(leftX, topY, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_r"), 0, 255, 45, v -> onCustomSliderChanged()));
-        customColor1G = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_g"), 0, 255, 74, v -> onCustomSliderChanged()));
-        customColor1B = addDrawableChild(new SoupIntSliderWidget(leftX, topY + rowStep * 2, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color1_b"), 0, 255, 115, v -> onCustomSliderChanged()));
-
-        customColor2R = addDrawableChild(new SoupIntSliderWidget(rightX, topY, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_r"), 0, 255, 95, v -> onCustomSliderChanged()));
-        customColor2G = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_g"), 0, 255, 143, v -> onCustomSliderChanged()));
-        customColor2B = addDrawableChild(new SoupIntSliderWidget(rightX, topY + rowStep * 2, sliderW, 20, ts("gui.staffhelper.custom_theme.slider.color2_b"), 0, 255, 214, v -> onCustomSliderChanged()));
+        customStopAddBtn = addDrawableChild(new SoupButtonWidget(
+                dialogX + 214,
+                dialogY + 220,
+                100,
+                20,
+                Text.literal("+ Color"),
+                b -> addCustomGradientStop()
+        ));
+        customStopRemoveBtn = addDrawableChild(new SoupButtonWidget(
+                dialogX + 322,
+                dialogY + 220,
+                100,
+                20,
+                Text.literal("- Color"),
+                b -> removeCustomGradientStop()
+        ));
 
         customThemeApplyBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 196, dialogY + h - 28, 88, 20, tr("gui.staffhelper.button.apply"), b -> applyCustomThemeDialog()));
         customThemeCancelBtn = addDrawableChild(new SoupButtonWidget(dialogX + w - 100, dialogY + h - 28, 88, 20, tr("gui.staffhelper.button.cancel"), b -> closeCustomThemeDialog(true)));
@@ -853,30 +942,22 @@ public class StaffHelperMenuScreen extends Screen {
         setCustomDialogWidgetsVisible(false);
     }
 
-    private void onCustomSliderChanged() {
-        if (!customThemeDialogOpen) return;
-        int c1 = sliderRgb(customColor1R, customColor1G, customColor1B);
-        int c2 = sliderRgb(customColor2R, customColor2G, customColor2B);
-        StaffHelperState.CONFIG.uiCustomColor1 = c1;
-        StaffHelperState.CONFIG.uiCustomColor2 = c2;
-    }
-
     private void openCustomThemeDialog() {
         customThemeBeforeOpen = currentTheme();
         customColor1BeforeOpen = StaffHelperState.CONFIG.uiCustomColor1;
         customColor2BeforeOpen = StaffHelperState.CONFIG.uiCustomColor2;
+        customGradientBeforeOpen.clear();
+        customGradientBeforeOpen.addAll(copyStops(StaffHelperState.CONFIG.uiCustomGradientStops));
 
-        setTheme("CUSTOM");
-
-        int c1 = clampRgb(StaffHelperState.CONFIG.uiCustomColor1);
-        int c2 = clampRgb(StaffHelperState.CONFIG.uiCustomColor2);
-        customColor1R.setIntValue((c1 >> 16) & 0xFF);
-        customColor1G.setIntValue((c1 >> 8) & 0xFF);
-        customColor1B.setIntValue(c1 & 0xFF);
-        customColor2R.setIntValue((c2 >> 16) & 0xFF);
-        customColor2G.setIntValue((c2 >> 8) & 0xFF);
-        customColor2B.setIntValue(c2 & 0xFF);
-        onCustomSliderChanged();
+        customGradientDraft.clear();
+        customGradientDraft.addAll(copyStops(StaffHelperState.CONFIG.uiCustomGradientStops));
+        normalizeDraftStops();
+        customSelectedStopIndex = Math.max(0, Math.min(customSelectedStopIndex, customGradientDraft.size() - 1));
+        syncPickerFromSelectedStop();
+        syncHexFieldFromSelectedStop();
+        applyDraftToConfig();
+        StaffHelperState.CONFIG.uiTheme = "CUSTOM";
+        refreshThemeButtonsState();
 
         customThemeDialogOpen = true;
         setCustomDialogWidgetsVisible(true);
@@ -884,7 +965,7 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private void applyCustomThemeDialog() {
-        onCustomSliderChanged();
+        applyDraftToConfig();
         StaffHelperState.CONFIG.uiTheme = "CUSTOM";
         StaffHelperState.CONFIG.save();
         closeCustomThemeDialog(false);
@@ -895,8 +976,12 @@ public class StaffHelperMenuScreen extends Screen {
             StaffHelperState.CONFIG.uiTheme = customThemeBeforeOpen;
             StaffHelperState.CONFIG.uiCustomColor1 = customColor1BeforeOpen;
             StaffHelperState.CONFIG.uiCustomColor2 = customColor2BeforeOpen;
+            StaffHelperState.CONFIG.uiCustomGradientStops = copyStops(customGradientBeforeOpen);
             StaffHelperState.CONFIG.save();
         }
+        customDraggingSv = false;
+        customDraggingHue = false;
+        customDraggingStopIndex = -1;
         customThemeDialogOpen = false;
         setCustomDialogWidgetsVisible(false);
         setDialogBackdropControlsVisible(true);
@@ -905,12 +990,9 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private void setCustomDialogWidgetsVisible(boolean visible) {
-        setVisibleActive(customColor1R, visible);
-        setVisibleActive(customColor1G, visible);
-        setVisibleActive(customColor1B, visible);
-        setVisibleActive(customColor2R, visible);
-        setVisibleActive(customColor2G, visible);
-        setVisibleActive(customColor2B, visible);
+        setVisibleActive(customHexInput, visible);
+        setVisibleActive(customStopAddBtn, visible);
+        setVisibleActive(customStopRemoveBtn, visible);
         setVisibleActive(customThemeApplyBtn, visible);
         setVisibleActive(customThemeCancelBtn, visible);
     }
@@ -934,8 +1016,380 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActive(themeCustomBtn, visible);
     }
 
-    private static int sliderRgb(IntSliderWidget r, IntSliderWidget g, IntSliderWidget b) {
-        return ((r.getIntValue() & 0xFF) << 16) | ((g.getIntValue() & 0xFF) << 8) | (b.getIntValue() & 0xFF);
+    private void addCustomGradientStop() {
+        normalizeDraftStops();
+        if (customGradientDraft.size() >= 10) return;
+
+        StaffHelperConfig.UiGradientStop left = selectedStop();
+        if (left == null) return;
+
+        int leftIndex = customSelectedStopIndex;
+        int rightIndex = Math.min(customGradientDraft.size() - 1, leftIndex + 1);
+        StaffHelperConfig.UiGradientStop right = customGradientDraft.get(rightIndex);
+        if (right == left && leftIndex > 0) {
+            right = left;
+            left = customGradientDraft.get(leftIndex - 1);
+        }
+
+        float newPos = clamp01((left.position + right.position) * 0.5f);
+        if (Math.abs(right.position - left.position) < 0.015f) {
+            newPos = clamp01(left.position + 0.06f);
+        }
+        int newColor = ModernGui.lerpColor(0xFF000000 | clampRgb(left.color), 0xFF000000 | clampRgb(right.color), 0.5f) & 0xFFFFFF;
+        StaffHelperConfig.UiGradientStop created = new StaffHelperConfig.UiGradientStop(newPos, newColor);
+        customGradientDraft.add(created);
+        sortStopsKeepingSelection(created);
+        syncPickerFromSelectedStop();
+        syncHexFieldFromSelectedStop();
+        applyDraftToConfig();
+    }
+
+    private void removeCustomGradientStop() {
+        normalizeDraftStops();
+        if (customGradientDraft.size() <= 2) return;
+        if (customSelectedStopIndex < 0 || customSelectedStopIndex >= customGradientDraft.size()) {
+            customSelectedStopIndex = 0;
+        }
+        customGradientDraft.remove(customSelectedStopIndex);
+        customSelectedStopIndex = Math.max(0, Math.min(customSelectedStopIndex, customGradientDraft.size() - 1));
+        syncPickerFromSelectedStop();
+        syncHexFieldFromSelectedStop();
+        applyDraftToConfig();
+    }
+
+    private void normalizeDraftStops() {
+        if (customGradientDraft.isEmpty()) {
+            customGradientDraft.add(new StaffHelperConfig.UiGradientStop(0.0f, clampRgb(StaffHelperState.CONFIG.uiCustomColor1)));
+            customGradientDraft.add(new StaffHelperConfig.UiGradientStop(1.0f, clampRgb(StaffHelperState.CONFIG.uiCustomColor2)));
+        }
+        for (StaffHelperConfig.UiGradientStop stop : customGradientDraft) {
+            if (stop == null) continue;
+            stop.position = clamp01(stop.position);
+            stop.color = clampRgb(stop.color);
+        }
+        customGradientDraft.removeIf(s -> s == null);
+        if (customGradientDraft.isEmpty()) {
+            customGradientDraft.add(new StaffHelperConfig.UiGradientStop(0.0f, 0x2D4A73));
+            customGradientDraft.add(new StaffHelperConfig.UiGradientStop(1.0f, 0x5F8FD6));
+        }
+        customGradientDraft.sort((a, b) -> Float.compare(a.position, b.position));
+        if (customGradientDraft.size() == 1) {
+            StaffHelperConfig.UiGradientStop only = customGradientDraft.get(0);
+            customGradientDraft.add(new StaffHelperConfig.UiGradientStop(only.position < 0.5f ? 1.0f : 0.0f, only.color));
+            customGradientDraft.sort((a, b) -> Float.compare(a.position, b.position));
+        }
+        customSelectedStopIndex = Math.max(0, Math.min(customSelectedStopIndex, customGradientDraft.size() - 1));
+    }
+
+    private void sortStopsKeepingSelection(StaffHelperConfig.UiGradientStop selectedRef) {
+        customGradientDraft.sort((a, b) -> Float.compare(a.position, b.position));
+        int idx = customGradientDraft.indexOf(selectedRef);
+        customSelectedStopIndex = idx < 0 ? 0 : idx;
+    }
+
+    private StaffHelperConfig.UiGradientStop selectedStop() {
+        if (customGradientDraft.isEmpty()) return null;
+        customSelectedStopIndex = Math.max(0, Math.min(customSelectedStopIndex, customGradientDraft.size() - 1));
+        return customGradientDraft.get(customSelectedStopIndex);
+    }
+
+    private void applyDraftToConfig() {
+        normalizeDraftStops();
+        StaffHelperState.CONFIG.uiCustomGradientStops = copyStops(customGradientDraft);
+        StaffHelperConfig.UiGradientStop first = customGradientDraft.get(0);
+        StaffHelperConfig.UiGradientStop last = customGradientDraft.get(customGradientDraft.size() - 1);
+        StaffHelperState.CONFIG.uiCustomColor1 = clampRgb(first.color);
+        StaffHelperState.CONFIG.uiCustomColor2 = clampRgb(last.color);
+    }
+
+    private void onCustomHexChanged(String value) {
+        if (!customThemeDialogOpen || customHexEditInternal) return;
+        String raw = value == null ? "" : value.trim();
+        if (raw.isEmpty()) return;
+        String hex = raw.startsWith("#") ? raw.substring(1) : raw;
+        if (!hex.matches("(?i)[0-9a-f]{6}")) return;
+
+        StaffHelperConfig.UiGradientStop selected = selectedStop();
+        if (selected == null) return;
+        selected.color = Integer.parseInt(hex, 16) & 0xFFFFFF;
+        syncPickerFromSelectedStop();
+        applyDraftToConfig();
+    }
+
+    private void syncHexFieldFromSelectedStop() {
+        StaffHelperConfig.UiGradientStop selected = selectedStop();
+        if (selected == null || customHexInput == null) return;
+        customHexEditInternal = true;
+        customHexInput.setText("#" + hexColor(selected.color));
+        customHexEditInternal = false;
+    }
+
+    private void syncPickerFromSelectedStop() {
+        StaffHelperConfig.UiGradientStop selected = selectedStop();
+        if (selected == null) return;
+        float[] hsv = rgbToHsv(clampRgb(selected.color));
+        customPickerHue = hsv[0];
+        customPickerSat = hsv[1];
+        customPickerVal = hsv[2];
+    }
+
+    private void applyPickerToSelectedStop() {
+        StaffHelperConfig.UiGradientStop selected = selectedStop();
+        if (selected == null) return;
+        selected.color = hsvToRgb(customPickerHue, customPickerSat, customPickerVal);
+        syncHexFieldFromSelectedStop();
+        applyDraftToConfig();
+    }
+
+    private static int hsvToRgb(float h, float s, float v) {
+        float hue = clamp01(h);
+        float sat = clamp01(s);
+        float val = clamp01(v);
+
+        if (sat <= 0.0001f) {
+            int gray = Math.round(val * 255.0f);
+            return ((gray & 0xFF) << 16) | ((gray & 0xFF) << 8) | (gray & 0xFF);
+        }
+
+        float hh = (hue % 1.0f) * 6.0f;
+        int sector = (int) Math.floor(hh);
+        float frac = hh - sector;
+        float p = val * (1.0f - sat);
+        float q = val * (1.0f - (sat * frac));
+        float t = val * (1.0f - (sat * (1.0f - frac)));
+
+        float r;
+        float g;
+        float b;
+        switch (sector) {
+            case 0 -> {
+                r = val; g = t; b = p;
+            }
+            case 1 -> {
+                r = q; g = val; b = p;
+            }
+            case 2 -> {
+                r = p; g = val; b = t;
+            }
+            case 3 -> {
+                r = p; g = q; b = val;
+            }
+            case 4 -> {
+                r = t; g = p; b = val;
+            }
+            default -> {
+                r = val; g = p; b = q;
+            }
+        }
+        int ir = Math.round(r * 255.0f);
+        int ig = Math.round(g * 255.0f);
+        int ib = Math.round(b * 255.0f);
+        return ((ir & 0xFF) << 16) | ((ig & 0xFF) << 8) | (ib & 0xFF);
+    }
+
+    private static float[] rgbToHsv(int rgb) {
+        float r = ((rgb >> 16) & 0xFF) / 255.0f;
+        float g = ((rgb >> 8) & 0xFF) / 255.0f;
+        float b = (rgb & 0xFF) / 255.0f;
+
+        float max = Math.max(r, Math.max(g, b));
+        float min = Math.min(r, Math.min(g, b));
+        float delta = max - min;
+
+        float h;
+        if (delta <= 0.0001f) {
+            h = 0.0f;
+        } else if (max == r) {
+            h = ((g - b) / delta) / 6.0f;
+            if (h < 0.0f) h += 1.0f;
+        } else if (max == g) {
+            h = (((b - r) / delta) + 2.0f) / 6.0f;
+        } else {
+            h = (((r - g) / delta) + 4.0f) / 6.0f;
+        }
+
+        float s = max <= 0.0001f ? 0.0f : (delta / max);
+        float v = max;
+        return new float[]{clamp01(h), clamp01(s), clamp01(v)};
+    }
+
+    private static float clamp01(float value) {
+        if (Float.isNaN(value)) return 0.0f;
+        if (value < 0.0f) return 0.0f;
+        return Math.min(1.0f, value);
+    }
+
+    private static List<StaffHelperConfig.UiGradientStop> copyStops(List<StaffHelperConfig.UiGradientStop> source) {
+        List<StaffHelperConfig.UiGradientStop> out = new ArrayList<>();
+        if (source == null) return out;
+        for (StaffHelperConfig.UiGradientStop stop : source) {
+            if (stop == null) continue;
+            out.add(new StaffHelperConfig.UiGradientStop(clamp01(stop.position), clampRgb(stop.color)));
+        }
+        return out;
+    }
+
+    private int customDialogX() {
+        int x0 = panelBaseX();
+        return x0 + (panelW - CUSTOM_DIALOG_W) / 2;
+    }
+
+    private int customDialogY() {
+        int y0 = panelBaseY() + getUiOffsetY();
+        return y0 + (panelH - CUSTOM_DIALOG_H) / 2;
+    }
+
+    private int customPickerX() { return customDialogX() + 14; }
+    private int customPickerY() { return customDialogY() + 52; }
+    private int customPickerSize() { return 186; }
+    private int customHueX() { return customDialogX() + 14; }
+    private int customHueY() { return customDialogY() + 242; }
+    private int customHueW() { return 186; }
+    private int customHueH() { return 12; }
+    private int customGradientX() { return customDialogX() + 214; }
+    private int customGradientY() { return customDialogY() + 76; }
+    private int customGradientW() { return 208; }
+    private int customGradientH() { return 16; }
+
+    private boolean handleCustomThemePointerPressed(double mouseX, double mouseY) {
+        normalizeDraftStops();
+
+        int gradientX = customGradientX();
+        int gradientY = customGradientY();
+        int gradientW = customGradientW();
+        int gradientH = customGradientH();
+
+        for (int i = 0; i < customGradientDraft.size(); i++) {
+            StaffHelperConfig.UiGradientStop stop = customGradientDraft.get(i);
+            int handleX = gradientX + Math.round(clamp01(stop.position) * (gradientW - 1));
+            int handleY = gradientY + (gradientH / 2);
+            if (Math.abs(mouseX - handleX) <= 7 && Math.abs(mouseY - handleY) <= 8) {
+                customSelectedStopIndex = i;
+                customDraggingStopIndex = i;
+                syncPickerFromSelectedStop();
+                syncHexFieldFromSelectedStop();
+                return true;
+            }
+        }
+
+        if (mouseX >= gradientX && mouseX <= gradientX + gradientW && mouseY >= gradientY && mouseY <= gradientY + gradientH) {
+            customSelectedStopIndex = nearestStopIndex(mouseX);
+            customDraggingStopIndex = customSelectedStopIndex;
+            moveSelectedStopToMouseX(mouseX);
+            syncHexFieldFromSelectedStop();
+            return true;
+        }
+
+        int svX = customPickerX();
+        int svY = customPickerY();
+        int svS = customPickerSize();
+        if (mouseX >= svX && mouseX <= svX + svS && mouseY >= svY && mouseY <= svY + svS) {
+            customDraggingSv = true;
+            updateSvFromMouse(mouseX, mouseY);
+            return true;
+        }
+
+        int hueX = customHueX();
+        int hueY = customHueY();
+        int hueW = customHueW();
+        int hueH = customHueH();
+        if (mouseX >= hueX && mouseX <= hueX + hueW && mouseY >= hueY && mouseY <= hueY + hueH) {
+            customDraggingHue = true;
+            updateHueFromMouse(mouseX);
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean handleCustomThemePointerDragged(double mouseX, double mouseY) {
+        if (customDraggingSv) {
+            updateSvFromMouse(mouseX, mouseY);
+            return true;
+        }
+        if (customDraggingHue) {
+            updateHueFromMouse(mouseX);
+            return true;
+        }
+        if (customDraggingStopIndex >= 0) {
+            moveSelectedStopToMouseX(mouseX);
+            return true;
+        }
+        return false;
+    }
+
+    private void handleCustomThemePointerReleased() {
+        customDraggingSv = false;
+        customDraggingHue = false;
+        customDraggingStopIndex = -1;
+    }
+
+    private void updateSvFromMouse(double mouseX, double mouseY) {
+        int svX = customPickerX();
+        int svY = customPickerY();
+        int svS = customPickerSize();
+        customPickerSat = clamp01((float) ((mouseX - svX) / (double) Math.max(1, svS - 1)));
+        customPickerVal = clamp01((float) (1.0 - ((mouseY - svY) / (double) Math.max(1, svS - 1))));
+        applyPickerToSelectedStop();
+    }
+
+    private void updateHueFromMouse(double mouseX) {
+        int hueX = customHueX();
+        int hueW = customHueW();
+        customPickerHue = clamp01((float) ((mouseX - hueX) / (double) Math.max(1, hueW - 1)));
+        applyPickerToSelectedStop();
+    }
+
+    private int nearestStopIndex(double mouseX) {
+        if (customGradientDraft.isEmpty()) return 0;
+        int gradientX = customGradientX();
+        int gradientW = customGradientW();
+        int best = 0;
+        double bestDist = Double.MAX_VALUE;
+        for (int i = 0; i < customGradientDraft.size(); i++) {
+            StaffHelperConfig.UiGradientStop stop = customGradientDraft.get(i);
+            int x = gradientX + Math.round(clamp01(stop.position) * (gradientW - 1));
+            double dist = Math.abs(mouseX - x);
+            if (dist < bestDist) {
+                bestDist = dist;
+                best = i;
+            }
+        }
+        return best;
+    }
+
+    private void moveSelectedStopToMouseX(double mouseX) {
+        if (customGradientDraft.isEmpty()) return;
+        if (customDraggingStopIndex < 0 || customDraggingStopIndex >= customGradientDraft.size()) return;
+
+        int gradientX = customGradientX();
+        int gradientW = customGradientW();
+        float pos = clamp01((float) ((mouseX - gradientX) / (double) Math.max(1, gradientW - 1)));
+
+        StaffHelperConfig.UiGradientStop selected = customGradientDraft.get(customDraggingStopIndex);
+        selected.position = pos;
+        sortStopsKeepingSelection(selected);
+        customDraggingStopIndex = customSelectedStopIndex;
+        applyDraftToConfig();
+    }
+
+    private static int sampleGradientColor(List<StaffHelperConfig.UiGradientStop> stops, float t) {
+        if (stops == null || stops.isEmpty()) return 0x2D4A73;
+        float pos = clamp01(t);
+        StaffHelperConfig.UiGradientStop first = stops.get(0);
+        if (pos <= first.position) return clampRgb(first.color);
+        StaffHelperConfig.UiGradientStop last = stops.get(stops.size() - 1);
+        if (pos >= last.position) return clampRgb(last.color);
+
+        for (int i = 0; i < stops.size() - 1; i++) {
+            StaffHelperConfig.UiGradientStop a = stops.get(i);
+            StaffHelperConfig.UiGradientStop b = stops.get(i + 1);
+            if (pos < a.position || pos > b.position) continue;
+            float span = Math.max(0.0001f, b.position - a.position);
+            float local = clamp01((pos - a.position) / span);
+            return (ModernGui.lerpColor(0xFF000000 | clampRgb(a.color), 0xFF000000 | clampRgb(b.color), local) & 0xFFFFFF);
+        }
+        return clampRgb(last.color);
     }
 
     private static int clampRgb(int c) {
@@ -996,12 +1450,6 @@ public class StaffHelperMenuScreen extends Screen {
         if (v) tf.visible = true;
         if (!v && current <= 0.02f) tf.visible = false;
         tf.active = v && current >= 0.92f;
-    }
-
-    private void setVisibleActive(IntSliderWidget slider, boolean v) {
-        if (slider == null) return;
-        slider.visible = v;
-        slider.active = v;
     }
 
     private void setVisibleActive(ButtonWidget b, boolean v) {
@@ -1070,6 +1518,23 @@ public class StaffHelperMenuScreen extends Screen {
 
     private int tabTextColor(int argb) {
         return fadeArgb(argb, easeOutCubic(tabTransitionProgress));
+    }
+
+    private int listRowColor(int index, boolean hovered) {
+        int base = (index % 2 == 0) ? 0x66252730 : 0x5522232B;
+        if (!hovered) return base;
+        return ModernGui.lerpColor(base, UiChrome.accentColor(92), 0.50f);
+    }
+
+    private void drawDeleteChip(DrawContext ctx, int x, int y, int size, boolean hovered) {
+        int baseFill = 0xA6232730;
+        int fill = hovered ? ModernGui.lerpColor(baseFill, UiChrome.accentColor(112), 0.62f) : baseFill;
+        int outline = hovered ? UiChrome.accentColor(210) : UiChrome.outlineColor(196);
+        int text = hovered ? UiChrome.mainTextColor(255) : UiChrome.mutedTextColor(236);
+
+        GuiRenderUtils.roundedRect(ctx, x, y, x + size, y + size, 4, fill);
+        GuiRenderUtils.roundedOutline(ctx, x, y, x + size, y + size, 4, 1, outline);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("x"), x + 4, y + 2, text, false);
     }
 
     private void tickTextFieldAnimations() {
@@ -1224,14 +1689,17 @@ public class StaffHelperMenuScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        double uiMouseX = toMenuSpaceX(mouseX);
+        double uiMouseY = toMenuSpaceY(mouseY);
+
         if (customThemeDialogOpen) {
-            return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+            return super.mouseScrolled(uiMouseX, uiMouseY, horizontalAmount, verticalAmount);
         }
 
         if (verticalAmount != 0 && tab != Tab.COMMANDBUILDER) {
             for (var child : this.children()) {
                 if (child instanceof net.minecraft.client.gui.widget.TextFieldWidget tf) {
-                    if (tf.visible && tf.active && tf.isMouseOver(mouseX, mouseY)) {
+                    if (tf.visible && tf.active && tf.isMouseOver(uiMouseX, uiMouseY)) {
                         int dw = (verticalAmount > 0) ? 10 : -10;
                         int dh = (verticalAmount > 0) ? 2 : -2;
 
@@ -1250,45 +1718,45 @@ public class StaffHelperMenuScreen extends Screen {
         }
 
         if (tab == Tab.NICKSEARCH) {
-            int x0 = (this.width - panelW) / 2;
-            int y0 = (this.height - panelH) / 2 + getUiOffsetY();
+            int x0 = panelBaseX();
+            int y0 = panelBaseY() + getUiOffsetY();
 
-            int pad = 16;
+            int pad = CONTENT_PAD;
             int patternListX = x0 + pad;
             int patternListY = y0 + 200;
             int patternListW = 362;
             int patternListH = panelH - 200 - pad - 30;
-            if (mouseX >= patternListX && mouseX <= patternListX + patternListW && mouseY >= patternListY && mouseY <= patternListY + patternListH) {
+            if (uiMouseX >= patternListX && uiMouseX <= patternListX + patternListW && uiMouseY >= patternListY && uiMouseY <= patternListY + patternListH) {
                 scroll -= (int) Math.signum(verticalAmount) * 18;
                 clampScroll();
                 return true;
             }
 
-            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int ignoreBoxY = y0 + 220;
-            int ignoreBoxW = 218;
+            int ignoreBoxW = RIGHT_COLUMN_W;
             int ignoreBoxH = panelH - 220 - pad - 30;
-            if (mouseX >= ignoreBoxX && mouseX <= ignoreBoxX + ignoreBoxW && mouseY >= ignoreBoxY && mouseY <= ignoreBoxY + ignoreBoxH) {
+            if (uiMouseX >= ignoreBoxX && uiMouseX <= ignoreBoxX + ignoreBoxW && uiMouseY >= ignoreBoxY && uiMouseY <= ignoreBoxY + ignoreBoxH) {
                 nickIgnoreScroll -= (int) Math.signum(verticalAmount) * 18;
                 clampNickIgnoreScroll();
                 return true;
             }
 
-            return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+            return super.mouseScrolled(uiMouseX, uiMouseY, horizontalAmount, verticalAmount);
         }
 
         if (tab == Tab.AFKZONE) {
-            int x0 = (this.width - panelW) / 2;
-            int y0 = (this.height - panelH) / 2 + getUiOffsetY();
-            int pad = 16;
+            int x0 = panelBaseX();
+            int y0 = panelBaseY() + getUiOffsetY();
+            int pad = CONTENT_PAD;
             int afkBaseY = y0 + 110;
 
-            int boxX = x0 + pad + 370;
+            int boxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int boxY = afkBaseY + 68;
-            int boxW = 218;
+            int boxW = RIGHT_COLUMN_W;
             int boxH = 120;
 
-            if (mouseX >= boxX && mouseX <= boxX + boxW && mouseY >= boxY && mouseY <= boxY + boxH) {
+            if (uiMouseX >= boxX && uiMouseX <= boxX + boxW && uiMouseY >= boxY && uiMouseY <= boxY + boxH) {
                 afkIgnoreScroll -= (int) Math.signum(verticalAmount) * 18;
                 clampIgnoreScroll();
                 return true;
@@ -1300,7 +1768,7 @@ public class StaffHelperMenuScreen extends Screen {
             int y = commandBuilderListY + 30;
             int w = commandBuilderListW;
             int h = commandBuilderListH - 36;
-            if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+            if (uiMouseX >= x && uiMouseX <= x + w && uiMouseY >= y && uiMouseY <= y + h) {
                 commandBuilderScroll -= (int) Math.signum(verticalAmount) * 18;
                 clampCommandBuilderScroll();
                 applyCommandBuilderLayout();
@@ -1314,7 +1782,7 @@ public class StaffHelperMenuScreen extends Screen {
             int y = modulesListY;
             int w = modulesListW;
             int h = modulesListH;
-            if (mouseX >= x && mouseX <= x + w && mouseY >= y && mouseY <= y + h) {
+            if (uiMouseX >= x && uiMouseX <= x + w && uiMouseY >= y && uiMouseY <= y + h) {
                 modulesScroll -= (int) Math.signum(verticalAmount) * 18;
                 clampModulesScroll();
                 applyModulesLayout();
@@ -1323,33 +1791,39 @@ public class StaffHelperMenuScreen extends Screen {
             }
         }
 
-        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+        return super.mouseScrolled(uiMouseX, uiMouseY, horizontalAmount, verticalAmount);
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        double uiMouseX = toMenuSpaceX(mouseX);
+        double uiMouseY = toMenuSpaceY(mouseY);
+
         if (customThemeDialogOpen) {
-            boolean handled = super.mouseClicked(mouseX, mouseY, button);
+            boolean handled = super.mouseClicked(uiMouseX, uiMouseY, button);
             if (handled) return true;
-            if (button == 0 && !isInsideCustomThemeDialog(mouseX, mouseY)) {
-                closeCustomThemeDialog(true);
+            if (button == 0) {
+                if (handleCustomThemePointerPressed(uiMouseX, uiMouseY)) return true;
+                if (!isInsideCustomThemeDialog(uiMouseX, uiMouseY)) {
+                    closeCustomThemeDialog(true);
+                }
             }
             return true;
         }
 
         if (tab == Tab.NICKSEARCH && button == 0) {
-            int x0 = (this.width - panelW) / 2;
-            int y0 = (this.height - panelH) / 2 + getUiOffsetY();
+            int x0 = panelBaseX();
+            int y0 = panelBaseY() + getUiOffsetY();
 
-            int pad = 16;
+            int pad = CONTENT_PAD;
             int listX = x0 + pad;
             int listY = y0 + 200;
             int listW = 362;
             int listH = panelH - 200 - pad - 30;
 
-            if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) {
+            if (uiMouseX >= listX && uiMouseX <= listX + listW && uiMouseY >= listY && uiMouseY <= listY + listH) {
                 int rowH = 18;
-                int localY = (int) (mouseY - listY) + scroll;
+                int localY = (int) (uiMouseY - listY) + scroll;
                 int idx = localY / rowH;
 
                 List<String> list = filteredList();
@@ -1362,7 +1836,7 @@ public class StaffHelperMenuScreen extends Screen {
                     int rowTop = (listY - scroll) + idx * rowH;
                     int crossY = rowTop + (rowH - crossSize) / 2;
 
-                    if (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize) {
+                    if (uiMouseX >= crossX && uiMouseX <= crossX + crossSize && uiMouseY >= crossY && uiMouseY <= crossY + crossSize) {
                         boolean removed = StaffHelperState.CONFIG.nickPatterns.remove(value);
                         if (removed) {
                             StaffHelperState.CONFIG.save();
@@ -1373,13 +1847,13 @@ public class StaffHelperMenuScreen extends Screen {
                 }
             }
 
-            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int ignoreBoxY = y0 + 220;
-            int ignoreBoxW = 218;
+            int ignoreBoxW = RIGHT_COLUMN_W;
             int ignoreBoxH = panelH - 220 - pad - 30;
-            if (mouseX >= ignoreBoxX && mouseX <= ignoreBoxX + ignoreBoxW && mouseY >= ignoreBoxY && mouseY <= ignoreBoxY + ignoreBoxH) {
+            if (uiMouseX >= ignoreBoxX && uiMouseX <= ignoreBoxX + ignoreBoxW && uiMouseY >= ignoreBoxY && uiMouseY <= ignoreBoxY + ignoreBoxH) {
                 int rowH = 18;
-                int localY = (int) (mouseY - ignoreBoxY) + nickIgnoreScroll;
+                int localY = (int) (uiMouseY - ignoreBoxY) + nickIgnoreScroll;
                 int idx = localY / rowH;
                 List<String> list = sortedNickIgnoreList();
                 if (idx >= 0 && idx < list.size()) {
@@ -1390,7 +1864,7 @@ public class StaffHelperMenuScreen extends Screen {
                     int crossX = ignoreBoxX + ignoreBoxW - crossPadRight - crossSize;
                     int rowTop = (ignoreBoxY - nickIgnoreScroll) + idx * rowH;
                     int crossY = rowTop + (rowH - crossSize) / 2;
-                    if (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize) {
+                    if (uiMouseX >= crossX && uiMouseX <= crossX + crossSize && uiMouseY >= crossY && uiMouseY <= crossY + crossSize) {
                         boolean removed = StaffHelperState.CONFIG.nickIgnoreNicks.removeIf(s -> s != null && s.equalsIgnoreCase(value));
                         if (removed) {
                             StaffHelperState.CONFIG.save();
@@ -1403,19 +1877,19 @@ public class StaffHelperMenuScreen extends Screen {
         }
 
         if (tab == Tab.AFKZONE && button == 0) {
-            int x0 = (this.width - panelW) / 2;
-            int y0 = (this.height - panelH) / 2 + getUiOffsetY();
-            int pad = 16;
+            int x0 = panelBaseX();
+            int y0 = panelBaseY() + getUiOffsetY();
+            int pad = CONTENT_PAD;
             int afkBaseY = y0 + 110;
 
-            int boxX = x0 + pad + 370;
+            int boxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int boxY = afkBaseY + 68;
-            int boxW = 218;
+            int boxW = RIGHT_COLUMN_W;
             int boxH = 120;
 
-            if (mouseX >= boxX && mouseX <= boxX + boxW && mouseY >= boxY && mouseY <= boxY + boxH) {
+            if (uiMouseX >= boxX && uiMouseX <= boxX + boxW && uiMouseY >= boxY && uiMouseY <= boxY + boxH) {
                 int rowH = 18;
-                int localY = (int) (mouseY - boxY) + afkIgnoreScroll;
+                int localY = (int) (uiMouseY - boxY) + afkIgnoreScroll;
                 int idx = localY / rowH;
 
                 List<String> list = new ArrayList<>(StaffHelperState.CONFIG.afkIgnoreNicks);
@@ -1430,7 +1904,7 @@ public class StaffHelperMenuScreen extends Screen {
                     int rowTop = (boxY - afkIgnoreScroll) + idx * rowH;
                     int crossY = rowTop + (rowH - crossSize) / 2;
 
-                    if (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize) {
+                    if (uiMouseX >= crossX && uiMouseX <= crossX + crossSize && uiMouseY >= crossY && uiMouseY <= crossY + crossSize) {
                         boolean removed = StaffHelperState.CONFIG.afkIgnoreNicks.removeIf(s -> s != null && s.equalsIgnoreCase(value));
                         if (removed) {
                             StaffHelperState.CONFIG.save();
@@ -1442,7 +1916,30 @@ public class StaffHelperMenuScreen extends Screen {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(uiMouseX, uiMouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        double uiMouseX = toMenuSpaceX(mouseX);
+        double uiMouseY = toMenuSpaceY(mouseY);
+        if (customThemeDialogOpen) {
+            if (button == 0 && handleCustomThemePointerDragged(uiMouseX, uiMouseY)) return true;
+            return super.mouseDragged(uiMouseX, uiMouseY, button, deltaX, deltaY);
+        }
+        return super.mouseDragged(uiMouseX, uiMouseY, button, deltaX, deltaY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        double uiMouseX = toMenuSpaceX(mouseX);
+        double uiMouseY = toMenuSpaceY(mouseY);
+        if (customThemeDialogOpen) {
+            if (button == 0) handleCustomThemePointerReleased();
+            super.mouseReleased(uiMouseX, uiMouseY, button);
+            return true;
+        }
+        return super.mouseReleased(uiMouseX, uiMouseY, button);
     }
 
     @Override
@@ -1467,33 +1964,40 @@ public class StaffHelperMenuScreen extends Screen {
         int overlayAlpha = (int) (92 * p);
         ctx.fill(0, 0, this.width, this.height, (overlayAlpha << 24));
 
-        int x0 = (this.width - panelW) / 2;
-        int y0 = (this.height - panelH) / 2 + getUiOffsetY();
+        int x0 = panelBaseX();
+        int y0 = panelBaseY() + getUiOffsetY();
+        int uiMouseX = (int) Math.round(toMenuSpaceX(mouseX));
+        int uiMouseY = (int) Math.round(toMenuSpaceY(mouseY));
+        long now = System.currentTimeMillis();
 
-        UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, System.currentTimeMillis(), 0.10f, true, false);
+        pushMenuScale(ctx);
+        UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, now, 0.10f, true, false);
 
-        ctx.fill(x0 + 12, y0 + 48, x0 + panelW - 12, y0 + 49, ((int)(0x80 * p) << 24) | 0x2A2F3A);
+        int lineColor = ModernGui.lerpColor(UiChrome.outlineColor(130), UiChrome.accentColor(118), 0.22f);
+        lineColor = tabTextColor(lineColor);
+        ctx.fill(x0 + 12, y0 + 48, x0 + panelW - 12, y0 + 49, lineColor);
+        UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false, false);
+        ctx.fill(x0 + SIDEBAR_X_OFFSET + SIDEBAR_W - 1, y0 + 54, x0 + SIDEBAR_X_OFFSET + SIDEBAR_W, y0 + panelH - 12, tabTextColor(UiChrome.outlineColor(106)));
 
-        int tabsY = y0 + 10;
-        int headerY = tabsY + 28;
+        int headerY = y0 + 38;
+        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.title"), x0 + CONTENT_PAD, headerY, tabTextColor(UiChrome.mainTextColor(252)), false);
+        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.subtitle"), x0 + CONTENT_PAD, headerY + 14, tabTextColor(UiChrome.mutedTextColor(234)), false);
 
-        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.title"), x0 + 16, headerY, 0xFFFFFFFF, false);
-        ctx.drawText(this.textRenderer, tr("screen.staffhelper.menu.subtitle"), x0 + 16, headerY + 14, 0xFFBEBEBE, false);
-
-        renderTabContent(ctx, x0, y0, mouseX, mouseY);
+        renderTabContent(ctx, x0, y0, uiMouseX, uiMouseY);
         if (customThemeDialogOpen) {
-            renderCustomThemeDialog(ctx, x0, y0);
+            renderCustomThemeDialog(ctx);
         }
 
-        super.render(ctx, mouseX, mouseY, delta);
+        super.render(ctx, uiMouseX, uiMouseY, delta);
+        popMenuScale(ctx);
     }
 
     private void renderTabContent(DrawContext ctx, int x0, int y0, int mouseX, int mouseY) {
-        int textMain = tabTextColor(0xFFFFFFFF);
-        int textSub = tabTextColor(0xFFBEBEBE);
-        int textAccent = tabTextColor(0xFF6FB3FF);
+        int textMain = tabTextColor(UiChrome.mainTextColor(255));
+        int textSub = tabTextColor(UiChrome.mutedTextColor(246));
+        int textAccent = tabTextColor(UiChrome.accentColor(255));
         if (tab == Tab.NICKSEARCH) {
-            int pad = 16;
+            int pad = CONTENT_PAD;
             int tabsY = y0 + 10;
             int headerY = tabsY + 28;
             int blockY = headerY + 34;
@@ -1514,7 +2018,7 @@ public class StaffHelperMenuScreen extends Screen {
             }
 
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.patterns_list"), x0 + pad, y0 + 182, textSub, false);
-            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.ignored_nicks"), x0 + pad + 370, y0 + 182, textSub, false);
+            ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.nick.ignored_nicks"), x0 + pad + RIGHT_COLUMN_X_OFFSET, y0 + 182, textSub, false);
 
             int listX = x0 + pad;
             int listY = y0 + 200;
@@ -1535,9 +2039,10 @@ public class StaffHelperMenuScreen extends Screen {
 
                 String value = list.get(i);
 
-                int rowBg = (i % 2 == 0) ? 0x8012141B : 0x80101116;
-                ctx.fill(listX + 2, yy, listX + listW - 2, yy + rowH, rowBg);
-                ctx.drawText(this.textRenderer, Text.literal(value), listX + 6, yy + 5, 0xFFEAEAEA, false);
+                boolean hoverRow = mouseY >= yy && mouseY <= yy + rowH && mouseX >= listX + 2 && mouseX <= listX + listW - 2;
+                int rowBg = listRowColor(i, hoverRow);
+                GuiRenderUtils.roundedRect(ctx, listX + 2, yy, listX + listW - 2, yy + rowH, 4, rowBg);
+                UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), listX + 6, yy + 5, UiChrome.mainTextColor(246), false);
 
                 int crossSize = 12;
                 int crossPadRight = 8;
@@ -1545,17 +2050,14 @@ public class StaffHelperMenuScreen extends Screen {
                 int crossY = yy + (rowH - crossSize) / 2;
 
                 boolean hoverCross = (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize);
-                int crossBg = hoverCross ? 0xCC1C202A : 0xB015171E;
-                GuiRenderUtils.roundedRect(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, crossBg);
-                GuiRenderUtils.roundedOutline(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, 1, hoverCross ? 0xFF3A4252 : 0xFF2A2F3A);
-                ctx.drawText(this.textRenderer, Text.literal("x"), crossX + 4, crossY + 2, 0xFFFFFFFF, false);
+                drawDeleteChip(ctx, crossX, crossY, crossSize, hoverCross);
             }
 
             ctx.disableScissor();
 
-            int ignoreBoxX = x0 + pad + 370;
+            int ignoreBoxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int ignoreBoxY = y0 + 220;
-            int ignoreBoxW = 218;
+            int ignoreBoxW = RIGHT_COLUMN_W;
             int ignoreBoxH = panelH - 220 - pad - 30;
             UiChrome.drawPanel(ctx, ignoreBoxX, ignoreBoxY, ignoreBoxW, ignoreBoxH, 10, System.currentTimeMillis(), -0.10f, true);
 
@@ -1569,24 +2071,22 @@ public class StaffHelperMenuScreen extends Screen {
                 if (yy + ignoreRowH < ignoreBoxY || yy > ignoreBoxY + ignoreBoxH) continue;
 
                 String value = ignoreList.get(i);
-                int rowBg = (i % 2 == 0) ? 0x8012141B : 0x80101116;
-                ctx.fill(ignoreBoxX + 2, yy, ignoreBoxX + ignoreBoxW - 2, yy + ignoreRowH, rowBg);
-                ctx.drawText(this.textRenderer, Text.literal(value), ignoreBoxX + 6, yy + 5, 0xFFEAEAEA, false);
+                boolean hoverRow = mouseY >= yy && mouseY <= yy + ignoreRowH && mouseX >= ignoreBoxX + 2 && mouseX <= ignoreBoxX + ignoreBoxW - 2;
+                int rowBg = listRowColor(i, hoverRow);
+                GuiRenderUtils.roundedRect(ctx, ignoreBoxX + 2, yy, ignoreBoxX + ignoreBoxW - 2, yy + ignoreRowH, 4, rowBg);
+                UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), ignoreBoxX + 6, yy + 5, UiChrome.mainTextColor(246), false);
 
                 int crossSize = 12;
                 int crossPadRight = 8;
                 int crossX = ignoreBoxX + ignoreBoxW - crossPadRight - crossSize;
                 int crossY = yy + (ignoreRowH - crossSize) / 2;
                 boolean hoverCross = (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize);
-                int crossBg = hoverCross ? 0xCC1C202A : 0xB015171E;
-                GuiRenderUtils.roundedRect(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, crossBg);
-                GuiRenderUtils.roundedOutline(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, 1, hoverCross ? 0xFF3A4252 : 0xFF2A2F3A);
-                ctx.drawText(this.textRenderer, Text.literal("x"), crossX + 4, crossY + 2, 0xFFFFFFFF, false);
+                drawDeleteChip(ctx, crossX, crossY, crossSize, hoverCross);
             }
             ctx.disableScissor();
 
         } else if (tab == Tab.AFKZONE) {
-            int pad = 16;
+            int pad = CONTENT_PAD;
             int baseY = y0 + 110;
 
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.afk.title"), x0 + pad, baseY - 10, textMain, false);
@@ -1611,9 +2111,9 @@ public class StaffHelperMenuScreen extends Screen {
                     tr("gui.staffhelper.tab.afk.tip"),
                     x0 + pad, baseY + 230, textAccent, false);
 
-            int boxX = x0 + pad + 370;
+            int boxX = x0 + pad + RIGHT_COLUMN_X_OFFSET;
             int boxY = baseY + 68;
-            int boxW = 218;
+            int boxW = RIGHT_COLUMN_W;
             int boxH = 120;
 
             ctx.drawText(this.textRenderer,
@@ -1642,9 +2142,10 @@ public class StaffHelperMenuScreen extends Screen {
 
                 String value = list.get(i);
 
-                int rowBg = (i % 2 == 0) ? 0x8012141B : 0x80101116;
-                ctx.fill(boxX + 2, yy, boxX + boxW - 2, yy + rowH, rowBg);
-                ctx.drawText(this.textRenderer, Text.literal(value), boxX + 6, yy + 5, 0xFFEAEAEA, false);
+                boolean hoverRow = mouseY >= yy && mouseY <= yy + rowH && mouseX >= boxX + 2 && mouseX <= boxX + boxW - 2;
+                int rowBg = listRowColor(i, hoverRow);
+                GuiRenderUtils.roundedRect(ctx, boxX + 2, yy, boxX + boxW - 2, yy + rowH, 4, rowBg);
+                UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), boxX + 6, yy + 5, UiChrome.mainTextColor(246), false);
 
                 int crossSize = 12;
                 int crossPadRight = 8;
@@ -1652,10 +2153,7 @@ public class StaffHelperMenuScreen extends Screen {
                 int crossY = yy + (rowH - crossSize) / 2;
 
                 boolean hoverCross = (mouseX >= crossX && mouseX <= crossX + crossSize && mouseY >= crossY && mouseY <= crossY + crossSize);
-                int crossBg = hoverCross ? 0xCC1C202A : 0xB015171E;
-                GuiRenderUtils.roundedRect(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, crossBg);
-                GuiRenderUtils.roundedOutline(ctx, crossX, crossY, crossX + crossSize, crossY + crossSize, 4, 1, hoverCross ? 0xFF3A4252 : 0xFF2A2F3A);
-                ctx.drawText(this.textRenderer, Text.literal("x"), crossX + 4, crossY + 2, 0xFFFFFFFF, false);
+                drawDeleteChip(ctx, crossX, crossY, crossSize, hoverCross);
             }
 
             ctx.disableScissor();
@@ -1664,41 +2162,111 @@ public class StaffHelperMenuScreen extends Screen {
             renderCommandBuilderTab(ctx, x0, y0);
         } else if (tab == Tab.MODULES) {
         } else if (tab == Tab.APPEARANCE) {
-            int appearanceX = x0 + 16;
+            int appearanceX = x0 + CONTENT_PAD;
             int appearanceY = y0 + 126;
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.appearance.theme_presets"), appearanceX, appearanceY - 14, textSub, false);
         }
     }
 
-    private void renderCustomThemeDialog(DrawContext ctx, int panelX, int panelY) {
+    private void renderCustomThemeDialog(DrawContext ctx) {
+        normalizeDraftStops();
+        int x = customDialogX();
+        int y = customDialogY();
         int w = CUSTOM_DIALOG_W;
         int h = CUSTOM_DIALOG_H;
-        int x = panelX + (panelW - w) / 2;
-        int y = panelY + (panelH - h) / 2;
+        long now = System.currentTimeMillis();
+
+        StaffHelperConfig.UiGradientStop selected = selectedStop();
+        int selectedColor = selected != null ? clampRgb(selected.color) : hsvToRgb(customPickerHue, customPickerSat, customPickerVal);
+
+        int svX = customPickerX();
+        int svY = customPickerY();
+        int svS = customPickerSize();
+        int hueX = customHueX();
+        int hueY = customHueY();
+        int hueW = customHueW();
+        int hueH = customHueH();
+        int gradientX = customGradientX();
+        int gradientY = customGradientY();
+        int gradientW = customGradientW();
+        int gradientH = customGradientH();
+        if (customStopAddBtn != null) customStopAddBtn.active = customGradientDraft.size() < 10;
+        if (customStopRemoveBtn != null) customStopRemoveBtn.active = customGradientDraft.size() > 2;
 
         ctx.fill(0, 0, this.width, this.height, 0x7A000000);
-        UiChrome.drawPanel(ctx, x, y, w, h, 10, System.currentTimeMillis(), 0.22f, true, false);
+        UiChrome.drawPanel(ctx, x, y, w, h, 10, now, 0.22f, true, false);
         ctx.fill(x + 12, y + 40, x + w - 12, y + 41, 0x882A2F3A);
-        UiChrome.drawPanel(ctx, x + 12, y + 50, 192, 156, 8, System.currentTimeMillis(), -0.08f, false, false);
-        UiChrome.drawPanel(ctx, x + 216, y + 50, 192, 156, 8, System.currentTimeMillis(), -0.08f, false, false);
+        UiChrome.drawPanel(ctx, x + 12, y + 48, 194, 206, 8, now, -0.06f, false, false);
+        UiChrome.drawPanel(ctx, x + 212, y + 48, 210, 192, 8, now, -0.06f, false, false);
 
-        int c1 = sliderRgb(customColor1R, customColor1G, customColor1B);
-        int c2 = sliderRgb(customColor2R, customColor2G, customColor2B);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Custom Theme"), x + 14, y + 12, UiChrome.mainTextColor(255), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("HSV picker + editable gradient stops"), x + 14, y + 26, UiChrome.mutedTextColor(232), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Color picker"), x + 16, y + 52, UiChrome.mainTextColor(248), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Gradient stops"), x + 216, y + 52, UiChrome.mainTextColor(248), false);
 
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.title"), x + 14, y + 12, 0xFFFFFFFF, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.subtitle"), x + 14, y + 26, 0xFFBEBEBE, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.color1"), x + 20, y + 56, 0xFFD7DEE9, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.custom_theme.color2"), x + 224, y + 56, 0xFFD7DEE9, false);
+        int hueColor = 0xFF000000 | hsvToRgb(customPickerHue, 1.0f, 1.0f);
+        GuiRenderUtils.roundedRect(ctx, svX, svY, svX + svS, svY + svS, 8, hueColor);
+        for (int i = 0; i < svS; i++) {
+            float t = i / (float) Math.max(1, svS - 1);
+            int alpha = Math.round((1.0f - t) * 255.0f);
+            ctx.fill(svX + i, svY, svX + i + 1, svY + svS, (alpha << 24) | 0x00FFFFFF);
+        }
+        for (int i = 0; i < svS; i++) {
+            float t = i / (float) Math.max(1, svS - 1);
+            int alpha = Math.round(t * 255.0f);
+            ctx.fill(svX, svY + i, svX + svS, svY + i + 1, (alpha << 24));
+        }
+        GuiRenderUtils.roundedOutline(ctx, svX, svY, svX + svS, svY + svS, 8, 1, UiChrome.outlineColor(180));
 
-        drawColorSwatch(ctx, x + 18, y + 172, 180, 20, c1, "#" + hexColor(c1));
-        drawColorSwatch(ctx, x + 222, y + 172, 180, 20, c2, "#" + hexColor(c2));
+        int svMarkerX = svX + Math.round(customPickerSat * (svS - 1));
+        int svMarkerY = svY + Math.round((1.0f - customPickerVal) * (svS - 1));
+        GuiRenderUtils.roundedOutline(ctx, svMarkerX - 5, svMarkerY - 5, svMarkerX + 5, svMarkerY + 5, 5, 1, UiChrome.mainTextColor(255));
+
+        for (int i = 0; i < hueW; i++) {
+            float t = i / (float) Math.max(1, hueW - 1);
+            int rgb = hsvToRgb(t, 1.0f, 1.0f);
+            ctx.fill(hueX + i, hueY, hueX + i + 1, hueY + hueH, 0xFF000000 | rgb);
+        }
+        GuiRenderUtils.roundedOutline(ctx, hueX, hueY, hueX + hueW, hueY + hueH, 4, 1, UiChrome.outlineColor(180));
+        int hueMarkerX = hueX + Math.round(customPickerHue * (hueW - 1));
+        GuiRenderUtils.roundedRect(ctx, hueMarkerX - 1, hueY - 2, hueMarkerX + 2, hueY + hueH + 2, 1, UiChrome.mainTextColor(255));
+
+        drawTextFieldPanel(ctx, customHexInput, 6);
+        drawColorSwatch(ctx, x + 146, y + 258, 58, 20, selectedColor, "");
+
+        for (int i = 0; i < gradientW; i++) {
+            float t = i / (float) Math.max(1, gradientW - 1);
+            int rgb = sampleGradientColor(customGradientDraft, t);
+            ctx.fill(gradientX + i, gradientY, gradientX + i + 1, gradientY + gradientH, 0xFF000000 | rgb);
+        }
+        GuiRenderUtils.roundedOutline(ctx, gradientX, gradientY, gradientX + gradientW, gradientY + gradientH, 5, 1, UiChrome.outlineColor(186));
+
+        for (int i = 0; i < customGradientDraft.size(); i++) {
+            StaffHelperConfig.UiGradientStop stop = customGradientDraft.get(i);
+            int handleX = gradientX + Math.round(clamp01(stop.position) * (gradientW - 1));
+            int handleY = gradientY + (gradientH / 2);
+            int size = (i == customSelectedStopIndex) ? 10 : 8;
+            int fill = 0xFF000000 | clampRgb(stop.color);
+            int border = (i == customSelectedStopIndex) ? UiChrome.accentColor(255) : UiChrome.outlineColor(204);
+            GuiRenderUtils.roundedRect(ctx, handleX - (size / 2), handleY - (size / 2), handleX + (size / 2), handleY + (size / 2), 3, fill);
+            GuiRenderUtils.roundedOutline(ctx, handleX - (size / 2), handleY - (size / 2), handleX + (size / 2), handleY + (size / 2), 3, 1, border);
+        }
+
+        String selectedHex = "#" + hexColor(selectedColor);
+        int selectedPos = selected != null ? Math.round(clamp01(selected.position) * 100.0f) : 0;
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Selected: " + selectedHex), x + 216, y + 102, UiChrome.mainTextColor(246), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Position: " + selectedPos + "%"), x + 216, y + 116, UiChrome.mutedTextColor(236), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Stops: " + customGradientDraft.size()), x + 216, y + 130, UiChrome.mutedTextColor(236), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Drag markers on bar to reorder blend"), x + 216, y + 152, UiChrome.accentColor(230), false);
     }
 
     private void drawColorSwatch(DrawContext ctx, int x, int y, int w, int h, int rgb, String label) {
         int fill = 0xFF000000 | clampRgb(rgb);
         GuiRenderUtils.roundedRect(ctx, x, y, x + w, y + h, 6, fill);
-        GuiRenderUtils.roundedOutline(ctx, x, y, x + w, y + h, 6, 1, 0xAAFFFFFF);
-        ctx.drawText(this.textRenderer, Text.literal(label), x + 6, y + 5, 0xFFFFFFFF, false);
+        GuiRenderUtils.roundedOutline(ctx, x, y, x + w, y + h, 6, 1, UiChrome.outlineColor(192));
+        if (label != null && !label.isEmpty()) {
+            UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(label), x + 6, y + 5, UiChrome.mainTextColor(255), false);
+        }
     }
 
     private static String hexColor(int rgb) {
@@ -1709,12 +2277,10 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private boolean isInsideCustomThemeDialog(double mouseX, double mouseY) {
-        int x0 = (this.width - panelW) / 2;
-        int y0 = (this.height - panelH) / 2 + getUiOffsetY();
+        int x = customDialogX();
+        int y = customDialogY();
         int w = CUSTOM_DIALOG_W;
         int h = CUSTOM_DIALOG_H;
-        int x = x0 + (panelW - w) / 2;
-        int y = y0 + (panelH - h) / 2;
         return mouseX >= x && mouseX <= (x + w) && mouseY >= y && mouseY <= (y + h);
     }
 
@@ -1738,10 +2304,10 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private void renderCommandBuilderTab(DrawContext ctx, int x0, int y0) {
-        int pad = 16;
-        int textMain = tabTextColor(0xFFFFFFFF);
-        int textSub = tabTextColor(0xFFBEBEBE);
-        int textAccent = tabTextColor(0xFF6FB3FF);
+        int pad = CONTENT_PAD;
+        int textMain = tabTextColor(UiChrome.mainTextColor(255));
+        int textSub = tabTextColor(UiChrome.mutedTextColor(246));
+        int textAccent = tabTextColor(UiChrome.accentColor(255));
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.title"), x0 + pad, y0 + 74, textMain, false);
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.subtitle"), x0 + pad, y0 + 88, textSub, false);
 
@@ -1766,10 +2332,10 @@ public class StaffHelperMenuScreen extends Screen {
                 }
 
                 if (ui.entry.hasExecuteToken("{time}") && commandBuilderWidgetInViewport(ui.timeOptionsField)) {
-                    ctx.drawText(this.textRenderer, Text.literal("{time}"), ui.rowX + 10, ui.timeOptionsField.getY() + 6, textAccent, false);
+                    UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("{time}"), ui.rowX + 10, ui.timeOptionsField.getY() + 6, textAccent, false);
                 }
                 if (ui.entry.hasExecuteToken("{reason}") && commandBuilderWidgetInViewport(ui.reasonOptionsField)) {
-                    ctx.drawText(this.textRenderer, Text.literal("{reason}"), ui.rowX + 10, ui.reasonOptionsField.getY() + 6, textAccent, false);
+                    UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("{reason}"), ui.rowX + 10, ui.reasonOptionsField.getY() + 6, textAccent, false);
                 }
 
                 if (commandBuilderWidgetInViewport(ui.aliasField)) {
@@ -1822,7 +2388,7 @@ public class StaffHelperMenuScreen extends Screen {
         List<String> list = filteredList();
         int rowH = 18;
 
-        int pad = 16;
+        int pad = CONTENT_PAD;
         int listH = panelH - 200 - pad - 30;
 
         int contentH = list.size() * rowH;
@@ -1835,7 +2401,7 @@ public class StaffHelperMenuScreen extends Screen {
     private void clampNickIgnoreScroll() {
         List<String> list = sortedNickIgnoreList();
         int rowH = 18;
-        int boxH = panelH - 220 - 16 - 30;
+        int boxH = panelH - 220 - CONTENT_PAD - 30;
         int contentH = list.size() * rowH;
         int maxScroll = Math.max(0, contentH - boxH);
         if (nickIgnoreScroll < 0) nickIgnoreScroll = 0;
@@ -2011,7 +2577,8 @@ public class StaffHelperMenuScreen extends Screen {
             float afkScale = clampScale(StaffHelperState.CONFIG.afkBoxScale);
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
-            int titleH = Math.max(12, Math.round(12 * afkScale));
+            int headerH = Math.max(14, Math.round(16 * afkScale));
+            int contentTopPad = Math.max(3, Math.round(4 * afkScale));
             Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
 
             String l1 = "Nick Test | 1234";
@@ -2022,7 +2589,7 @@ public class StaffHelperMenuScreen extends Screen {
             wAfk = Math.max(wAfk, this.textRenderer.getWidth(l2));
             wAfk += pad * 2;
 
-            int hAfk = pad + titleH + (2 * lineH) + pad;
+            int hAfk = headerH + contentTopPad + (2 * lineH) + pad;
 
             if (mouseX >= xAfk && mouseX <= xAfk + wAfk && mouseY >= yAfk && mouseY <= yAfk + hAfk) {
                 dragging = DragTarget.AFK_LIST;
@@ -2091,7 +2658,8 @@ public class StaffHelperMenuScreen extends Screen {
                 float afkScale = clampScale(StaffHelperState.CONFIG.afkBoxScale);
                 int pad = Math.max(4, Math.round(6 * afkScale));
                 int lineH = Math.max(10, Math.round(10 * afkScale));
-                int titleH = Math.max(12, Math.round(12 * afkScale));
+                int headerH = Math.max(14, Math.round(16 * afkScale));
+                int contentTopPad = Math.max(3, Math.round(4 * afkScale));
                 Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
                 String l1 = "Nick Test | 1234";
                 String l2 = "OtherNick";
@@ -2101,7 +2669,7 @@ public class StaffHelperMenuScreen extends Screen {
                 w = Math.max(w, this.textRenderer.getWidth(l2));
                 w += pad * 2;
 
-                int h = pad + titleH + (2 * lineH) + pad;
+                int h = headerH + contentTopPad + (2 * lineH) + pad;
 
                 int nx = (int) mouseX - offX;
                 int ny = (int) mouseY - offY;
@@ -2155,7 +2723,8 @@ public class StaffHelperMenuScreen extends Screen {
             float afkScale = clampScale(StaffHelperState.CONFIG.afkBoxScale);
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
-            int titleH = Math.max(12, Math.round(12 * afkScale));
+            int headerH = Math.max(14, Math.round(16 * afkScale));
+            int contentTopPad = Math.max(3, Math.round(4 * afkScale));
             Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
@@ -2163,7 +2732,7 @@ public class StaffHelperMenuScreen extends Screen {
             wAfk = Math.max(wAfk, this.textRenderer.getWidth(l1));
             wAfk = Math.max(wAfk, this.textRenderer.getWidth(l2));
             wAfk += pad * 2;
-            int hAfk = pad + titleH + (2 * lineH) + pad;
+            int hAfk = headerH + contentTopPad + (2 * lineH) + pad;
             int xAfk = StaffHelperState.CONFIG.afkListX;
             int yAfk = StaffHelperState.CONFIG.afkListY;
             if (mouseX >= xAfk && mouseX <= xAfk + wAfk && mouseY >= yAfk && mouseY <= yAfk + hAfk) {
@@ -2210,7 +2779,8 @@ public class StaffHelperMenuScreen extends Screen {
             float afkScale = clampScale(StaffHelperState.CONFIG.afkBoxScale);
             int pad = Math.max(4, Math.round(6 * afkScale));
             int lineH = Math.max(10, Math.round(10 * afkScale));
-            int titleH = Math.max(12, Math.round(12 * afkScale));
+            int headerH = Math.max(14, Math.round(16 * afkScale));
+            int contentTopPad = Math.max(3, Math.round(4 * afkScale));
             Text title = StaffHelperMenuScreen.tr("gui.staffhelper.hud.afk.title");
             String l1 = "Nick Test | 1234";
             String l2 = "OtherNick";
@@ -2220,15 +2790,16 @@ public class StaffHelperMenuScreen extends Screen {
             w = Math.max(w, this.textRenderer.getWidth(l2));
             w += pad * 2;
 
-            int h = pad + titleH + (2 * lineH) + pad;
+            int h = headerH + contentTopPad + (2 * lineH) + pad;
 
-            UiChrome.drawPanel(ctx, x, y, w, h, 8, System.currentTimeMillis());
-            ctx.drawText(this.textRenderer, title, x + pad, y + pad, 0xFFFFFFFF, false);
+            UiChrome.drawHudPanel(ctx, x, y, w, h, 8, headerH, System.currentTimeMillis(), 0.10f, true);
+            int titleY = y + Math.max(2, (headerH - this.textRenderer.fontHeight) / 2);
+            ctx.drawText(this.textRenderer, title, x + pad, titleY, UiChrome.mainTextColor(255), false);
 
-            int yy = y + pad + titleH;
-            ctx.drawText(this.textRenderer, Text.literal(l1), x + pad, yy, 0xFFBEBEBE, false);
+            int yy = y + headerH + contentTopPad;
+            UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(l1), x + pad, yy, UiChrome.mutedTextColor(238), false);
             yy += lineH;
-            ctx.drawText(this.textRenderer, Text.literal(l2), x + pad, yy, 0xFFBEBEBE, false);
+            UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(l2), x + pad, yy, UiChrome.mutedTextColor(238), false);
 
             super.render(ctx, mouseX, mouseY, delta);
         }
@@ -2244,3 +2815,4 @@ public class StaffHelperMenuScreen extends Screen {
         }
     }
 }
+

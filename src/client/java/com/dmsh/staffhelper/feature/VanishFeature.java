@@ -22,8 +22,8 @@ public final class VanishFeature {
     private static boolean vanishEnabled = false;
 
     private static final int PAD = 6;
-    private static final int BOX_H = 14 + 10;
-    private static final Text LINE = Text.literal("⚗ ваниш включен").formatted(Formatting.GREEN);
+    private static final Text HEADER = UiChrome.uiLiteral("Vanish");
+    private static final Text LINE = UiChrome.uiLiteral("VANISH ENABLED").formatted(Formatting.GREEN);
 
     private static final Pattern P_VANISH_ON =
             Pattern.compile("(?iu).*исчезновение\\s+Включено\\s+для\\s+([A-Za-z0-9_]{3,16}).*");
@@ -54,8 +54,12 @@ public final class VanishFeature {
 
     public static int getBoxWidth(TextRenderer tr) {
 
-        int pad = Math.max(4, Math.round(PAD * getScale()));
-        return tr.getWidth(LINE) + pad * 2;
+        float scale = getScale();
+        int pad = Math.max(4, Math.round(PAD * scale));
+        int badge = getBadgeSize(scale);
+        int bodyWidth = tr.getWidth(LINE) + pad * 2;
+        int headerWidth = tr.getWidth(HEADER) + pad + badge + Math.max(3, Math.round(3 * scale)) + pad;
+        return Math.max(bodyWidth, headerWidth);
     }
 
     public static int getPreviewWidth(TextRenderer tr) {
@@ -63,7 +67,11 @@ public final class VanishFeature {
     }
 
     public static int getPreviewHeight() {
-        return Math.max(16, Math.round(BOX_H * getScale()));
+        MinecraftClient mc = MinecraftClient.getInstance();
+        int lineH = (mc != null && mc.textRenderer != null) ? mc.textRenderer.fontHeight : 9;
+        float scale = getScale();
+        int pad = Math.max(4, Math.round(PAD * scale));
+        return getHeaderHeight(scale) + pad + lineH + pad;
     }
 
     public static void renderPreview(DrawContext ctx, int x, int y) {
@@ -88,13 +96,26 @@ public final class VanishFeature {
     }
 
     private static void drawBox(DrawContext ctx, MinecraftClient mc, int x, int y, Text line) {
-        int pad = Math.max(4, Math.round(PAD * getScale()));
+        float scale = getScale();
+        int pad = Math.max(4, Math.round(PAD * scale));
+        int headerH = getHeaderHeight(scale);
+        int badgeSize = getBadgeSize(scale);
         int w = getBoxWidth(mc.textRenderer);
         int h = getPreviewHeight();
 
-        UiChrome.drawPanel(ctx, x, y, w, h, 8, System.currentTimeMillis());
-        int textY = y + Math.max(4, (h - mc.textRenderer.fontHeight) / 2);
-        ctx.drawText(mc.textRenderer, line, x + pad, textY, 0xFFFFFFFF, true);
+        UiChrome.drawHudPanel(ctx, x, y, w, h, 8, headerH, System.currentTimeMillis(), 0.10f, true);
+        int titleY = y + Math.max(2, (headerH - mc.textRenderer.fontHeight) / 2);
+        UiChrome.drawText(ctx, mc.textRenderer, HEADER, x + pad, titleY, UiChrome.mainTextColor(250), false);
+        UiChrome.drawHudHeaderBadge(
+                ctx,
+                x + w - pad - badgeSize,
+                y + Math.max(1, (headerH - badgeSize) / 2),
+                badgeSize,
+                vanishEnabled
+        );
+
+        int textY = y + headerH + pad;
+        UiChrome.drawText(ctx, mc.textRenderer, line, x + pad, textY, UiChrome.mainTextColor(250), true);
     }
 
     private static void onChatMessage(String msg) {
@@ -145,5 +166,13 @@ public final class VanishFeature {
         float v = StaffHelperState.CONFIG.vanishBoxScale;
         if (Float.isNaN(v)) return 1.0f;
         return Math.max(0.6f, Math.min(2.0f, v));
+    }
+
+    private static int getHeaderHeight(float scale) {
+        return Math.max(14, Math.round(16 * scale));
+    }
+
+    private static int getBadgeSize(float scale) {
+        return Math.max(7, Math.round(8 * scale));
     }
 }

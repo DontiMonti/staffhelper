@@ -18,29 +18,32 @@ public class SoupIntSliderWidget extends IntSliderWidget {
         boolean enabled = this.active;
         long now = System.currentTimeMillis();
 
-        hoverAnim = hoverAnim + ((hovered ? 1.0f : 0.0f) - hoverAnim) * 0.28f;
-        float accentBoost = enabled ? (-0.10f + hoverAnim * 0.34f) : -0.32f;
+        hoverAnim = hoverAnim + ((hovered ? 1.0f : 0.0f) - hoverAnim) * 0.24f;
+        float accentBoost = enabled ? (-0.18f + hoverAnim * 0.38f) : -0.36f;
 
         UiChrome.drawPanel(ctx, getX(), getY(), getWidth(), getHeight(), 7, now, accentBoost, false, false);
 
-        int trackX = getX() + 10;
-        int trackY = getY() + getHeight() - 7;
-        int trackW = Math.max(24, getWidth() - 20);
+        int trackX = getX() + 9;
+        int trackY = getY() + getHeight() - 8;
+        int trackW = Math.max(24, getWidth() - 18);
         int trackH = 3;
-        GuiRenderUtils.roundedRect(ctx, trackX, trackY, trackX + trackW, trackY + trackH, 2, enabled ? 0x7A11151C : 0x5511151C);
+
+        int trackColor = enabled ? UiChrome.outlineColor(132) : UiChrome.outlineColor(92);
+        GuiRenderUtils.roundedRect(ctx, trackX, trackY, trackX + trackW, trackY + trackH, 2, trackColor);
 
         int fillW = Math.max(1, (int) Math.round(trackW * this.value));
-        GuiRenderUtils.roundedRect(ctx, trackX, trackY, trackX + fillW, trackY + trackH, 2, enabled ? 0xFF7FA9E8 : 0x886E7E99);
+        int fillColor = enabled ? UiChrome.accentColor(220) : UiChrome.accentColor(120);
+        GuiRenderUtils.roundedRect(ctx, trackX, trackY, trackX + fillW, trackY + trackH, 2, fillColor);
 
         int knobW = 8;
-        int knobH = 13;
+        int knobH = 12;
         int knobX = trackX + (int) Math.round((trackW - knobW) * this.value);
         int knobY = getY() + getHeight() - 13;
-        int knobColor = enabled ? 0xFFE3E8F2 : 0xFF8993A6;
+        int knobColor = enabled ? UiChrome.mainTextColor(246) : UiChrome.mutedTextColor(188);
         GuiRenderUtils.roundedRect(ctx, knobX, knobY, knobX + knobW, knobY + knobH, 4, knobColor);
-        GuiRenderUtils.roundedOutline(ctx, knobX, knobY, knobX + knobW, knobY + knobH, 4, 1, 0xAA13161D);
+        GuiRenderUtils.roundedOutline(ctx, knobX, knobY, knobX + knobW, knobY + knobH, 4, 1, UiChrome.outlineColor(168));
 
-        int textColor = enabled ? 0xFFEAEAEA : 0xFF7A7A7A;
+        int textColor = enabled ? UiChrome.mainTextColor(242) : UiChrome.mutedTextColor(184);
         var tr = MinecraftClient.getInstance().textRenderer;
         ctx.drawText(tr, getMessage(), getX() + 8, getY() + 6, textColor, false);
     }

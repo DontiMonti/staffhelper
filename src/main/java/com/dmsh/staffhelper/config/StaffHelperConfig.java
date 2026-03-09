@@ -47,6 +47,7 @@ public class StaffHelperConfig {
     public String uiTheme = "BLUE";
     public int uiCustomColor1 = 0x2D4A73;
     public int uiCustomColor2 = 0x5F8FD6;
+    public List<UiGradientStop> uiCustomGradientStops = defaultCustomGradientStops(uiCustomColor1, uiCustomColor2);
     public boolean uiSheenAnimationEnabled = true;
 
     public boolean afkZoneEnabled = true;
@@ -128,6 +129,11 @@ public class StaffHelperConfig {
         uiTheme = normalizeTheme(uiTheme);
         uiCustomColor1 = clampRgb(uiCustomColor1, 0x2D4A73);
         uiCustomColor2 = clampRgb(uiCustomColor2, 0x5F8FD6);
+        uiCustomGradientStops = normalizeCustomGradientStops(uiCustomGradientStops, uiCustomColor1, uiCustomColor2);
+        if (!uiCustomGradientStops.isEmpty()) {
+            uiCustomColor1 = uiCustomGradientStops.get(0).color;
+            uiCustomColor2 = uiCustomGradientStops.get(uiCustomGradientStops.size() - 1).color;
+        }
         autoBoxSelection = clampAutoBoxSelection(autoBoxSelection);
         autoBoxCommandBox1 = safe(autoBoxCommandBox1);
         autoBoxCommandBox2 = safe(autoBoxCommandBox2);
@@ -205,6 +211,73 @@ public class StaffHelperConfig {
         return value;
     }
 
+    private static List<UiGradientStop> defaultCustomGradientStops(int color1, int color2) {
+        List<UiGradientStop> out = new ArrayList<>();
+        out.add(new UiGradientStop(0.0f, clampRgb(color1, 0x2D4A73)));
+        out.add(new UiGradientStop(1.0f, clampRgb(color2, 0x5F8FD6)));
+        return out;
+    }
+
+    private static List<UiGradientStop> normalizeCustomGradientStops(List<UiGradientStop> source, int fallback1, int fallback2) {
+        int c1 = clampRgb(fallback1, 0x2D4A73);
+        int c2 = clampRgb(fallback2, 0x5F8FD6);
+
+        // Backward compatibility: when loading old configs without gradient stops,
+        // gson leaves this field with initializer defaults (0/1 + stock colors).
+        // In that case prefer legacy uiCustomColor1/uiCustomColor2 values.
+        if ((c1 != 0x2D4A73 || c2 != 0x5F8FD6) && looksLikeDefaultStops(source)) {
+            return defaultCustomGradientStops(c1, c2);
+        }
+
+        List<UiGradientStop> out = new ArrayList<>();
+        if (source != null) {
+            for (UiGradientStop stop : source) {
+                if (stop == null) continue;
+                UiGradientStop clean = new UiGradientStop();
+                clean.position = clamp01(stop.position);
+                clean.color = clampRgb(stop.color, clean.position <= 0.5f ? c1 : c2);
+                out.add(clean);
+                if (out.size() >= 10) break;
+            }
+        }
+
+        if (out.isEmpty()) {
+            return defaultCustomGradientStops(c1, c2);
+        }
+
+        out.sort((a, b) -> Float.compare(a.position, b.position));
+        if (out.size() == 1) {
+            UiGradientStop only = out.get(0);
+            float secondPos = only.position < 0.5f ? 1.0f : 0.0f;
+            int secondColor = only.position < 0.5f ? c2 : c1;
+            out.add(new UiGradientStop(secondPos, secondColor));
+            out.sort((a, b) -> Float.compare(a.position, b.position));
+        }
+        return out;
+    }
+
+    private static boolean looksLikeDefaultStops(List<UiGradientStop> source) {
+        if (source == null || source.size() != 2) return false;
+        UiGradientStop a = source.get(0);
+        UiGradientStop b = source.get(1);
+        if (a == null || b == null) return false;
+
+        float p0 = clamp01(a.position);
+        float p1 = clamp01(b.position);
+        int c0 = clampRgb(a.color, 0x2D4A73);
+        int c1 = clampRgb(b.color, 0x5F8FD6);
+        return Math.abs(p0 - 0.0f) < 0.0001f
+                && Math.abs(p1 - 1.0f) < 0.0001f
+                && c0 == 0x2D4A73
+                && c1 == 0x5F8FD6;
+    }
+
+    private static float clamp01(float value) {
+        if (Float.isNaN(value)) return 0.0f;
+        if (value < 0.0f) return 0.0f;
+        return Math.min(1.0f, value);
+    }
+
     private static String decodeSecretAtRuntime(String plainOrEncoded, String encryptedField) {
         String p = safe(plainOrEncoded);
         if (!p.isEmpty()) {
@@ -265,6 +338,18 @@ public class StaffHelperConfig {
         public boolean hasExecuteToken(String token) {
             if (token == null || token.isBlank()) return false;
             return execute != null && execute.toLowerCase(Locale.ROOT).contains(token.toLowerCase(Locale.ROOT));
+        }
+    }
+
+    public static class UiGradientStop {
+        public float position = 0.0f;
+        public int color = 0xFFFFFF;
+
+        public UiGradientStop() {}
+
+        public UiGradientStop(float position, int color) {
+            this.position = position;
+            this.color = color;
         }
     }
 }

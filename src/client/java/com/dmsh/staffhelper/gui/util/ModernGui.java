@@ -31,12 +31,12 @@ public final class ModernGui {
     }
 
     public static void shadow(DrawContext ctx, int x, int y, int w, int h, int radius, int spread, int colorARGB) {
-        for (int i = spread; i >= 1; i--) {
-            float k = (float)i / (float)spread;
-            int a = (int)(((colorARGB>>>24)&255) * k * 0.35f);
-            int c = (colorARGB & 0x00FFFFFF) | (a<<24);
-            roundedRect(ctx, x - i, y - i, w + i*2, h + i*2, radius + i, c);
-        }
+        if (w <= 0 || h <= 0 || spread <= 0) return;
+        int alpha = (colorARGB >>> 24) & 0xFF;
+        if (alpha <= 0) return;
+        int glowAlpha = Math.max(1, Math.round(alpha * 0.30f));
+        int glowColor = (glowAlpha << 24) | (colorARGB & 0x00FFFFFF);
+        SmoothUiShader.drawRoundedGlow(ctx, x, y, w, h, radius, spread, glowColor);
     }
 
     public static void roundedRect(DrawContext ctx, int x, int y, int w, int h, int radius, int colorARGB) {
@@ -45,66 +45,22 @@ public final class ModernGui {
             ctx.fill(x, y, x + w, y + h, colorARGB);
             return;
         }
-        int r = Math.min(radius, Math.min(w, h) / 2);
-
-        ctx.fill(x + r, y, x + w - r, y + h, colorARGB);
-
-        ctx.fill(x, y + r, x + r, y + h - r, colorARGB);
-        ctx.fill(x + w - r, y + r, x + w, y + h - r, colorARGB);
-
-        for (int dy = 0; dy < r; dy++) {
-            int yyTop = y + dy;
-            int yyBot = y + h - 1 - dy;
-            int dx = (int)Math.floor(Math.sqrt((double)r*r - (double)(r - dy)*(r - dy)));
-            int left = x + r - dx;
-            int right = x + w - r + dx;
-
-            ctx.fill(left, yyTop, right, yyTop + 1, colorARGB);
-            ctx.fill(left, yyBot, right, yyBot + 1, colorARGB);
-        }
+        SmoothUiShader.drawRoundedFill(ctx, x, y, w, h, radius, colorARGB);
     }
 
     public static void roundedOutline(DrawContext ctx, int x, int y, int w, int h, int radius, int colorARGB) {
-
-        roundedRect(ctx, x, y, w, 1, radius, colorARGB);
-        roundedRect(ctx, x, y + h - 1, w, 1, radius, colorARGB);
-
-        roundedRect(ctx, x, y, 1, h, radius, colorARGB);
-        roundedRect(ctx, x + w - 1, y, 1, h, radius, colorARGB);
+        if (w <= 0 || h <= 0) return;
+        SmoothUiShader.drawRoundedOutline(ctx, x, y, w, h, radius, 1, colorARGB);
     }
 
     public static void roundedVerticalGradient(DrawContext ctx, int x, int y, int w, int h, int radius, int topColor, int bottomColor) {
         if (w <= 0 || h <= 0) return;
-        int r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
-
-        for (int i = 0; i < h; i++) {
-            float t = (h <= 1) ? 1f : (float)i / (float)(h - 1);
-            int c = lerpColor(topColor, bottomColor, t);
-
-            int yy = y + i;
-
-            int insetL = 0;
-            int insetR = 0;
-
-            if (r > 0) {
-                if (i < r) {
-                    int dy = i;
-                    int dx = (int)Math.floor(Math.sqrt((double)r*r - (double)(r - dy)*(r - dy)));
-                    insetL = r - dx;
-                    insetR = r - dx;
-                } else if (i >= h - r) {
-                    int dy = h - 1 - i;
-                    int dx = (int)Math.floor(Math.sqrt((double)r*r - (double)(r - dy)*(r - dy)));
-                    insetL = r - dx;
-                    insetR = r - dx;
-                }
-            }
-
-            ctx.fill(x + insetL, yy, x + w - insetR, yy + 1, c);
-        }
+        SmoothUiShader.drawRoundedGradient(ctx, x, y, w, h, radius, topColor, bottomColor);
     }
 
     public static void topHighlight(DrawContext ctx, int x, int y, int w, int radius, int colorARGB) {
-        roundedRect(ctx, x + 1, y + 1, w - 2, 2, radius, colorARGB);
+        if (w <= 2) return;
+        int transparent = colorARGB & 0x00FFFFFF;
+        SmoothUiShader.drawRoundedGradient(ctx, x + 1, y + 1, w - 2, 3, radius, colorARGB, transparent);
     }
 }

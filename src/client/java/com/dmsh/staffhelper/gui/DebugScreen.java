@@ -3,6 +3,7 @@ package com.dmsh.staffhelper.gui;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.feature.StaffStatsFeature;
+import com.dmsh.staffhelper.feature.UpdateNotifyFeature;
 import com.dmsh.staffhelper.feature.VanishFeature;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.gui.widget.IntSliderWidget;
@@ -35,6 +36,8 @@ public class DebugScreen extends Screen {
     private ButtonWidget logsBtn;
     private ButtonWidget forceBtn;
     private ButtonWidget backBtn;
+    private ButtonWidget simulateOldVersionBtn;
+    private ButtonWidget simulateFutureVersionBtn;
     private ButtonWidget closeBtn;
     private IntSliderWidget verticalSlider;
     private IntSliderWidget horizontalSlider;
@@ -50,6 +53,11 @@ public class DebugScreen extends Screen {
 
     @Override
     protected void init() {
+        int closeX = this.width - 92;
+        int simBtnW = 126;
+        int simFutureX = Math.max(12, closeX - simBtnW - 8);
+        int simOldX = Math.max(12, simFutureX - simBtnW - 8);
+
         logsBtn = addDrawableChild(new SoupButtonWidget(12, 10, 120, 20, Text.literal("Logs"), b -> {
             mode = Mode.LOGS;
             updateModeVisibility();
@@ -65,7 +73,14 @@ public class DebugScreen extends Screen {
             updateModeVisibility();
         }));
 
-        closeBtn = addDrawableChild(new SoupButtonWidget(this.width - 92, 10, 80, 20, Text.literal("Close"), b -> close()));
+        simulateOldVersionBtn = addDrawableChild(new SoupButtonWidget(
+                simOldX, 10, simBtnW, 20, Text.literal("Sim OLD Version"), b -> UpdateNotifyFeature.simulateOldVersionNotice()
+        ));
+        simulateFutureVersionBtn = addDrawableChild(new SoupButtonWidget(
+                simFutureX, 10, simBtnW, 20, Text.literal("Sim FUTURE Version"), b -> UpdateNotifyFeature.simulateFutureVersionNotice()
+        ));
+
+        closeBtn = addDrawableChild(new SoupButtonWidget(closeX, 10, 80, 20, Text.literal("Close"), b -> close()));
 
         verticalSlider = addDrawableChild(new IntSliderWidget(
                 14, this.height - 52, 280, 20, "Up/Down", 0, 0, 0, value -> logsScrollY = value
@@ -80,12 +95,17 @@ public class DebugScreen extends Screen {
 
     private void updateModeVisibility() {
         boolean logsMode = mode == Mode.LOGS;
+        boolean overviewMode = mode == Mode.OVERVIEW;
         logsBtn.visible = !logsMode;
         logsBtn.active = !logsMode;
         forceBtn.visible = logsMode;
         forceBtn.active = logsMode;
         backBtn.visible = logsMode;
         backBtn.active = logsMode;
+        simulateOldVersionBtn.visible = overviewMode;
+        simulateOldVersionBtn.active = overviewMode;
+        simulateFutureVersionBtn.visible = overviewMode;
+        simulateFutureVersionBtn.active = overviewMode;
         verticalSlider.visible = logsMode;
         verticalSlider.active = logsMode;
         horizontalSlider.visible = logsMode;

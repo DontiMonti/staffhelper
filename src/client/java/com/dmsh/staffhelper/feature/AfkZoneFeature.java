@@ -533,7 +533,8 @@ public final class AfkZoneFeature {
         float scale = getAfkBoxScale();
         int pad = Math.max(4, Math.round(6 * scale));
         int lineH = Math.max(10, Math.round(10 * scale));
-        int titleH = Math.max(12, Math.round(12 * scale));
+        int headerH = getHeaderHeight(scale);
+        int contentTopPad = getContentTopPad(scale);
         float panelVisual = easeOutCubic(animatedHudPanelProgress);
 
         int w = mc.textRenderer.getWidth(title);
@@ -548,20 +549,32 @@ public final class AfkZoneFeature {
         }
         w += pad * 2;
 
-        int h = pad + Math.max(1, Math.round(titleH * animatedHudPanelProgress)) + Math.max(1, Math.round(visibleRows * lineH)) + pad;
+        int h = headerH + contentTopPad + Math.max(1, Math.round(visibleRows * lineH)) + pad;
 
-        UiChrome.drawPanel(ctx, x, y, w, h, 8, System.currentTimeMillis());
+        UiChrome.drawHudPanel(
+                ctx,
+                x,
+                y,
+                w,
+                h,
+                8,
+                Math.max(1, Math.round(headerH * panelVisual)),
+                System.currentTimeMillis(),
+                0.11f,
+                true
+        );
 
         int titleAlpha = Math.max(0, Math.min(255, Math.round(255 * panelVisual)));
-        ctx.drawText(mc.textRenderer, title, x + pad, y + pad, (titleAlpha << 24) | 0xFFFFFF, true);
+        int titleY = y + Math.max(2, (headerH - mc.textRenderer.fontHeight) / 2);
+        ctx.drawText(mc.textRenderer, title, x + pad, titleY, withAlpha(UiChrome.mainTextColor(255), titleAlpha), false);
 
-        float yy = y + pad + titleH;
+        float yy = y + headerH + contentTopPad;
         for (AnimatedHudRow row : sorted) {
             if (row.progress <= 0.01f) continue;
             float rowVisual = easeOutCubic(row.progress) * panelVisual;
             int alpha = Math.max(0, Math.min(255, Math.round(190 * rowVisual)));
             int lineX = x + pad + Math.round((1.0f - rowVisual) * 8.0f);
-            ctx.drawText(mc.textRenderer, Text.literal(row.text), lineX, Math.round(yy), (alpha << 24) | 0xBEBEBE, true);
+            ctx.drawText(mc.textRenderer, Text.literal(row.text), lineX, Math.round(yy), UiChrome.mutedTextColor(alpha), false);
             yy += row.progress * lineH;
         }
     }
@@ -622,6 +635,19 @@ public final class AfkZoneFeature {
         float v = StaffHelperState.CONFIG.afkBoxScale;
         if (Float.isNaN(v)) return 1.0f;
         return Math.max(0.6f, Math.min(2.0f, v));
+    }
+
+    private static int getHeaderHeight(float scale) {
+        return Math.max(14, Math.round(16 * scale));
+    }
+
+    private static int getContentTopPad(float scale) {
+        return Math.max(3, Math.round(4 * scale));
+    }
+
+    private static int withAlpha(int argb, int alpha) {
+        int a = Math.max(0, Math.min(255, alpha));
+        return (a << 24) | (argb & 0x00FFFFFF);
     }
 
     private static void renderZone(MatrixStack matrices, Vec3d cameraPos, VertexConsumerProvider consumers) {

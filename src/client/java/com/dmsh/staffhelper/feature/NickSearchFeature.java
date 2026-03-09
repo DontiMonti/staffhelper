@@ -1,6 +1,7 @@
 package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
+import com.dmsh.staffhelper.gui.util.ModernGui;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -137,7 +138,8 @@ public class NickSearchFeature {
         MinecraftClient mc = MinecraftClient.getInstance();
         int padding = getPadding(scale);
         int lineH = getLineHeight(scale);
-        int titleH = Math.max(mc.textRenderer.fontHeight + 2, Math.round(12 * scale));
+        int headerH = getHeaderHeight(scale);
+        int contentTopPad = getContentTopPad(scale);
         int width = getWidgetWidth(scale);
         float panelVisual = easeOutCubic(panelProgress);
 
@@ -154,21 +156,34 @@ public class NickSearchFeature {
             y = Math.max(0, Math.min(y, screenH - height));
         }
 
-        UiChrome.drawPanel(ctx, x, y, width, height, 8, System.currentTimeMillis());
+        UiChrome.drawHudPanel(
+                ctx,
+                x,
+                y,
+                width,
+                height,
+                8,
+                Math.max(1, Math.round(headerH * panelVisual)),
+                System.currentTimeMillis(),
+                0.12f,
+                true
+        );
+        drawHeaderTransition(ctx, x, y, width, headerH, panelVisual);
 
         int titleAlpha = Math.max(0, Math.min(255, Math.round(255 * panelVisual)));
-        ctx.drawText(mc.textRenderer, Text.literal("NickSearch"), x + padding, y + padding, (titleAlpha << 24) | 0xFFFFFF, false);
+        int titleY = y + Math.max(2, (headerH - mc.textRenderer.fontHeight) / 2);
+        UiChrome.drawText(ctx, mc.textRenderer, UiChrome.uiLiteral("NickSearch"), x + padding, titleY, withAlpha(UiChrome.mainTextColor(255), titleAlpha), false);
 
         List<AnimatedNickRow> sorted = new ArrayList<>(animatedRows.values());
         sorted.sort(Comparator.comparingInt(r -> r.order));
 
-        float yy = y + padding + titleH;
+        float yy = y + headerH + contentTopPad;
         for (AnimatedNickRow row : sorted) {
             if (row.progress <= 0.01f) continue;
             float rowVisual = easeOutCubic(row.progress) * panelVisual;
             int alpha = Math.max(0, Math.min(255, Math.round(234 * rowVisual)));
             int lineX = x + padding + Math.round((1.0f - rowVisual) * 8.0f);
-            ctx.drawText(mc.textRenderer, row.display, lineX, Math.round(yy), (alpha << 24) | 0xEAEAEA, false);
+            UiChrome.drawText(ctx, mc.textRenderer, row.display, lineX, Math.round(yy), UiChrome.mainTextColor(alpha), false);
             yy += row.progress * lineH;
         }
     }
@@ -184,11 +199,11 @@ public class NickSearchFeature {
 
     public static void renderWidgetPreview(DrawContext ctx, int x, int y) {
         List<Text> demo = List.of(
-                Text.literal("ExamplePlayer1"),
-                Text.literal("Klaucnher_123"),
-                Text.literal("Tester"),
-                Text.literal("AdminGuy"),
-                Text.literal("Someone")
+                UiChrome.uiLiteral("ExamplePlayer1"),
+                UiChrome.uiLiteral("Klaucnher_123"),
+                UiChrome.uiLiteral("Tester"),
+                UiChrome.uiLiteral("AdminGuy"),
+                UiChrome.uiLiteral("Someone")
         );
         renderWidgetText(ctx, x, y, demo, true);
     }
@@ -199,7 +214,8 @@ public class NickSearchFeature {
 
         int padding = getPadding(scale);
         int lineH = getLineHeight(scale);
-        int titleH = Math.max(12, Math.round(12 * scale));
+        int headerH = getHeaderHeight(scale);
+        int contentTopPad = getContentTopPad(scale);
 
         int width = getWidgetWidth(scale);
         int height = getWidgetHeight(lines.size(), scale);
@@ -211,14 +227,30 @@ public class NickSearchFeature {
             y = Math.max(0, Math.min(y, screenH - height));
         }
 
-        UiChrome.drawPanel(ctx, x, y, width, height, 8, System.currentTimeMillis());
+        UiChrome.drawHudPanel(ctx, x, y, width, height, 8, headerH, System.currentTimeMillis(), 0.10f, true);
+        drawHeaderTransition(ctx, x, y, width, headerH, 1.0f);
 
-        ctx.drawText(mc.textRenderer, Text.literal("NickSearch"), x + padding, y + padding, 0xFFFFFFFF, false);
+        int titleY = y + Math.max(2, (headerH - mc.textRenderer.fontHeight) / 2);
+        UiChrome.drawText(ctx, mc.textRenderer, UiChrome.uiLiteral("NickSearch"), x + padding, titleY, UiChrome.mainTextColor(255), false);
 
-        int yy = y + padding + titleH;
+        int yy = y + headerH + contentTopPad;
         for (Text t : lines) {
-            ctx.drawText(mc.textRenderer, t, x + padding, yy, 0xFFEAEAEA, false);
+            UiChrome.drawText(ctx, mc.textRenderer, t, x + padding, yy, UiChrome.mainTextColor(234), false);
             yy += lineH;
+        }
+    }
+
+    private static void drawHeaderTransition(DrawContext ctx, int x, int y, int width, int headerH, float progress) {
+        int blendTop = y + Math.max(0, headerH - 1);
+        int blendHeight = Math.max(5, Math.round(8 * (0.45f + (0.55f * progress))));
+        for (int i = 0; i < blendHeight; i++) {
+            float t = i / (float) Math.max(1, blendHeight - 1);
+            int alpha = Math.max(0, Math.min(92, Math.round((1.0f - t) * (24 + (42 * progress)))));
+            if (alpha <= 0) continue;
+            int accent = UiChrome.accentColor(alpha);
+            int neutral = UiChrome.outlineColor(Math.max(8, alpha / 2));
+            int lineColor = ModernGui.lerpColor(accent, neutral, 0.58f);
+            ctx.fill(x + 2, blendTop + i, x + width - 2, blendTop + i + 1, lineColor);
         }
     }
 
@@ -267,24 +299,40 @@ public class NickSearchFeature {
     private static int getWidgetHeight(int rows, float scale) {
         int padding = getPadding(scale);
         int lineH = getLineHeight(scale);
-        int titleH = Math.max(12, Math.round(12 * scale));
-        return padding + titleH + (rows * lineH) + padding;
+        int headerH = getHeaderHeight(scale);
+        int contentTopPad = getContentTopPad(scale);
+        return headerH + contentTopPad + (rows * lineH) + padding;
     }
 
     private static int getAnimatedWidgetHeight(float visibleRows, float scale, float openProgress) {
         int padding = getPadding(scale);
         int lineH = getLineHeight(scale);
-        int titleH = Math.max(12, Math.round(12 * scale));
+        int headerH = getHeaderHeight(scale);
+        int contentTopPad = getContentTopPad(scale);
         int contentH = Math.max(1, Math.round(visibleRows * lineH));
-        return padding + Math.max(1, Math.round(titleH * openProgress)) + contentH + padding;
+        int animatedContent = Math.max(1, Math.round(contentH * Math.max(0.20f, openProgress)));
+        return headerH + contentTopPad + animatedContent + padding;
     }
 
     private static int getPadding(float scale) {
         return Math.max(4, Math.round(6 * scale));
     }
 
+    private static int getHeaderHeight(float scale) {
+        return Math.max(14, Math.round(16 * scale));
+    }
+
+    private static int getContentTopPad(float scale) {
+        return Math.max(3, Math.round(4 * scale));
+    }
+
     private static int getLineHeight(float scale) {
         return Math.max(10, Math.round(10 * scale));
+    }
+
+    private static int withAlpha(int argb, int alpha) {
+        int a = Math.max(0, Math.min(255, alpha));
+        return (a << 24) | (argb & 0x00FFFFFF);
     }
 
     private static float joinProgress() {
