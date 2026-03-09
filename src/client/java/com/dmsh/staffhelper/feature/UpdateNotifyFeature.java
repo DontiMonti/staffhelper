@@ -35,7 +35,7 @@ public final class UpdateNotifyFeature {
 
     private static final String LEGACY_UPDATES_URL = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_updates.json";
     private static final String RELEASES_URL = "https://github.com/DontiMonti/staffhelper/releases";
-    private static final String MSG_UPDATE_REQUIRED_PREFIX = "[ESH] Вышла новая мода, скачайте её здесь ";
+    private static final String MSG_UPDATE_REQUIRED_PREFIX = "[ESH] Вышла новая версия мода, скачайте её здесь ";
     private static final String TITLE_UPDATE_REQUIRED = "Нужно обновить ElytraStaffhelper";
     private static final String MSG_LOCAL_ABOVE_REMOTE =
             "[ESH] Ты где взял эту версию чумба? Ты че дофига разработчик?";
