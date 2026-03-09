@@ -33,7 +33,7 @@ public final class UiChrome {
     }
 
     public static void drawPanel(DrawContext ctx, int x, int y, int w, int h, int radius, long nowMs) {
-        drawPanel(ctx, x, y, w, h, radius, nowMs, 0.0f, true, true);
+        drawPanel(ctx, x, y, w, h, radius, nowMs, 0.0f, true);
     }
 
     public static void drawPanel(
@@ -47,24 +47,8 @@ public final class UiChrome {
             float accentBoost,
             boolean shadow
     ) {
-        drawPanel(ctx, x, y, w, h, radius, nowMs, accentBoost, shadow, true);
-    }
-
-    public static void drawPanel(
-            DrawContext ctx,
-            int x,
-            int y,
-            int w,
-            int h,
-            int radius,
-            long nowMs,
-            float accentBoost,
-            boolean shadow,
-            boolean sheen
-    ) {
         if (w <= 0 || h <= 0) return;
-        boolean animated = isUiSheenAnimationEnabled();
-        float pulse = animated ? (float) ((Math.sin(nowMs / 600.0) + 1.0) * 0.5) : 0.5f;
+        float pulse = (float) ((Math.sin(nowMs / 600.0) + 1.0) * 0.5);
         float accent = clamp01(0.40f + (accentBoost * 0.65f) + (pulse * 0.12f));
 
         ThemePalette palette = getThemePalette();
@@ -84,15 +68,9 @@ public final class UiChrome {
         ModernGui.roundedVerticalGradient(ctx, x, y, w, h, radius, top, bottom);
         ModernGui.roundedOutline(ctx, x, y, w, h, radius, border);
         ModernGui.roundedOutline(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, radius - 1), inner);
-        ModernGui.topHighlight(ctx, x, y, w, radius, ModernGui.argb(46, 255, 255, 255));
-
         if (h >= 56) {
             int divider = ModernGui.lerpColor(outlineColor(84), accentColor(84), accent * 0.45f);
             ctx.fill(x + 2, y + 28, x + w - 2, y + 29, divider);
-        }
-
-        if (sheen && animated) {
-            drawSheen(ctx, x, y, w, h, nowMs);
         }
     }
 
@@ -121,7 +99,7 @@ public final class UiChrome {
             float accentBoost,
             boolean shadow
     ) {
-        drawPanel(ctx, x, y, w, h, radius, nowMs, accentBoost, shadow, false);
+        drawPanel(ctx, x, y, w, h, radius, nowMs, accentBoost, shadow);
 
         int innerW = w - 2;
         int maxHeader = h - 2;
@@ -156,28 +134,6 @@ public final class UiChrome {
         ModernGui.roundedRect(ctx, x, y, size, size, radius, fill);
         ModernGui.roundedOutline(ctx, x, y, size, size, radius, border);
         ctx.fill(dotX, dotY, dotX + dotSize, dotY + dotSize, dot);
-    }
-
-    private static void drawSheen(DrawContext ctx, int x, int y, int w, int h, long nowMs) {
-        int inset = 2;
-        int ix = x + inset;
-        int iy = y + inset;
-        int iw = w - inset * 2;
-        int ih = h - inset * 2;
-        if (iw <= 0 || ih <= 0) return;
-
-        ctx.enableScissor(ix, iy, ix + iw, iy + ih);
-        int sweep = ix - 20 + (int) (((nowMs % 2300L) / 2300.0) * (iw + 40));
-        int c1 = ModernGui.argb(8, 255, 255, 255);
-        int c2 = ModernGui.argb(16, 255, 255, 255);
-        for (int i = 0; i < ih; i++) {
-            int yy = iy + i;
-            int xx = sweep + (i / 2);
-            ctx.fill(xx, yy, xx + 1, yy + 1, c1);
-            ctx.fill(xx + 1, yy, xx + 2, yy + 1, c2);
-            ctx.fill(xx + 2, yy, xx + 3, yy + 1, c1);
-        }
-        ctx.disableScissor();
     }
 
     private static float clamp01(float v) {
@@ -262,11 +218,16 @@ public final class UiChrome {
 
         int topShade = sampleGradientColor(stops, topSample);
         int bottomShade = sampleGradientColor(stops, bottomSample);
-        int accent = sampleGradientColor(stops, clamp01((topSample + bottomSample) * 0.5f));
+        int midShade = sampleGradientColor(stops, clamp01((topSample + bottomSample) * 0.5f));
+        int accent = mixRgb(midShade, sampleGradientColor(stops, clamp01((topSample * 0.35f) + (bottomSample * 0.65f))), 0.50f);
 
-        // Make custom palette tint stronger so added colors are visible in the menu.
-        int top = mixRgb(0x1A1A20, topShade, 0.34f);
-        int bottom = mixRgb(0x141419, bottomShade, 0.26f);
+        // Blend with middle tone so newly added stops visibly affect the final custom palette.
+        int topBlend = mixRgb(topShade, midShade, 0.34f);
+        int bottomBlend = mixRgb(bottomShade, midShade, 0.28f);
+
+        // Stronger tint so custom colors are clearly visible in the UI.
+        int top = mixRgb(0x1A1A20, topBlend, 0.40f);
+        int bottom = mixRgb(0x141419, bottomBlend, 0.33f);
 
         return new ThemePalette(
                 (top >> 16) & 0xFF, (top >> 8) & 0xFF, top & 0xFF,
@@ -343,11 +304,6 @@ public final class UiChrome {
         int rg = (int) (ag + (bg - ag) * k);
         int rb = (int) (ab + (bb - ab) * k);
         return (rr << 16) | (rg << 8) | rb;
-    }
-
-    private static boolean isUiSheenAnimationEnabled() {
-        if (StaffHelperState.CONFIG == null) return true;
-        return StaffHelperState.CONFIG.uiSheenAnimationEnabled;
     }
 
     private record ThemePalette(

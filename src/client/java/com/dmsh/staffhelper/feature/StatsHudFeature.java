@@ -245,7 +245,7 @@ public final class StatsHudFeature {
 
     private static void drawStatChip(DrawContext ctx, MinecraftClient mc, StaffHelperConfig cfg, int x, int y, int w, int h, Text text, int alpha, float visual) {
         float accentBoost = -0.14f + (0.28f * visual);
-        UiChrome.drawPanel(ctx, x, y, w, h, 7, System.currentTimeMillis(), accentBoost, false, false);
+        UiChrome.drawPanel(ctx, x, y, w, h, 7, System.currentTimeMillis(), accentBoost, false);
         int textY = y + (h - mc.textRenderer.fontHeight) / 2;
         UiChrome.drawText(ctx, mc.textRenderer, text, x + getChipPadX(cfg), textY, UiChrome.mainTextColor(alpha), false);
     }

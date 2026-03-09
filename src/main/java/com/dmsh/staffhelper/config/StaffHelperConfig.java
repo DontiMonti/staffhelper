@@ -49,7 +49,6 @@ public class StaffHelperConfig {
     public int uiCustomColor2 = 0x5F8FD6;
     public List<UiGradientStop> uiCustomGradientStops = defaultCustomGradientStops(uiCustomColor1, uiCustomColor2);
     public float uiCustomGradientAngle = 90.0f;
-    public boolean uiSheenAnimationEnabled = true;
 
     public boolean afkZoneEnabled = true;
 

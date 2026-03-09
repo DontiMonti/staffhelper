@@ -50,7 +50,7 @@ public class SoupButtonWidget extends ButtonWidget {
 
         if (enabled) {
             float accentBoost = pressedState ? 0.90f : (-0.22f + (hoverAnim * 0.52f));
-            UiChrome.drawPanel(ctx, drawX, drawY, drawW, drawH, RADIUS, now, accentBoost, hovered || pressedState, false);
+            UiChrome.drawPanel(ctx, drawX, drawY, drawW, drawH, RADIUS, now, accentBoost, hovered || pressedState);
 
             if (pressedState) {
                 int accentFill = UiChrome.accentColor(Math.round(46 * alphaMul));
@@ -64,7 +64,7 @@ public class SoupButtonWidget extends ButtonWidget {
                 drawInnerOverlay(ctx, drawX, drawY, drawW, drawH, shade << 24);
             }
         } else {
-            UiChrome.drawPanel(ctx, drawX, drawY, drawW, drawH, RADIUS, now, -0.40f, false, false);
+            UiChrome.drawPanel(ctx, drawX, drawY, drawW, drawH, RADIUS, now, -0.40f, false);
             drawInnerOverlay(ctx, drawX, drawY, drawW, drawH, 0x55000000);
         }
 

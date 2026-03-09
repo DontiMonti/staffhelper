@@ -58,9 +58,4 @@ public final class ModernGui {
         SmoothUiShader.drawRoundedGradient(ctx, x, y, w, h, radius, topColor, bottomColor);
     }
 
-    public static void topHighlight(DrawContext ctx, int x, int y, int w, int radius, int colorARGB) {
-        if (w <= 2) return;
-        int transparent = colorARGB & 0x00FFFFFF;
-        SmoothUiShader.drawRoundedGradient(ctx, x + 1, y + 1, w - 2, 3, radius, colorARGB, transparent);
-    }
 }

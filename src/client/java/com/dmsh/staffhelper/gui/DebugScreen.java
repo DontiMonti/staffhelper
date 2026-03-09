@@ -133,7 +133,7 @@ public class DebugScreen extends Screen {
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         ctx.fill(0, 0, this.width, this.height, 0xCC000000);
-        UiChrome.drawPanel(ctx, 8, 38, this.width - 16, this.height - 46, 10, System.currentTimeMillis(), 0.05f, true, false);
+        UiChrome.drawPanel(ctx, 8, 38, this.width - 16, this.height - 46, 10, System.currentTimeMillis(), 0.05f, true);
 
         if (mode == Mode.OVERVIEW) {
             renderOverview(ctx);

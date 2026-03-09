@@ -21,7 +21,7 @@ public class SoupIntSliderWidget extends IntSliderWidget {
         hoverAnim = hoverAnim + ((hovered ? 1.0f : 0.0f) - hoverAnim) * 0.24f;
         float accentBoost = enabled ? (-0.18f + hoverAnim * 0.38f) : -0.36f;
 
-        UiChrome.drawPanel(ctx, getX(), getY(), getWidth(), getHeight(), 7, now, accentBoost, false, false);
+        UiChrome.drawPanel(ctx, getX(), getY(), getWidth(), getHeight(), 7, now, accentBoost, false);
 
         int trackX = getX() + 9;
         int trackY = getY() + getHeight() - 8;

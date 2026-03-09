@@ -82,7 +82,6 @@ public class StaffHelperMenuScreen extends Screen {
     private ButtonWidget addBtn;
     private ButtonWidget clearBtn;
     private ButtonWidget hudEditorBtn;
-    private ButtonWidget uiSheenToggleBtn;
     private ButtonWidget toggleBtn;
     private ButtonWidget closeBtn;
     private ButtonWidget afkRenderToggleBtn;
@@ -356,18 +355,6 @@ public class StaffHelperMenuScreen extends Screen {
                 tr("gui.staffhelper.button.edit_hud"),
                 b -> {
                     if (tab == Tab.APPEARANCE) MinecraftClient.getInstance().setScreen(new HudEditorScreen());
-                }
-        ));
-        uiSheenToggleBtn = addDrawableChild(new SoupButtonWidget(
-                x0 + CONTENT_PAD + 120 + 8,
-                y0 + 78,
-                170,
-                20,
-                uiSheenText(),
-                b -> {
-                    StaffHelperState.CONFIG.uiSheenAnimationEnabled = !StaffHelperState.CONFIG.uiSheenAnimationEnabled;
-                    StaffHelperState.CONFIG.save();
-                    b.setMessage(uiSheenText());
                 }
         ));
 
@@ -876,8 +863,6 @@ public class StaffHelperMenuScreen extends Screen {
     private Text stats5mText() { return tr("gui.staffhelper.stats.tps_5m", onOff(StaffHelperState.CONFIG.statsShowTps5m)); }
     private Text stats10mText() { return tr("gui.staffhelper.stats.tps_10m", onOff(StaffHelperState.CONFIG.statsShowTps10m)); }
     private Text stats15mText() { return tr("gui.staffhelper.stats.tps_15m", onOff(StaffHelperState.CONFIG.statsShowTps15m)); }
-    private Text uiSheenText() { return tr("gui.staffhelper.sheen", onOff(StaffHelperState.CONFIG.uiSheenAnimationEnabled)); }
-
     private String autoBoxSelectionName() {
         int selection = getAutoBoxSelection();
         return switch (selection) {
@@ -1017,7 +1002,6 @@ public class StaffHelperMenuScreen extends Screen {
         setVisibleActive(tabAppearanceBtn, visible);
         setVisibleActive(closeBtn, visible);
         setVisibleActive(hudEditorBtn, visible);
-        setVisibleActive(uiSheenToggleBtn, visible);
         setVisibleActive(themeBlueBtn, visible);
         setVisibleActive(themeRedBtn, visible);
         setVisibleActive(themePurpleBtn, visible);
@@ -1704,7 +1688,6 @@ public class StaffHelperMenuScreen extends Screen {
         setModuleButtonState(autoBoxBox2Btn, autoBoxDetailsVisible && moduleInViewport(autoBoxBox2Btn), autoBoxDetailsActive && moduleInViewport(autoBoxBox2Btn), autoBoxAlpha);
 
         setVisibleActive(hudEditorBtn, appearance);
-        setVisibleActive(uiSheenToggleBtn, appearance);
         setVisibleActive(themeBlueBtn, appearance);
         setVisibleActive(themeRedBtn, appearance);
         setVisibleActive(themePurpleBtn, appearance);
@@ -2028,9 +2011,9 @@ public class StaffHelperMenuScreen extends Screen {
         long now = System.currentTimeMillis();
 
         pushMenuScale(ctx);
-        UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, now, 0.10f, true, false);
+        UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, now, 0.10f, true);
 
-        UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false, false);
+        UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false);
         ctx.fill(x0 + SIDEBAR_X_OFFSET + SIDEBAR_W - 1, y0 + 54, x0 + SIDEBAR_X_OFFSET + SIDEBAR_W, y0 + panelH - 12, tabTextColor(UiChrome.outlineColor(106)));
 
         int titleX = x0 + CONTENT_PAD;
@@ -2252,15 +2235,15 @@ public class StaffHelperMenuScreen extends Screen {
         if (customStopRemoveBtn != null) customStopRemoveBtn.active = customGradientDraft.size() > 2;
 
         ctx.fill(0, 0, this.width, this.height, 0x7A000000);
-        UiChrome.drawPanel(ctx, x, y, w, h, 10, now, 0.22f, true, false);
+        UiChrome.drawPanel(ctx, x, y, w, h, 10, now, 0.22f, true);
         ctx.fill(x + 12, y + 40, x + w - 12, y + 41, 0x882A2F3A);
-        UiChrome.drawPanel(ctx, x + 12, y + 48, 194, 206, 8, now, -0.06f, false, false);
-        UiChrome.drawPanel(ctx, x + 212, y + 48, 210, 192, 8, now, -0.06f, false, false);
+        UiChrome.drawPanel(ctx, x + 12, y + 48, 194, 206, 8, now, -0.06f, false);
+        UiChrome.drawPanel(ctx, x + 212, y + 48, 210, 192, 8, now, -0.06f, false);
 
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Custom Theme"), x + 14, y + 12, UiChrome.mainTextColor(255), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("HSV picker + editable gradient stops"), x + 14, y + 26, UiChrome.mutedTextColor(232), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Color picker"), x + 16, y + 52, UiChrome.mainTextColor(248), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Gradient stops"), x + 216, y + 52, UiChrome.mainTextColor(248), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.title"), x + 14, y + 12, UiChrome.mainTextColor(255), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.subtitle"), x + 14, y + 26, UiChrome.mutedTextColor(232), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.color_picker"), x + 16, y + 52, UiChrome.mainTextColor(248), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.gradient_stops"), x + 216, y + 52, UiChrome.mainTextColor(248), false);
 
         int hueColor = 0xFF000000 | hsvToRgb(customPickerHue, 1.0f, 1.0f);
         GuiRenderUtils.roundedRect(ctx, svX, svY, svX + svS, svY + svS, 8, hueColor);
@@ -2310,12 +2293,83 @@ public class StaffHelperMenuScreen extends Screen {
             GuiRenderUtils.roundedOutline(ctx, handleX - (size / 2), handleY - (size / 2), handleX + (size / 2), handleY + (size / 2), 3, 1, border);
         }
 
+        int angleCenterX = customAngleCenterX();
+        int angleCenterY = customAngleCenterY();
+        int anglePreviewSize = customAnglePreviewSize();
+        int angleHalf = anglePreviewSize / 2;
+        int angleLeft = angleCenterX - angleHalf;
+        int angleTop = angleCenterY - angleHalf;
+        float angleRad = (float) Math.toRadians(customGradientAngleDeg);
+        float dirX = (float) Math.cos(angleRad);
+        float dirY = (float) Math.sin(angleRad);
+        int previewDen = Math.max(1, anglePreviewSize - 1);
+
+        for (int py = 0; py < anglePreviewSize; py++) {
+            float ny = ((py / (float) previewDen) * 2.0f) - 1.0f;
+            int yy = angleTop + py;
+            for (int px = 0; px < anglePreviewSize; px++) {
+                float nx = ((px / (float) previewDen) * 2.0f) - 1.0f;
+                float t = clamp01(0.5f + (0.5f * ((nx * dirX) + (ny * dirY))));
+                int rgb = sampleGradientColor(customGradientDraft, t);
+                ctx.fill(angleLeft + px, yy, angleLeft + px + 1, yy + 1, 0xFF000000 | rgb);
+            }
+        }
+        GuiRenderUtils.roundedOutline(ctx, angleLeft, angleTop, angleLeft + anglePreviewSize, angleTop + anglePreviewSize, 6, 1, UiChrome.outlineColor(192));
+
+        int centerSize = 14;
+        int centerHalf = centerSize / 2;
+        int centerColor = 0xFF000000 | sampleGradientColor(customGradientDraft, 0.5f);
+        GuiRenderUtils.roundedRect(
+                ctx,
+                angleCenterX - centerHalf,
+                angleCenterY - centerHalf,
+                angleCenterX + centerHalf,
+                angleCenterY + centerHalf,
+                3,
+                centerColor
+        );
+        GuiRenderUtils.roundedOutline(
+                ctx,
+                angleCenterX - centerHalf,
+                angleCenterY - centerHalf,
+                angleCenterX + centerHalf,
+                angleCenterY + centerHalf,
+                3,
+                1,
+                UiChrome.mainTextColor(216)
+        );
+
+        int angleRadius = customAngleRingRadius();
+        for (int deg = 0; deg < 360; deg += 6) {
+            double rr = Math.toRadians(deg);
+            int px = angleCenterX + (int) Math.round(Math.cos(rr) * angleRadius);
+            int py = angleCenterY + (int) Math.round(Math.sin(rr) * angleRadius);
+            ctx.fill(px, py, px + 1, py + 1, UiChrome.outlineColor(176));
+        }
+        int knobX = angleCenterX + Math.round((float) Math.cos(angleRad) * angleRadius);
+        int knobY = angleCenterY + Math.round((float) Math.sin(angleRad) * angleRadius);
+        int knobSize = 8;
+        int knobHalf = knobSize / 2;
+        GuiRenderUtils.roundedRect(ctx, knobX - knobHalf, knobY - knobHalf, knobX + knobHalf, knobY + knobHalf, 3, UiChrome.accentColor(228));
+        GuiRenderUtils.roundedOutline(ctx, knobX - knobHalf, knobY - knobHalf, knobX + knobHalf, knobY + knobHalf, 3, 1, UiChrome.mainTextColor(255));
+
         String selectedHex = "#" + hexColor(selectedColor);
         int selectedPos = selected != null ? Math.round(clamp01(selected.position) * 100.0f) : 0;
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Selected: " + selectedHex), x + 216, y + 102, UiChrome.mainTextColor(246), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Position: " + selectedPos + "%"), x + 216, y + 116, UiChrome.mutedTextColor(236), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Stops: " + customGradientDraft.size()), x + 216, y + 130, UiChrome.mutedTextColor(236), false);
-        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral("Drag markers on bar to reorder blend"), x + 216, y + 152, UiChrome.accentColor(230), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.selected", selectedHex), x + 216, y + 102, UiChrome.mainTextColor(246), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.position", selectedPos), x + 216, y + 116, UiChrome.mutedTextColor(236), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.stops", customGradientDraft.size()), x + 216, y + 130, UiChrome.mutedTextColor(236), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.drag_hint"), x + 216, y + 144, UiChrome.accentColor(230), false);
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.angle"), x + 216, y + 156, UiChrome.mainTextColor(240), false);
+        UiChrome.drawText(
+                ctx,
+                this.textRenderer,
+                tr("gui.staffhelper.custom_theme.angle_value", Math.round(normalizeAngleDeg(customGradientAngleDeg))),
+                x + 216,
+                y + 170,
+                UiChrome.mutedTextColor(236),
+                false
+        );
+        UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.angle_hint"), x + 216, y + 206, UiChrome.mutedTextColor(228), false);
     }
 
     private void drawColorSwatch(DrawContext ctx, int x, int y, int w, int h, int rgb, String label) {
