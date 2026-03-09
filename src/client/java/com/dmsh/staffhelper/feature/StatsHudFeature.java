@@ -2,6 +2,7 @@ package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
+import com.dmsh.staffhelper.gui.util.MinimalIconRenderer;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import com.dmsh.staffhelper.util.RolesStore;
@@ -15,7 +16,6 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -109,43 +109,84 @@ public final class StatsHudFeature {
     private static List<ChipItem> buildChips(StaffHelperConfig cfg, String nick, String role, int roleColor, int ping, double tpsNow, double tps5, double tps10, double tps15) {
         List<ChipItem> chips = new ArrayList<>();
         String shownNick = (nick == null || nick.isBlank()) ? "Unknown" : nick;
+        int mainRgb = UiChrome.mainTextColor(255) & 0x00FFFFFF;
+        int mutedRgb = UiChrome.mutedTextColor(255) & 0x00FFFFFF;
+        int accentRgb = UiChrome.accentColor(255) & 0x00FFFFFF;
+        int cleanRoleColor = normalizeRoleColor(roleColor);
 
-        chips.add(new ChipItem("nick",
-                Text.literal("NICK: ").formatted(Formatting.GRAY)
-                        .append(Text.literal(shownNick).formatted(Formatting.WHITE))));
+        chips.add(new ChipItem(
+                "nick",
+                MinimalIconRenderer.Glyph.PROFILE,
+                Text.literal(shownNick),
+                mainRgb,
+                accentRgb
+        ));
 
         if (cfg.statsShowRole) {
-            chips.add(new ChipItem("role",
-                    Text.literal("ROLE: ").formatted(Formatting.GRAY)
-                            .append(Text.literal(role).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(normalizeRoleColor(roleColor)))))));
+            chips.add(new ChipItem(
+                    "role",
+                    MinimalIconRenderer.Glyph.TAG,
+                    Text.literal(role).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(cleanRoleColor))),
+                    mainRgb,
+                    cleanRoleColor
+            ));
         }
 
         if (cfg.statsShowPing) {
-            chips.add(new ChipItem("ping",
-                    Text.literal("PING: ").formatted(Formatting.GRAY)
-                            .append(Text.literal(ping >= 0 ? (ping + "ms") : "?").formatted(pingColor(ping)))));
+            int pingRgb = pingColorRgb(ping);
+            chips.add(new ChipItem(
+                    "ping",
+                    MinimalIconRenderer.Glyph.SIGNAL,
+                    Text.literal(ping >= 0 ? (ping + " ms") : "?").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(pingRgb))),
+                    mutedRgb,
+                    pingRgb
+            ));
         }
 
         if (cfg.statsShowTps) {
             if (cfg.statsShowTpsNow) {
-                chips.add(new ChipItem("tps_now",
-                        Text.literal("TPS NOW: ").formatted(Formatting.GRAY)
-                                .append(Text.literal(fmt1(tpsNow)).formatted(tpsColor(tpsNow)))));
+                int tpsRgb = tpsColorRgb(tpsNow);
+                chips.add(new ChipItem(
+                        "tps_now",
+                        MinimalIconRenderer.Glyph.TPS,
+                        Text.literal(fmt1(tpsNow)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
+                                .append(Text.literal(" now").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
+                        mutedRgb,
+                        tpsRgb
+                ));
             }
             if (cfg.statsShowTps5m) {
-                chips.add(new ChipItem("tps_5m",
-                        Text.literal("TPS 5M: ").formatted(Formatting.GRAY)
-                                .append(Text.literal(fmt1(tps5)).formatted(tpsColor(tps5)))));
+                int tpsRgb = tpsColorRgb(tps5);
+                chips.add(new ChipItem(
+                        "tps_5m",
+                        MinimalIconRenderer.Glyph.TPS,
+                        Text.literal(fmt1(tps5)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
+                                .append(Text.literal(" 5m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
+                        mutedRgb,
+                        tpsRgb
+                ));
             }
             if (cfg.statsShowTps10m) {
-                chips.add(new ChipItem("tps_10m",
-                        Text.literal("TPS 10M: ").formatted(Formatting.GRAY)
-                                .append(Text.literal(fmt1(tps10)).formatted(tpsColor(tps10)))));
+                int tpsRgb = tpsColorRgb(tps10);
+                chips.add(new ChipItem(
+                        "tps_10m",
+                        MinimalIconRenderer.Glyph.TPS,
+                        Text.literal(fmt1(tps10)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
+                                .append(Text.literal(" 10m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
+                        mutedRgb,
+                        tpsRgb
+                ));
             }
             if (cfg.statsShowTps15m) {
-                chips.add(new ChipItem("tps_15m",
-                        Text.literal("TPS 15M: ").formatted(Formatting.GRAY)
-                                .append(Text.literal(fmt1(tps15)).formatted(tpsColor(tps15)))));
+                int tpsRgb = tpsColorRgb(tps15);
+                chips.add(new ChipItem(
+                        "tps_15m",
+                        MinimalIconRenderer.Glyph.TPS,
+                        Text.literal(fmt1(tps15)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
+                                .append(Text.literal(" 15m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
+                        mutedRgb,
+                        tpsRgb
+                ));
             }
         }
         return chips;
@@ -158,7 +199,7 @@ public final class StatsHudFeature {
         int order = 0;
         for (ChipItem item : targetChips) {
             AnimatedStatsChip chip = animatedChips.computeIfAbsent(item.key(), k -> new AnimatedStatsChip());
-            chip.text = item.text();
+            chip.item = item;
             chip.targetVisible = true;
             chip.order = order++;
         }
@@ -195,10 +236,10 @@ public final class StatsHudFeature {
 
         float panelVisual = easeOutCubic(panelProgress);
         List<AnimatedStatsChip> chips = sortedAnimatedChips();
-        List<Text> visibleTexts = collectVisibleChipTexts(chips);
+        List<ChipItem> visibleChips = collectVisibleChipItems(chips);
 
-        int targetW = getPanelWidth(mc, cfg, visibleTexts);
-        int targetH = getPanelHeight(mc, cfg, visibleTexts);
+        int targetW = getPanelWidth(mc, cfg, visibleChips);
+        int targetH = getPanelHeight(mc, cfg, visibleChips);
         int minW = Math.max(Math.round(48 * clampScale(cfg.statsBoxScale)), 40);
         int minH = Math.max(Math.round(22 * clampScale(cfg.statsBoxScale)), 20);
         int w = lerpInt(minW, targetW, panelVisual);
@@ -227,13 +268,13 @@ public final class StatsHudFeature {
             float chipVisual = easeOutCubic(chip.progress) * panelVisual;
             if (chipVisual <= 0.01f) continue;
 
-            int chipW = getChipWidth(mc, cfg, chip.text);
+            int chipW = getChipWidth(mc, cfg, chip.item);
             int offset = Math.round((1.0f - chipVisual) * 8.0f);
             int alpha = Math.max(0, Math.min(255, Math.round(255 * chipVisual)));
 
             int drawX = cfg.statsHorizontal ? cursorX + offset : x + outerPad + offset;
             int drawY = cursorY;
-            drawStatChip(ctx, mc, cfg, drawX, drawY, chipW, chipH, chip.text, alpha, chipVisual);
+            drawStatChip(ctx, mc, cfg, drawX, drawY, chipW, chipH, chip.item, alpha, chipVisual);
 
             if (cfg.statsHorizontal) {
                 cursorX += chipW + gap;
@@ -243,11 +284,19 @@ public final class StatsHudFeature {
         }
     }
 
-    private static void drawStatChip(DrawContext ctx, MinecraftClient mc, StaffHelperConfig cfg, int x, int y, int w, int h, Text text, int alpha, float visual) {
+    private static void drawStatChip(DrawContext ctx, MinecraftClient mc, StaffHelperConfig cfg, int x, int y, int w, int h, ChipItem chip, int alpha, float visual) {
         float accentBoost = -0.14f + (0.28f * visual);
         UiChrome.drawPanel(ctx, x, y, w, h, 7, System.currentTimeMillis(), accentBoost, false);
-        int textY = y + (h - mc.textRenderer.fontHeight) / 2;
-        UiChrome.drawText(ctx, mc.textRenderer, text, x + getChipPadX(cfg), textY, UiChrome.mainTextColor(alpha), false);
+        int padX = getChipPadX(cfg);
+        int padY = getChipPadY(cfg);
+        int iconSize = getChipIconSize(cfg);
+        int contentHeight = getChipContentHeight(mc, cfg);
+        int iconY = y + padY + Math.max(0, (contentHeight - iconSize) / 2);
+        int textX = x + padX + iconSize + getChipIconGap(cfg);
+        int textY = y + padY + Math.max(0, (contentHeight - mc.textRenderer.fontHeight) / 2);
+
+        MinimalIconRenderer.draw(ctx, chip.icon(), x + padX, iconY, iconSize, withAlpha(chip.iconColor(), alpha), withAlpha(chip.accentColor(), alpha));
+        UiChrome.drawText(ctx, mc.textRenderer, chip.text(), textX, textY, UiChrome.mainTextColor(alpha), false);
     }
 
     private static void drawPanel(DrawContext ctx, int x, int y, ChipContent content, boolean clampToScreen) {
@@ -255,13 +304,8 @@ public final class StatsHudFeature {
         if (mc == null || mc.textRenderer == null || mc.getWindow() == null) return;
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
 
-        List<Text> chips = new ArrayList<>();
-        for (ChipItem chip : content.chips()) {
-            chips.add(chip.text());
-        }
-
-        int w = getPanelWidth(mc, cfg, chips);
-        int h = getPanelHeight(mc, cfg, chips);
+        int w = getPanelWidth(mc, cfg, content.chips());
+        int h = getPanelHeight(mc, cfg, content.chips());
 
         if (clampToScreen) {
             int screenW = mc.getWindow().getScaledWidth();
@@ -270,17 +314,17 @@ public final class StatsHudFeature {
             y = Math.max(0, Math.min(y, screenH - h));
         }
 
-        drawStaticChips(ctx, mc, x, y, cfg, chips);
+        drawStaticChips(ctx, mc, x, y, cfg, content.chips());
     }
 
-    private static void drawStaticChips(DrawContext ctx, MinecraftClient mc, int x, int y, StaffHelperConfig cfg, List<Text> chips) {
+    private static void drawStaticChips(DrawContext ctx, MinecraftClient mc, int x, int y, StaffHelperConfig cfg, List<ChipItem> chips) {
         int outerPad = getOuterPad(cfg);
         int chipH = getChipHeight(mc, cfg);
         int gap = getChipGap(cfg);
 
         int cursorX = x + outerPad;
         int cursorY = y + outerPad;
-        for (Text chip : chips) {
+        for (ChipItem chip : chips) {
             int chipW = getChipWidth(mc, cfg, chip);
             drawStatChip(ctx, mc, cfg, cursorX, cursorY, chipW, chipH, chip, 248, 1.0f);
             if (cfg.statsHorizontal) {
@@ -297,9 +341,7 @@ public final class StatsHudFeature {
 
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
         List<ChipItem> chips = buildChips(cfg, "DontiMonti", "MOD", RolesStore.DEFAULT_ROLE_COLOR, 42, 20.0, 19.9, 19.8, 19.7);
-        List<Text> texts = new ArrayList<>();
-        for (ChipItem chip : chips) texts.add(chip.text());
-        return getPanelWidth(mc, cfg, texts);
+        return getPanelWidth(mc, cfg, chips);
     }
 
     public static int getPreviewHeight() {
@@ -307,9 +349,7 @@ public final class StatsHudFeature {
         if (mc == null || mc.textRenderer == null) return 48;
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
         List<ChipItem> chips = buildChips(cfg, "DontiMonti", "MOD", RolesStore.DEFAULT_ROLE_COLOR, 42, 20.0, 19.9, 19.8, 19.7);
-        List<Text> texts = new ArrayList<>();
-        for (ChipItem chip : chips) texts.add(chip.text());
-        return getPanelHeight(mc, cfg, texts);
+        return getPanelHeight(mc, cfg, chips);
     }
 
     public static void renderPreview(DrawContext ctx, int x, int y) {
@@ -318,29 +358,29 @@ public final class StatsHudFeature {
     }
 
     private static int getAnimatedPanelWidth(MinecraftClient mc, StaffHelperConfig cfg) {
-        return getPanelWidth(mc, cfg, collectVisibleChipTexts(sortedAnimatedChips()));
+        return getPanelWidth(mc, cfg, collectVisibleChipItems(sortedAnimatedChips()));
     }
 
-    private static List<Text> collectVisibleChipTexts(List<AnimatedStatsChip> chips) {
-        List<Text> out = new ArrayList<>();
+    private static List<ChipItem> collectVisibleChipItems(List<AnimatedStatsChip> chips) {
+        List<ChipItem> out = new ArrayList<>();
         for (AnimatedStatsChip chip : chips) {
             if (chip.progress <= 0.01f) continue;
-            out.add(chip.text);
+            out.add(chip.item);
         }
         return out;
     }
 
-    private static int getPanelWidth(MinecraftClient mc, StaffHelperConfig cfg, List<Text> chips) {
+    private static int getPanelWidth(MinecraftClient mc, StaffHelperConfig cfg, List<ChipItem> chips) {
         int content = getContentWidth(mc, cfg, chips);
         return content + (getOuterPad(cfg) * 2);
     }
 
-    private static int getPanelHeight(MinecraftClient mc, StaffHelperConfig cfg, List<Text> chips) {
+    private static int getPanelHeight(MinecraftClient mc, StaffHelperConfig cfg, List<ChipItem> chips) {
         int content = getContentHeight(mc, cfg, chips);
         return content + (getOuterPad(cfg) * 2);
     }
 
-    private static int getContentWidth(MinecraftClient mc, StaffHelperConfig cfg, List<Text> chips) {
+    private static int getContentWidth(MinecraftClient mc, StaffHelperConfig cfg, List<ChipItem> chips) {
         if (chips == null || chips.isEmpty()) return Math.max(18, Math.round(26 * clampScale(cfg.statsBoxScale)));
         int gap = getChipGap(cfg);
         if (cfg.statsHorizontal) {
@@ -353,13 +393,13 @@ public final class StatsHudFeature {
         }
 
         int max = 0;
-        for (Text chip : chips) {
+        for (ChipItem chip : chips) {
             max = Math.max(max, getChipWidth(mc, cfg, chip));
         }
         return max;
     }
 
-    private static int getContentHeight(MinecraftClient mc, StaffHelperConfig cfg, List<Text> chips) {
+    private static int getContentHeight(MinecraftClient mc, StaffHelperConfig cfg, List<ChipItem> chips) {
         int chipH = getChipHeight(mc, cfg);
         if (chips == null || chips.isEmpty()) return chipH;
         int gap = getChipGap(cfg);
@@ -369,13 +409,13 @@ public final class StatsHudFeature {
         return (chips.size() * chipH) + ((chips.size() - 1) * gap);
     }
 
-    private static int getChipWidth(MinecraftClient mc, StaffHelperConfig cfg, Text text) {
-        int textW = mc.textRenderer.getWidth(UiChrome.uiText(text));
-        return textW + (getChipPadX(cfg) * 2);
+    private static int getChipWidth(MinecraftClient mc, StaffHelperConfig cfg, ChipItem chip) {
+        int textW = mc.textRenderer.getWidth(UiChrome.uiText(chip.text()));
+        return textW + (getChipPadX(cfg) * 2) + getChipIconSize(cfg) + getChipIconGap(cfg);
     }
 
     private static int getChipHeight(MinecraftClient mc, StaffHelperConfig cfg) {
-        return mc.textRenderer.fontHeight + (getChipPadY(cfg) * 2);
+        return getChipContentHeight(mc, cfg) + (getChipPadY(cfg) * 2);
     }
 
     private static int getOuterPad(StaffHelperConfig cfg) {
@@ -390,6 +430,18 @@ public final class StatsHudFeature {
         return Math.max(2, Math.round(4 * clampScale(cfg.statsBoxScale)));
     }
 
+    private static int getChipIconSize(StaffHelperConfig cfg) {
+        return Math.max(10, Math.round(11 * clampScale(cfg.statsBoxScale)));
+    }
+
+    private static int getChipIconGap(StaffHelperConfig cfg) {
+        return Math.max(5, Math.round(7 * clampScale(cfg.statsBoxScale)));
+    }
+
+    private static int getChipContentHeight(MinecraftClient mc, StaffHelperConfig cfg) {
+        return Math.max(mc.textRenderer.fontHeight, getChipIconSize(cfg));
+    }
+
     private static int getChipGap(StaffHelperConfig cfg) {
         return Math.max(4, Math.round(6 * clampScale(cfg.statsBoxScale)));
     }
@@ -398,19 +450,19 @@ public final class StatsHudFeature {
         return String.format(Locale.ROOT, "%.1f", v);
     }
 
-    private static Formatting pingColor(int ping) {
-        if (ping < 0) return Formatting.GRAY;
-        if (ping <= 70) return Formatting.GREEN;
-        if (ping <= 130) return Formatting.YELLOW;
-        if (ping <= 200) return Formatting.GOLD;
-        return Formatting.RED;
+    private static int pingColorRgb(int ping) {
+        if (ping < 0) return 0x9A9AA4;
+        if (ping <= 70) return 0x7FE39C;
+        if (ping <= 130) return 0xF2D66B;
+        if (ping <= 200) return 0xF1A95A;
+        return 0xF07A7A;
     }
 
-    private static Formatting tpsColor(double tps) {
-        if (tps >= 19.5) return Formatting.GREEN;
-        if (tps >= 18.0) return Formatting.YELLOW;
-        if (tps >= 16.0) return Formatting.GOLD;
-        return Formatting.RED;
+    private static int tpsColorRgb(double tps) {
+        if (tps >= 19.5) return 0x7FE39C;
+        if (tps >= 18.0) return 0xF2D66B;
+        if (tps >= 16.0) return 0xF1A95A;
+        return 0xF07A7A;
     }
 
     private static float joinProgress() {
@@ -442,15 +494,20 @@ public final class StatsHudFeature {
         return rgb;
     }
 
+    private static int withAlpha(int rgb, int alpha) {
+        int cleanAlpha = Math.max(0, Math.min(255, alpha));
+        return (cleanAlpha << 24) | (rgb & 0x00FFFFFF);
+    }
+
     private static float approach(float current, float target, float speed) {
         return current + (target - current) * speed;
     }
 
     private record ChipContent(List<ChipItem> chips) {}
-    private record ChipItem(String key, Text text) {}
+    private record ChipItem(String key, MinimalIconRenderer.Glyph icon, Text text, int iconColor, int accentColor) {}
 
     private static final class AnimatedStatsChip {
-        private Text text = Text.literal("");
+        private ChipItem item = new ChipItem("nick", MinimalIconRenderer.Glyph.PROFILE, Text.literal(""), 0xD9D9E2, 0xD9D9E2);
         private boolean targetVisible = false;
         private float progress = 0.0f;
         private int order = 0;

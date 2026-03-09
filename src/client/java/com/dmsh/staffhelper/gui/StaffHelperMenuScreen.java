@@ -1610,11 +1610,15 @@ public class StaffHelperMenuScreen extends Screen {
         float anim = getTextFieldAnimation(tf);
         if (anim <= 0.02f) return;
 
-        UiChrome.drawPanel(ctx, tf.getX(), tf.getY(), tf.getWidth(), tf.getHeight(), radius, System.currentTimeMillis(), -0.15f, false);
+        drawInsetPanel(ctx, tf.getX(), tf.getY(), tf.getWidth(), tf.getHeight(), radius, -0.15f, false);
         if (anim < 0.999f) {
             int fadeMask = Math.max(0, Math.min(220, Math.round((1.0f - anim) * 180.0f)));
             ctx.fill(tf.getX() + 1, tf.getY() + 1, tf.getX() + tf.getWidth() - 1, tf.getY() + tf.getHeight() - 1, fadeMask << 24);
         }
+    }
+
+    private void drawInsetPanel(DrawContext ctx, int x, int y, int w, int h, int radius, float accentBoost, boolean shadow) {
+        UiChrome.drawPanel(ctx, x, y, w, h, radius, System.currentTimeMillis(), accentBoost, shadow, false);
     }
 
     private void updateTabVisibility() {
@@ -2065,7 +2069,7 @@ public class StaffHelperMenuScreen extends Screen {
             int listW = NICK_PATTERN_LIST_W;
             int listH = panelH - NICK_LIST_TOP_Y - NICK_LIST_BOTTOM_PAD;
 
-            UiChrome.drawPanel(ctx, listX, listY, listW, listH, 10, System.currentTimeMillis(), -0.10f, true);
+            drawInsetPanel(ctx, listX, listY, listW, listH, 10, -0.10f, true);
 
             List<String> list = filteredList();
             int rowH = 18;
@@ -2099,7 +2103,7 @@ public class StaffHelperMenuScreen extends Screen {
             int ignoreBoxY = y0 + NICK_LIST_TOP_Y;
             int ignoreBoxW = RIGHT_COLUMN_W;
             int ignoreBoxH = listH;
-            UiChrome.drawPanel(ctx, ignoreBoxX, ignoreBoxY, ignoreBoxW, ignoreBoxH, 10, System.currentTimeMillis(), -0.10f, true);
+            drawInsetPanel(ctx, ignoreBoxX, ignoreBoxY, ignoreBoxW, ignoreBoxH, 10, -0.10f, true);
 
             List<String> ignoreList = sortedNickIgnoreList();
             int ignoreRowH = 18;
@@ -2167,7 +2171,7 @@ public class StaffHelperMenuScreen extends Screen {
                 drawTextFieldPanel(ctx, afkIgnoreInput, 8);
             }
 
-            UiChrome.drawPanel(ctx, boxX, boxY, boxW, boxH, 10, System.currentTimeMillis(), -0.10f, true);
+            drawInsetPanel(ctx, boxX, boxY, boxW, boxH, 10, -0.10f, true);
 
             List<String> list = new ArrayList<>(StaffHelperState.CONFIG.afkIgnoreNicks);
             list.sort(String.CASE_INSENSITIVE_ORDER);
@@ -2236,8 +2240,8 @@ public class StaffHelperMenuScreen extends Screen {
         ctx.fill(0, 0, this.width, this.height, 0x7A000000);
         UiChrome.drawPanel(ctx, x, y, w, h, 10, now, 0.22f, true);
         ctx.fill(x + 12, y + 40, x + w - 12, y + 41, 0x882A2F3A);
-        UiChrome.drawPanel(ctx, x + 12, y + 48, 194, 206, 8, now, -0.06f, false);
-        UiChrome.drawPanel(ctx, x + 212, y + 48, 210, 192, 8, now, -0.06f, false);
+        drawInsetPanel(ctx, x + 12, y + 48, 194, 206, 8, -0.06f, false);
+        drawInsetPanel(ctx, x + 212, y + 48, 210, 192, 8, -0.06f, false);
 
         UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.title"), x + 14, y + 12, UiChrome.mainTextColor(255), false);
         UiChrome.drawText(ctx, this.textRenderer, tr("gui.staffhelper.custom_theme.subtitle"), x + 14, y + 26, UiChrome.mutedTextColor(232), false);
@@ -2422,7 +2426,7 @@ public class StaffHelperMenuScreen extends Screen {
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.title"), x0 + pad, y0 + 74, textMain, false);
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.subtitle"), x0 + pad, y0 + 88, textSub, false);
 
-        UiChrome.drawPanel(ctx, commandBuilderListX, commandBuilderListY, commandBuilderListW, commandBuilderListH, 10, System.currentTimeMillis(), -0.10f, true);
+        drawInsetPanel(ctx, commandBuilderListX, commandBuilderListY, commandBuilderListW, commandBuilderListH, 10, -0.10f, true);
 
         int listTop = commandBuilderViewportTop();
         int listBottom = commandBuilderViewportBottom();
@@ -2430,7 +2434,7 @@ public class StaffHelperMenuScreen extends Screen {
         ctx.enableScissor(commandBuilderListX + 4, listTop, commandBuilderListX + commandBuilderListW - 4, listBottom);
         for (CommandBuilderUiEntry ui : commandBuilderUiEntries) {
             if (!commandBuilderInViewport(ui)) continue;
-            UiChrome.drawPanel(ctx, ui.rowX, ui.rowY, ui.rowW, ui.rowH, 8, System.currentTimeMillis(), -0.15f, false);
+            drawInsetPanel(ctx, ui.rowX, ui.rowY, ui.rowW, ui.rowH, 8, -0.15f, false);
 
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.commandbuilder.name"), ui.rowX + 32, ui.rowY - 6 + 12, textSub, false);
 
@@ -2450,21 +2454,21 @@ public class StaffHelperMenuScreen extends Screen {
                 }
 
                 if (commandBuilderWidgetInViewport(ui.aliasField)) {
-                    UiChrome.drawPanel(ctx, ui.aliasField.getX(), ui.aliasField.getY(), ui.aliasField.getWidth(), ui.aliasField.getHeight(), 8, System.currentTimeMillis(), -0.15f, false);
+                    drawInsetPanel(ctx, ui.aliasField.getX(), ui.aliasField.getY(), ui.aliasField.getWidth(), ui.aliasField.getHeight(), 8, -0.15f, false);
                 }
                 if (commandBuilderWidgetInViewport(ui.executeField)) {
-                    UiChrome.drawPanel(ctx, ui.executeField.getX(), ui.executeField.getY(), ui.executeField.getWidth(), ui.executeField.getHeight(), 8, System.currentTimeMillis(), -0.15f, false);
+                    drawInsetPanel(ctx, ui.executeField.getX(), ui.executeField.getY(), ui.executeField.getWidth(), ui.executeField.getHeight(), 8, -0.15f, false);
                 }
                 if (ui.entry.hasExecuteToken("{time}") && commandBuilderWidgetInViewport(ui.timeOptionsField)) {
-                    UiChrome.drawPanel(ctx, ui.timeOptionsField.getX(), ui.timeOptionsField.getY(), ui.timeOptionsField.getWidth(), ui.timeOptionsField.getHeight(), 8, System.currentTimeMillis(), -0.15f, false);
+                    drawInsetPanel(ctx, ui.timeOptionsField.getX(), ui.timeOptionsField.getY(), ui.timeOptionsField.getWidth(), ui.timeOptionsField.getHeight(), 8, -0.15f, false);
                 }
                 if (ui.entry.hasExecuteToken("{reason}") && commandBuilderWidgetInViewport(ui.reasonOptionsField)) {
-                    UiChrome.drawPanel(ctx, ui.reasonOptionsField.getX(), ui.reasonOptionsField.getY(), ui.reasonOptionsField.getWidth(), ui.reasonOptionsField.getHeight(), 8, System.currentTimeMillis(), -0.15f, false);
+                    drawInsetPanel(ctx, ui.reasonOptionsField.getX(), ui.reasonOptionsField.getY(), ui.reasonOptionsField.getWidth(), ui.reasonOptionsField.getHeight(), 8, -0.15f, false);
                 }
             }
 
             if (commandBuilderWidgetInViewport(ui.nameField)) {
-                UiChrome.drawPanel(ctx, ui.nameField.getX(), ui.nameField.getY(), ui.nameField.getWidth(), ui.nameField.getHeight(), 8, System.currentTimeMillis(), -0.15f, false);
+                drawInsetPanel(ctx, ui.nameField.getX(), ui.nameField.getY(), ui.nameField.getWidth(), ui.nameField.getHeight(), 8, -0.15f, false);
             }
         }
         ctx.disableScissor();
