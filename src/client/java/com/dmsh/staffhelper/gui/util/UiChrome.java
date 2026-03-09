@@ -26,7 +26,7 @@ public final class UiChrome {
     }
 
     public static void drawPanel(DrawContext ctx, int x, int y, int w, int h, int radius, long nowMs) {
-        drawPanel(ctx, x, y, w, h, radius, nowMs, 0.0f, true);
+        drawPanel(ctx, x, y, w, h, radius, nowMs, 0.0f, true, true);
     }
 
     public static void drawPanel(
@@ -39,6 +39,21 @@ public final class UiChrome {
             long nowMs,
             float accentBoost,
             boolean shadow
+    ) {
+        drawPanel(ctx, x, y, w, h, radius, nowMs, accentBoost, shadow, true);
+    }
+
+    public static void drawPanel(
+            DrawContext ctx,
+            int x,
+            int y,
+            int w,
+            int h,
+            int radius,
+            long nowMs,
+            float accentBoost,
+            boolean shadow,
+            boolean showDivider
     ) {
         if (w <= 0 || h <= 0) return;
         float pulse = (float) ((Math.sin(nowMs / 600.0) + 1.0) * 0.5);
@@ -61,7 +76,7 @@ public final class UiChrome {
         ModernGui.roundedVerticalGradient(ctx, x, y, w, h, radius, top, bottom);
         ModernGui.roundedOutline(ctx, x, y, w, h, radius, border);
         ModernGui.roundedOutline(ctx, x + 1, y + 1, w - 2, h - 2, Math.max(0, radius - 1), inner);
-        if (h >= 56) {
+        if (showDivider && h >= 56) {
             int divider = ModernGui.lerpColor(outlineColor(84), accentColor(84), accent * 0.45f);
             ctx.fill(x + 2, y + 28, x + w - 2, y + 29, divider);
         }

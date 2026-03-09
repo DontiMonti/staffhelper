@@ -2013,8 +2013,7 @@ public class StaffHelperMenuScreen extends Screen {
         pushMenuScale(ctx);
         UiChrome.drawPanel(ctx, x0, y0, panelW, panelH, 12, now, 0.10f, true);
 
-        UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false);
-        ctx.fill(x0 + SIDEBAR_X_OFFSET + SIDEBAR_W - 1, y0 + 54, x0 + SIDEBAR_X_OFFSET + SIDEBAR_W, y0 + panelH - 12, tabTextColor(UiChrome.outlineColor(106)));
+        UiChrome.drawPanel(ctx, x0 + SIDEBAR_X_OFFSET, y0 + 58, SIDEBAR_W, panelH - 72, 8, now, -0.30f, false, false);
 
         int titleX = x0 + CONTENT_PAD;
         int titleY = y0 + MENU_TITLE_Y;
