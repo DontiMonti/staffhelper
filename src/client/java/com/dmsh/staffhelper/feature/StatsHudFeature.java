@@ -431,7 +431,7 @@ public final class StatsHudFeature {
     }
 
     private static int getChipIconSize(StaffHelperConfig cfg) {
-        return Math.max(10, Math.round(11 * clampScale(cfg.statsBoxScale)));
+        return Math.max(11, Math.round(12 * clampScale(cfg.statsBoxScale)));
     }
 
     private static int getChipIconGap(StaffHelperConfig cfg) {

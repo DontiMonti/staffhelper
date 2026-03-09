@@ -10,19 +10,19 @@ public final class MinimalIconRenderer {
     private static final int TEXTURE_SIZE = 64;
     private static final IconTexture PROFILE_ICON = new IconTexture(
             Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/profile.png"),
-            0.04f
+            0.0f
     );
     private static final IconTexture TAG_ICON = new IconTexture(
             Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/tag.png"),
-            0.06f
+            0.0f
     );
     private static final IconTexture TPS_ICON = new IconTexture(
             Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/tps.png"),
-            0.02f
+            0.0f
     );
     private static final IconTexture SIGNAL_ICON = new IconTexture(
             Identifier.of(StaffHelper.MOD_ID, "textures/gui/icons/signal.png"),
-            0.08f
+            0.0f
     );
 
     public enum Glyph {
@@ -79,13 +79,6 @@ public final class MinimalIconRenderer {
         int textureSize = Math.max(1, drawSize - (inset * 2));
         int drawX = x + inset;
         int drawY = y + inset;
-        int accentAlpha = (accent >>> 24) & 0xFF;
-
-        if (accentAlpha > 0) {
-            int underlayColor = withAlpha(accent, Math.min(52, Math.max(18, Math.round(accentAlpha * 0.22f))));
-            drawTexture(ctx, icon.texture(), drawX, drawY, textureSize, underlayColor);
-        }
-
         drawTexture(ctx, icon.texture(), drawX, drawY, textureSize, color);
     }
 
@@ -141,11 +134,6 @@ public final class MinimalIconRenderer {
         p.dot(5, 3, 3, accent);
         p.dot(10, 7, 3, accent);
         p.dot(7, 11, 3, accent);
-    }
-
-    private static int withAlpha(int color, int alpha) {
-        int clamped = Math.max(0, Math.min(255, alpha));
-        return (clamped << 24) | (color & 0x00FFFFFF);
     }
 
     private static final class GridPainter {
