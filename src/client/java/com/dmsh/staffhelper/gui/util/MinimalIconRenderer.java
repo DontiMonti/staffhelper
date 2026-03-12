@@ -110,10 +110,13 @@ public final class MinimalIconRenderer {
     }
 
     private static void drawHome(GridPainter p, int color, int accent) {
-        p.diagUp(2, 9, 6, color);
-        p.diagDown(8, 3, 6, color);
-        p.fill(4, 8, 8, 6, 2, color);
-        p.fill(7, 10, 2, 4, 1, accent);
+        p.h(7, 2, 2, color);
+        p.h(6, 3, 4, color);
+        p.h(5, 4, 6, color);
+        p.h(4, 5, 8, color);
+        p.h(3, 6, 10, color);
+        p.fill(4, 7, 8, 6, 2, color);
+        p.fill(7, 9, 2, 4, 1, accent);
     }
 
     private static void drawMapPin(GridPainter p, int color, int accent) {
