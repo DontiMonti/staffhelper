@@ -177,6 +177,16 @@ public final class UiChrome {
         return ModernGui.argb(clamp255(alpha), 217, 217, 226);
     }
 
+    public static int themePrimaryColor(int alpha) {
+        ThemePalette palette = getThemePalette();
+        return ModernGui.argb(clamp255(alpha), palette.topR, palette.topG, palette.topB);
+    }
+
+    public static int themeSecondaryColor(int alpha) {
+        ThemePalette palette = getThemePalette();
+        return ModernGui.argb(clamp255(alpha), palette.bottomR, palette.bottomG, palette.bottomB);
+    }
+
     private static ThemePalette getThemePalette() {
         String theme = (StaffHelperState.CONFIG != null && StaffHelperState.CONFIG.uiTheme != null)
                 ? StaffHelperState.CONFIG.uiTheme.trim().toUpperCase()

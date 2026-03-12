@@ -5,6 +5,7 @@ import com.dmsh.staffhelper.feature.AfkZoneFeature;
 import com.dmsh.staffhelper.feature.AutoBoxFeature;
 import com.dmsh.staffhelper.feature.CommandBuilderFeature;
 import com.dmsh.staffhelper.feature.NickSearchFeature;
+import com.dmsh.staffhelper.feature.StaffStatsFeature;
 import com.dmsh.staffhelper.feature.StatsHudFeature;
 import com.dmsh.staffhelper.feature.UpdateNotifyFeature;
 import com.dmsh.staffhelper.feature.VanishFeature;
@@ -59,6 +60,7 @@ public class StaffHelperClient implements ClientModInitializer {
         ));
 
         StatsHudFeature.init();
+        StaffStatsFeature.init();
         NickSearchFeature.init();
         AfkZoneFeature.init();
         VanishFeature.init();

@@ -3,6 +3,7 @@ package com.dmsh.staffhelper.gui;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.feature.NickSearchFeature;
+import com.dmsh.staffhelper.feature.StaffStatsFeature;
 import com.dmsh.staffhelper.gui.util.GuiRenderUtils;
 import com.dmsh.staffhelper.gui.util.ModernGui;
 import com.dmsh.staffhelper.gui.util.UiChrome;
@@ -18,15 +19,19 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class StaffHelperMenuScreen extends Screen {
 
-    private enum Tab { NICKSEARCH, AFKZONE, COMMANDBUILDER, MODULES, APPEARANCE }
-    private Tab tab = Tab.NICKSEARCH;
+    private enum Tab { HOME, NICKSEARCH, AFKZONE, COMMANDBUILDER, MODULES, APPEARANCE }
+    private Tab tab = Tab.HOME;
     private static final int CUSTOM_DIALOG_W = 436;
     private static final int CUSTOM_DIALOG_H = 304;
     private static final int SIDEBAR_X_OFFSET = 6;
@@ -48,6 +53,11 @@ public class StaffHelperMenuScreen extends Screen {
     private static final int NICK_LIST_TOP_Y = 220;
     private static final int NICK_LIST_BOTTOM_PAD = 44;
     private static final int NICK_PATTERN_LIST_W = RIGHT_COLUMN_X_OFFSET - 8;
+    private static final int HOME_CARD_H = 46;
+    private static final int HOME_CARD_GAP = 8;
+    private static final int HOME_GRID_SIZE = 18;
+    private static final int HOME_GRID_GAP = 4;
+    private static final int HOME_GRID_COLUMNS = 7;
 
     private float openProgress = 0f;
     private int openingOffsetY = 0;
@@ -73,6 +83,7 @@ public class StaffHelperMenuScreen extends Screen {
     private ButtonWidget afkIgnoreAddBtn;
     private int afkIgnoreScroll = 0;
 
+    private IconTabButtonWidget tabHomeBtn;
     private IconTabButtonWidget tabNickBtn;
     private IconTabButtonWidget tabAfkBtn;
     private IconTabButtonWidget tabCommandBuilderBtn;
@@ -229,6 +240,11 @@ public class StaffHelperMenuScreen extends Screen {
         int tabX = sidebarX + ((SIDEBAR_W - SIDEBAR_ICON_SIZE) / 2);
         int tabY = sidebarTopY + 8;
         int tabGap = 7;
+
+        tabHomeBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.HOME, b -> {
+            switchTab(Tab.HOME);
+        }));
+        tabY += SIDEBAR_ICON_SIZE + tabGap;
 
         tabNickBtn = addDrawableChild(new IconTabButtonWidget(tabX, tabY, SIDEBAR_ICON_SIZE, SIDEBAR_ICON_SIZE, IconTabButtonWidget.IconType.NICKSEARCH, b -> {
             switchTab(Tab.NICKSEARCH);
@@ -995,6 +1011,7 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private void setDialogBackdropControlsVisible(boolean visible) {
+        setVisibleActive(tabHomeBtn, visible);
         setVisibleActive(tabNickBtn, visible);
         setVisibleActive(tabAfkBtn, visible);
         setVisibleActive(tabCommandBuilderBtn, visible);
@@ -1469,6 +1486,7 @@ public class StaffHelperMenuScreen extends Screen {
     }
 
     private void refreshTabButtonsState() {
+        if (tabHomeBtn != null) tabHomeBtn.setLockedPressed(tab == Tab.HOME);
         if (tabNickBtn != null) tabNickBtn.setLockedPressed(tab == Tab.NICKSEARCH);
         if (tabAfkBtn != null) tabAfkBtn.setLockedPressed(tab == Tab.AFKZONE);
         if (tabCommandBuilderBtn != null) tabCommandBuilderBtn.setLockedPressed(tab == Tab.COMMANDBUILDER);
@@ -2040,7 +2058,9 @@ public class StaffHelperMenuScreen extends Screen {
         int textMain = tabTextColor(UiChrome.mainTextColor(255));
         int textSub = tabTextColor(UiChrome.mutedTextColor(246));
         int textAccent = tabTextColor(UiChrome.accentColor(255));
-        if (tab == Tab.NICKSEARCH) {
+        if (tab == Tab.HOME) {
+            renderHomeTab(ctx, x0, y0, mouseX, mouseY, textMain, textSub, textAccent);
+        } else if (tab == Tab.NICKSEARCH) {
             int pad = CONTENT_PAD;
             int tabsY = y0 + 10;
             int headerY = tabsY + 28;
@@ -2211,6 +2231,193 @@ public class StaffHelperMenuScreen extends Screen {
             ctx.drawText(this.textRenderer, tr("gui.staffhelper.tab.appearance.theme_presets"), appearanceX, appearanceY - 14, textSub, false);
         }
     }
+
+    private void renderHomeTab(DrawContext ctx, int x0, int y0, int mouseX, int mouseY, int textMain, int textSub, int textAccent) {
+        StaffStatsFeature.MonthOverview overview = StaffStatsFeature.getCurrentMonthOverview();
+        String username = StaffStatsFeature.getCurrentUserName();
+        if (username.isEmpty()) username = "Player";
+
+        int contentX = x0 + CONTENT_PAD;
+        int contentW = panelW - CONTENT_PAD - 16;
+        int welcomeY = y0 + 48;
+        int welcomeH = 50;
+        drawInsetPanel(ctx, contentX, welcomeY, contentW, welcomeH, 10, -0.04f, true);
+
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.welcome", username), contentX + 14, welcomeY + 10, textMain, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.month_subtitle", monthLabel(overview.month())), contentX + 14, welcomeY + 26, textSub, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.month_hint"), contentX + 14, welcomeY + 40, textAccent, false);
+
+        int cardsY = welcomeY + welcomeH + 8;
+        int cardW = (contentW - (HOME_CARD_GAP * 3)) / 4;
+        renderHomeMetricCard(ctx, contentX, cardsY, cardW, HOME_CARD_H, tr("gui.staffhelper.home.card.play_time"), formatDuration(overview.totalPlayMillis()), 0.18f);
+        renderHomeMetricCard(ctx, contentX + cardW + HOME_CARD_GAP, cardsY, cardW, HOME_CARD_H, tr("gui.staffhelper.home.card.bans"), String.valueOf(overview.totalBans()), 0.14f);
+        renderHomeMetricCard(ctx, contentX + (cardW + HOME_CARD_GAP) * 2, cardsY, cardW, HOME_CARD_H, tr("gui.staffhelper.home.card.mutes"), String.valueOf(overview.totalMutes()), 0.14f);
+        renderHomeMetricCard(ctx, contentX + (cardW + HOME_CARD_GAP) * 3, cardsY, cardW, HOME_CARD_H, tr("gui.staffhelper.home.card.kicks"), String.valueOf(overview.totalKicks()), 0.14f);
+
+        int boardY = cardsY + HOME_CARD_H + 10;
+        int boardH = panelH - (boardY - y0) - 44;
+        drawInsetPanel(ctx, contentX, boardY, contentW, boardH, 10, -0.08f, true);
+
+        int innerPad = 14;
+        int detailW = 188;
+        int detailX = contentX + contentW - detailW - innerPad;
+        int detailY = boardY + innerPad;
+        int detailH = boardH - (innerPad * 2);
+        drawInsetPanel(ctx, detailX, detailY, detailW, detailH, 8, -0.02f, false);
+
+        int gridLabelX = contentX + 18;
+        int gridX = gridLabelX;
+        int gridY = boardY + 42;
+        int gridAreaW = detailX - gridX - 18;
+        int gridRows = Math.max(1, (overview.days().size() + HOME_GRID_COLUMNS - 1) / HOME_GRID_COLUMNS);
+        int gridWidth = (HOME_GRID_COLUMNS * HOME_GRID_SIZE) + ((HOME_GRID_COLUMNS - 1) * HOME_GRID_GAP);
+        int gridHeight = (gridRows * HOME_GRID_SIZE) + ((gridRows - 1) * HOME_GRID_GAP);
+        int centeredGridX = gridX + Math.max(0, (gridAreaW - gridWidth) / 2);
+
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.activity_title", monthLabel(overview.month())), gridLabelX, boardY + 14, textMain, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.activity_subtitle"), gridLabelX, boardY + 28, textAccent, false);
+
+        HomeGridCell hoveredCell = null;
+        for (int i = 0; i < overview.days().size(); i++) {
+            StaffStatsFeature.DaySnapshot day = overview.days().get(i);
+            int column = i % HOME_GRID_COLUMNS;
+            int row = i / HOME_GRID_COLUMNS;
+            int cellX = centeredGridX + (column * (HOME_GRID_SIZE + HOME_GRID_GAP));
+            int cellY = gridY + (row * (HOME_GRID_SIZE + HOME_GRID_GAP));
+            boolean hovered = mouseX >= cellX && mouseX <= cellX + HOME_GRID_SIZE && mouseY >= cellY && mouseY <= cellY + HOME_GRID_SIZE;
+            if (hovered) {
+                hoveredCell = new HomeGridCell(day, cellX, cellY, HOME_GRID_SIZE);
+            }
+            renderHomeDayCell(ctx, day, cellX, cellY, HOME_GRID_SIZE, hovered);
+        }
+
+        renderHomeLegend(ctx, centeredGridX, gridY + gridHeight + 10, textSub);
+        StaffStatsFeature.DaySnapshot detailSnapshot = hoveredCell != null ? hoveredCell.snapshot() : overview.today();
+        renderHomeDetailPanel(ctx, detailX, detailY, detailW, detailH, detailSnapshot, hoveredCell != null, textMain, textSub, textAccent);
+        if (hoveredCell != null) {
+            renderHomeTooltip(ctx, mouseX, mouseY, hoveredCell.snapshot());
+        }
+    }
+
+    private void renderHomeMetricCard(DrawContext ctx, int x, int y, int w, int h, Text label, String value, float accentBoost) {
+        drawInsetPanel(ctx, x, y, w, h, 8, accentBoost, true);
+        UiChrome.drawText(ctx, this.textRenderer, label, x + 10, y + 9, UiChrome.mutedTextColor(236), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), x + 10, y + 24, UiChrome.mainTextColor(255), false);
+    }
+
+    private void renderHomeDayCell(DrawContext ctx, StaffStatsFeature.DaySnapshot day, int x, int y, int size, boolean hovered) {
+        float ratio = Math.max(0.0f, Math.min(1.0f, day.playMillis() / 10_800_000.0f));
+        int fill = ModernGui.lerpColor(UiChrome.themePrimaryColor(176), 0xFF3FD46C, ratio);
+        int border = hovered
+                ? UiChrome.mainTextColor(255)
+                : ModernGui.lerpColor(UiChrome.outlineColor(190), 0xFF67E287, ratio);
+        GuiRenderUtils.roundedRect(ctx, x, y, x + size, y + size, 5, fill);
+        GuiRenderUtils.roundedOutline(ctx, x, y, x + size, y + size, 5, 1, border);
+
+        String dayNumber = Integer.toString(day.date().getDayOfMonth());
+        int textX = x + ((size - this.textRenderer.getWidth(dayNumber)) / 2);
+        int textY = y + ((size - this.textRenderer.fontHeight) / 2);
+        int dayText = hovered ? UiChrome.mainTextColor(255) : UiChrome.mainTextColor(day.playMillis() > 0L ? 248 : 196);
+        ctx.drawText(this.textRenderer, dayNumber, textX, textY, dayText, false);
+    }
+
+    private void renderHomeLegend(DrawContext ctx, int x, int y, int textSub) {
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.legend"), x, y + 4, textSub, false);
+        int startX = x + 122;
+        int box = 12;
+        int gap = 6;
+        float[] steps = new float[]{0.0f, 0.33f, 0.66f, 1.0f};
+        for (int i = 0; i < steps.length; i++) {
+            int fill = ModernGui.lerpColor(UiChrome.themePrimaryColor(176), 0xFF3FD46C, steps[i]);
+            int xx = startX + (i * (box + gap));
+            GuiRenderUtils.roundedRect(ctx, xx, y, xx + box, y + box, 3, fill);
+            GuiRenderUtils.roundedOutline(ctx, xx, y, xx + box, y + box, 3, 1, UiChrome.outlineColor(184));
+        }
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.legend_low"), startX - 34, y + 2, textSub, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.legend_high"), startX + (steps.length * (box + gap)) + 2, y + 2, textSub, false);
+    }
+
+    private void renderHomeDetailPanel(DrawContext ctx, int x, int y, int w, int h, StaffStatsFeature.DaySnapshot day, boolean hovered, int textMain, int textSub, int textAccent) {
+        String titleKey = hovered ? "gui.staffhelper.home.detail.hover" : "gui.staffhelper.home.detail.today";
+        ctx.drawText(this.textRenderer, tr(titleKey), x + 12, y + 12, textMain, false);
+        ctx.drawText(this.textRenderer, UiChrome.uiLiteral(dateLabel(day.date())), x + 12, y + 28, textAccent, false);
+        ctx.fill(x + 12, y + 44, x + w - 12, y + 45, UiChrome.outlineColor(120));
+
+        int lineY = y + 56;
+        lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.play_time"), formatDuration(day.playMillis()));
+        lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.bans"), String.valueOf(day.bans()));
+        lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.mutes"), String.valueOf(day.mutes()));
+        drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.kicks"), String.valueOf(day.kicks()));
+
+        String hintKey = hovered ? "gui.staffhelper.home.detail.hover_hint" : "gui.staffhelper.home.detail.today_hint";
+        ctx.drawText(this.textRenderer, tr(hintKey), x + 12, y + h - 18, textSub, false);
+    }
+
+    private int drawHomeDetailLine(DrawContext ctx, int x, int y, Text label, String value) {
+        UiChrome.drawText(ctx, this.textRenderer, label, x, y, UiChrome.mutedTextColor(238), false);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), x, y + 12, UiChrome.mainTextColor(255), false);
+        return y + 30;
+    }
+
+    private void renderHomeTooltip(DrawContext ctx, int mouseX, int mouseY, StaffStatsFeature.DaySnapshot day) {
+        List<String> lines = new ArrayList<>();
+        lines.add(dateLabel(day.date()));
+        lines.add(tr("gui.staffhelper.home.detail.play_time").getString() + ": " + formatDuration(day.playMillis()));
+        lines.add(tr("gui.staffhelper.home.detail.bans").getString() + ": " + day.bans());
+        lines.add(tr("gui.staffhelper.home.detail.mutes").getString() + ": " + day.mutes());
+        lines.add(tr("gui.staffhelper.home.detail.kicks").getString() + ": " + day.kicks());
+
+        int width = 0;
+        for (String line : lines) {
+            width = Math.max(width, this.textRenderer.getWidth(line));
+        }
+        width += 18;
+        int height = 12 + (lines.size() * 12);
+        int panelX = mouseX + 12;
+        int panelY = mouseY + 12;
+        int maxX = panelBaseX() + panelW - width - 10;
+        int maxY = panelBaseY() + getUiOffsetY() + panelH - height - 10;
+        if (panelX > maxX) panelX = maxX;
+        if (panelY > maxY) panelY = maxY;
+        panelX = Math.max(panelBaseX() + 8, panelX);
+        panelY = Math.max(panelBaseY() + getUiOffsetY() + 8, panelY);
+
+        UiChrome.drawPanel(ctx, panelX, panelY, width, height, 8, System.currentTimeMillis(), 0.18f, true, false);
+        int lineY = panelY + 8;
+        for (int i = 0; i < lines.size(); i++) {
+            int color = i == 0 ? UiChrome.mainTextColor(255) : UiChrome.mutedTextColor(242);
+            ctx.drawText(this.textRenderer, lines.get(i), panelX + 9, lineY, color, false);
+            lineY += 12;
+        }
+    }
+
+    private String monthLabel(YearMonth month) {
+        Locale locale = Locale.getDefault();
+        String monthName = month.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale);
+        return capitalize(monthName) + " " + month.getYear();
+    }
+
+    private String dateLabel(LocalDate date) {
+        Locale locale = Locale.getDefault();
+        String monthName = date.getMonth().getDisplayName(TextStyle.FULL_STANDALONE, locale);
+        return date.getDayOfMonth() + " " + capitalize(monthName) + " " + date.getYear();
+    }
+
+    private String formatDuration(long millis) {
+        long totalSeconds = Math.max(0L, millis / 1000L);
+        long hours = totalSeconds / 3600L;
+        long minutes = (totalSeconds % 3600L) / 60L;
+        long seconds = totalSeconds % 60L;
+        return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
+    }
+
+    private static String capitalize(String value) {
+        if (value == null || value.isEmpty()) return "";
+        if (value.length() == 1) return value.toUpperCase(Locale.ROOT);
+        return value.substring(0, 1).toUpperCase(Locale.ROOT) + value.substring(1);
+    }
+
+    private record HomeGridCell(StaffStatsFeature.DaySnapshot snapshot, int x, int y, int size) {}
 
     private void renderCustomThemeDialog(DrawContext ctx) {
         normalizeDraftStops();

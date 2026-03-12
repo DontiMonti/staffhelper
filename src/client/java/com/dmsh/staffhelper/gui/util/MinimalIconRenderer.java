@@ -26,6 +26,7 @@ public final class MinimalIconRenderer {
     );
 
     public enum Glyph {
+        HOME,
         SEARCH,
         MAP_PIN,
         COMMAND,
@@ -53,6 +54,7 @@ public final class MinimalIconRenderer {
         }
         GridPainter painter = new GridPainter(ctx, x, y, size);
         switch (glyph) {
+            case HOME -> drawHome(painter, color, accent);
             case SEARCH -> drawSearch(painter, color, accent);
             case MAP_PIN -> drawMapPin(painter, color, accent);
             case COMMAND -> drawCommand(painter, color, accent);
@@ -105,6 +107,13 @@ public final class MinimalIconRenderer {
         p.outline(2, 2, 8, 8, 4, color);
         p.diagDown(8, 8, 4, color);
         p.dot(5, 5, 2, accent);
+    }
+
+    private static void drawHome(GridPainter p, int color, int accent) {
+        p.diagUp(2, 9, 6, color);
+        p.diagDown(8, 3, 6, color);
+        p.fill(4, 8, 8, 6, 2, color);
+        p.fill(7, 10, 2, 4, 1, accent);
     }
 
     private static void drawMapPin(GridPainter p, int color, int accent) {

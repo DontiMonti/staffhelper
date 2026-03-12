@@ -8,6 +8,7 @@ import net.minecraft.text.Text;
 
 public class IconTabButtonWidget extends SoupButtonWidget {
     public enum IconType {
+        HOME,
         NICKSEARCH,
         AFKZONE,
         COMMANDBUILDER,
@@ -46,6 +47,7 @@ public class IconTabButtonWidget extends SoupButtonWidget {
 
     private static MinimalIconRenderer.Glyph toGlyph(IconType iconType) {
         return switch (iconType) {
+            case HOME -> MinimalIconRenderer.Glyph.HOME;
             case NICKSEARCH -> MinimalIconRenderer.Glyph.SEARCH;
             case AFKZONE -> MinimalIconRenderer.Glyph.MAP_PIN;
             case COMMANDBUILDER -> MinimalIconRenderer.Glyph.COMMAND;
