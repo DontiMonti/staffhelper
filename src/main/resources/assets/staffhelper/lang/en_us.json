@@ -24,6 +24,7 @@
   "gui.staffhelper.home.detail.today": "Today",
   "gui.staffhelper.home.detail.hover": "Day details",
   "gui.staffhelper.home.detail.play_time": "Play time",
+  "gui.staffhelper.home.detail.count": "Count",
   "gui.staffhelper.home.detail.bans": "Bans",
   "gui.staffhelper.home.detail.mutes": "Mutes",
   "gui.staffhelper.home.detail.kicks": "Kicks",

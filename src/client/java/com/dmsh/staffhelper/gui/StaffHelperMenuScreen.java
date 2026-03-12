@@ -2240,12 +2240,11 @@ public class StaffHelperMenuScreen extends Screen {
         int contentX = x0 + CONTENT_PAD;
         int contentW = panelW - CONTENT_PAD - 16;
         int welcomeY = y0 + 48;
-        int welcomeH = 50;
+        int welcomeH = 40;
         drawInsetPanel(ctx, contentX, welcomeY, contentW, welcomeH, 10, -0.04f, true);
 
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.welcome", username), contentX + 14, welcomeY + 10, textMain, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.month_subtitle", monthLabel(overview.month())), contentX + 14, welcomeY + 26, textSub, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.month_hint"), contentX + 14, welcomeY + 40, textAccent, false);
+        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.month_subtitle", monthLabel(overview.month())), contentX + 14, welcomeY + 24, textSub, false);
 
         int cardsY = welcomeY + welcomeH + 8;
         int cardW = (contentW - (HOME_CARD_GAP * 3)) / 4;
@@ -2267,7 +2266,7 @@ public class StaffHelperMenuScreen extends Screen {
 
         int gridLabelX = contentX + 18;
         int gridX = gridLabelX;
-        int gridY = boardY + 42;
+        int gridY = boardY + 34;
         int gridAreaW = detailX - gridX - 18;
         int gridRows = Math.max(1, (overview.days().size() + HOME_GRID_COLUMNS - 1) / HOME_GRID_COLUMNS);
         int gridWidth = (HOME_GRID_COLUMNS * HOME_GRID_SIZE) + ((HOME_GRID_COLUMNS - 1) * HOME_GRID_GAP);
@@ -2275,7 +2274,6 @@ public class StaffHelperMenuScreen extends Screen {
         int centeredGridX = gridX + Math.max(0, (gridAreaW - gridWidth) / 2);
 
         ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.activity_title", monthLabel(overview.month())), gridLabelX, boardY + 14, textMain, false);
-        ctx.drawText(this.textRenderer, tr("gui.staffhelper.home.activity_subtitle"), gridLabelX, boardY + 28, textAccent, false);
 
         HomeGridCell hoveredCell = null;
         for (int i = 0; i < overview.days().size(); i++) {
@@ -2345,18 +2343,28 @@ public class StaffHelperMenuScreen extends Screen {
 
         int lineY = y + 56;
         lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.play_time"), formatDuration(day.playMillis()));
-        lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.bans"), String.valueOf(day.bans()));
-        lineY = drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.mutes"), String.valueOf(day.mutes()));
-        drawHomeDetailLine(ctx, x + 12, lineY, tr("gui.staffhelper.home.detail.kicks"), String.valueOf(day.kicks()));
+        Text countHeader = tr("gui.staffhelper.home.detail.count");
+        int countHeaderWidth = this.textRenderer.getWidth(countHeader);
+        int countColumnX = x + w - 12 - countHeaderWidth;
+        UiChrome.drawText(ctx, this.textRenderer, countHeader, countColumnX, lineY + 2, UiChrome.mutedTextColor(238), false);
 
-        String hintKey = hovered ? "gui.staffhelper.home.detail.hover_hint" : "gui.staffhelper.home.detail.today_hint";
-        ctx.drawText(this.textRenderer, tr(hintKey), x + 12, y + h - 18, textSub, false);
+        int rowY = lineY + 16;
+        rowY = drawHomeDetailStatRow(ctx, x + 12, countColumnX, countHeaderWidth, rowY, tr("gui.staffhelper.home.detail.bans"), String.valueOf(day.bans()));
+        rowY = drawHomeDetailStatRow(ctx, x + 12, countColumnX, countHeaderWidth, rowY, tr("gui.staffhelper.home.detail.mutes"), String.valueOf(day.mutes()));
+        drawHomeDetailStatRow(ctx, x + 12, countColumnX, countHeaderWidth, rowY, tr("gui.staffhelper.home.detail.kicks"), String.valueOf(day.kicks()));
     }
 
     private int drawHomeDetailLine(DrawContext ctx, int x, int y, Text label, String value) {
         UiChrome.drawText(ctx, this.textRenderer, label, x, y, UiChrome.mutedTextColor(238), false);
         UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), x, y + 12, UiChrome.mainTextColor(255), false);
-        return y + 30;
+        return y + 36;
+    }
+
+    private int drawHomeDetailStatRow(DrawContext ctx, int labelX, int valueColumnX, int valueColumnWidth, int y, Text label, String value) {
+        UiChrome.drawText(ctx, this.textRenderer, label, labelX, y, UiChrome.mutedTextColor(238), false);
+        int valueX = valueColumnX + Math.max(0, (valueColumnWidth - this.textRenderer.getWidth(value)) / 2);
+        UiChrome.drawText(ctx, this.textRenderer, UiChrome.uiLiteral(value), valueX, y, UiChrome.mainTextColor(255), false);
+        return y + 18;
     }
 
     private void renderHomeTooltip(DrawContext ctx, int mouseX, int mouseY, StaffStatsFeature.DaySnapshot day) {
