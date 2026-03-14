@@ -51,43 +51,21 @@ public class StaffHelperConfig {
     public float uiCustomGradientAngle = 90.0f;
 
     public boolean afkZoneEnabled = true;
-
     public boolean afkOutlineEnabled = true;
     public boolean afkFillEnabled = false;
 
-    public int afkX1 = 0, afkY1 = 64, afkZ1 = 0;
-    public int afkX2 = 0, afkY2 = 64, afkZ2 = 0;
+    public int afkX1 = 0;
+    public int afkY1 = 64;
+    public int afkZ1 = 0;
+    public int afkX2 = 0;
+    public int afkY2 = 64;
+    public int afkZ2 = 0;
 
     public int afkListX = 8;
     public int afkListY = 90;
 
     public List<String> afkIgnoreNicks = new ArrayList<>();
-
     public List<CommandBuilderEntry> commandBuilders = new ArrayList<>();
-
-    public boolean remoteDecorationsEnabled = true;
-
-    public String remoteDecorationsUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/main/staffhelper_decorations.json";
-    public int remoteDecorationsIntervalSeconds = 5;
-
-    public String remoteRolesUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_roles.json";
-    public int remoteRolesIntervalSeconds = 5;
-
-    public String remoteUpdatesUrl = "https://raw.githubusercontent.com/DontiMonti/staffhelper-bd/refs/heads/main/staffhelper_updates.json";
-
-    public String supabaseProjectUrl = defaultSupabaseProjectUrl();
-    public String supabaseAnonKey = defaultSupabaseAnonKey();
-    public String supabaseWriteKey = "";
-    public String supabaseAnonKeyEncrypted = "";
-    public String supabaseWriteKeyEncrypted = "";
-    public String supabaseDecorationsTable = "decorations";
-    public String supabaseRolesTable = "staffhelper_roles";
-    public String supabaseUpdatesTable = "updates";
-    public String supabaseAllowedUsersTable = "allowed_users";
-    public boolean supabaseUseActiveFilter = true;
-
-    public String creatorNick = "DontiMonti";
-    public String creatorUuid = "";
 
     public static StaffHelperConfig load() {
         try {
@@ -104,21 +82,11 @@ public class StaffHelperConfig {
     }
 
     public void save() {
-        String runtimeAnon = safe(supabaseAnonKey);
-        String runtimeWrite = safe(supabaseWriteKey);
         try {
             normalize();
-            supabaseAnonKeyEncrypted = encodeSecretForSave(runtimeAnon, supabaseAnonKeyEncrypted);
-            supabaseWriteKeyEncrypted = encodeSecretForSave(runtimeWrite, supabaseWriteKeyEncrypted);
-            supabaseAnonKey = "";
-            supabaseWriteKey = "";
             Files.createDirectories(FILE.getParent());
             Files.writeString(FILE, GSON.toJson(this));
         } catch (IOException ignored) {}
-        finally {
-            supabaseAnonKey = runtimeAnon;
-            supabaseWriteKey = runtimeWrite;
-        }
     }
 
     private void normalize() {
@@ -126,6 +94,7 @@ public class StaffHelperConfig {
         if (nickIgnoreNicks == null) nickIgnoreNicks = new ArrayList<>();
         if (afkIgnoreNicks == null) afkIgnoreNicks = new ArrayList<>();
         if (commandBuilders == null) commandBuilders = new ArrayList<>();
+
         uiTheme = normalizeTheme(uiTheme);
         uiCustomColor1 = clampRgb(uiCustomColor1, 0x2D4A73);
         uiCustomColor2 = clampRgb(uiCustomColor2, 0x5F8FD6);
@@ -135,28 +104,10 @@ public class StaffHelperConfig {
             uiCustomColor1 = uiCustomGradientStops.get(0).color;
             uiCustomColor2 = uiCustomGradientStops.get(uiCustomGradientStops.size() - 1).color;
         }
+
         autoBoxSelection = clampAutoBoxSelection(autoBoxSelection);
         autoBoxCommandBox1 = safe(autoBoxCommandBox1);
         autoBoxCommandBox2 = safe(autoBoxCommandBox2);
-        remoteDecorationsUrl = safe(remoteDecorationsUrl);
-        remoteDecorationsIntervalSeconds = clampPollingInterval(remoteDecorationsIntervalSeconds);
-        remoteRolesUrl = safe(remoteRolesUrl);
-        remoteRolesIntervalSeconds = clampPollingInterval(remoteRolesIntervalSeconds);
-        remoteUpdatesUrl = safe(remoteUpdatesUrl);
-        supabaseProjectUrl = stripTrailingSlashes(safe(supabaseProjectUrl));
-        supabaseAnonKey = safe(supabaseAnonKey);
-        supabaseWriteKey = safe(supabaseWriteKey);
-        supabaseAnonKeyEncrypted = safe(supabaseAnonKeyEncrypted);
-        supabaseWriteKeyEncrypted = safe(supabaseWriteKeyEncrypted);
-        supabaseDecorationsTable = sanitizeTable(supabaseDecorationsTable, "decorations");
-        supabaseRolesTable = sanitizeTable(supabaseRolesTable, "staffhelper_roles");
-        supabaseUpdatesTable = sanitizeTable(supabaseUpdatesTable, "updates");
-        supabaseAllowedUsersTable = sanitizeTable(supabaseAllowedUsersTable, "allowed_users");
-        creatorNick = safe(creatorNick);
-        creatorUuid = safe(creatorUuid);
-        supabaseAnonKey = decodeSecretAtRuntime(supabaseAnonKey, supabaseAnonKeyEncrypted);
-        supabaseWriteKey = decodeSecretAtRuntime(supabaseWriteKey, supabaseWriteKeyEncrypted);
-        applyEmbeddedSupabaseDefaults();
 
         for (CommandBuilderEntry entry : commandBuilders) {
             if (entry == null) continue;
@@ -176,35 +127,14 @@ public class StaffHelperConfig {
         };
     }
 
-    private static String safe(String s) {
-        return s == null ? "" : s.trim();
-    }
-
-    private static String stripTrailingSlashes(String url) {
-        String out = safe(url);
-        while (out.endsWith("/")) {
-            out = out.substring(0, out.length() - 1);
-        }
-        return out;
-    }
-
-    private static int clampPollingInterval(int value) {
-        if (value < 5) return 5;
-        if (value > 15) return 15;
-        return value;
+    private static String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private static int clampAutoBoxSelection(int value) {
         if (value < 0) return 0;
         if (value > 2) return 0;
         return value;
-    }
-
-    private static String sanitizeTable(String value, String fallback) {
-        String t = safe(value);
-        if (t.isEmpty()) return fallback;
-        if (!t.matches("^[A-Za-z0-9_]+$")) return fallback;
-        return t;
     }
 
     private static int clampRgb(int value, int fallback) {
@@ -223,9 +153,6 @@ public class StaffHelperConfig {
         int c1 = clampRgb(fallback1, 0x2D4A73);
         int c2 = clampRgb(fallback2, 0x5F8FD6);
 
-        // Backward compatibility: when loading old configs without gradient stops,
-        // gson leaves this field with initializer defaults (0/1 + stock colors).
-        // In that case prefer legacy uiCustomColor1/uiCustomColor2 values.
         if ((c1 != 0x2D4A73 || c2 != 0x5F8FD6) && looksLikeDefaultStops(source)) {
             return defaultCustomGradientStops(c1, c2);
         }
@@ -284,55 +211,6 @@ public class StaffHelperConfig {
         float out = value % 360.0f;
         if (out < 0.0f) out += 360.0f;
         return out;
-    }
-
-    private static String decodeSecretAtRuntime(String plainOrEncoded, String encryptedField) {
-        String p = safe(plainOrEncoded);
-        if (!p.isEmpty()) {
-            if (ConfigSecretCodec.isEncrypted(p)) {
-                String dec = ConfigSecretCodec.decrypt(p);
-                return dec.isEmpty() ? "" : dec;
-            }
-            return p;
-        }
-
-        String e = safe(encryptedField);
-        if (e.isEmpty()) return "";
-        String dec = ConfigSecretCodec.decrypt(e);
-        return dec.isEmpty() ? "" : dec;
-    }
-
-    private static String encodeSecretForSave(String runtimePlain, String currentEncrypted) {
-        String plain = safe(runtimePlain);
-        if (!plain.isEmpty() && !ConfigSecretCodec.isEncrypted(plain)) {
-            String enc = ConfigSecretCodec.encrypt(plain);
-            if (ConfigSecretCodec.isEncrypted(enc)) return enc;
-        }
-        if (ConfigSecretCodec.isEncrypted(plain)) return plain;
-        String keep = safe(currentEncrypted);
-        return ConfigSecretCodec.isEncrypted(keep) ? keep : "";
-    }
-
-    private void applyEmbeddedSupabaseDefaults() {
-        if (supabaseProjectUrl.isEmpty()) {
-            supabaseProjectUrl = defaultSupabaseProjectUrl();
-        }
-        if (supabaseAnonKey.isEmpty() && supabaseAnonKeyEncrypted.isEmpty()) {
-            supabaseAnonKey = defaultSupabaseAnonKey();
-        }
-    }
-
-    private static String defaultSupabaseProjectUrl() {
-        return "https://ewtxmhsczspgrxaonlkb.supabase.co";
-    }
-
-    private static String defaultSupabaseAnonKey() {
-        char[] chars = new char[] {
-                's','b','_','p','u','b','l','i','s','h','a','b','l','e','_',
-                'g','a','O','e','Z','a','y','K','b','X','b','0','g','O','a','A','V',
-                'q','9','T','E','w','_','D','D','P','t','h','9','H','x'
-        };
-        return new String(chars);
     }
 
     public static class CommandBuilderEntry {

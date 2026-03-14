@@ -8,7 +8,6 @@ import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.gui.widget.IntSliderWidget;
 import com.dmsh.staffhelper.gui.widget.SoupButtonWidget;
 import com.dmsh.staffhelper.util.DebugLogStore;
-import com.dmsh.staffhelper.util.NameTagDebugStore;
 import com.dmsh.staffhelper.util.NickDecorationsStore;
 import com.dmsh.staffhelper.util.RolesStore;
 import net.minecraft.client.MinecraftClient;
@@ -200,19 +199,6 @@ public class DebugScreen extends Screen {
         out.add("decorations loaded: " + NickDecorationsStore.size());
         out.add("vanish enabled: " + VanishFeature.isEnabled());
         out.add("staff stats bans/mutes: " + StaffStatsFeature.getBans() + "/" + StaffStatsFeature.getMutes());
-        out.add("");
-        out.add("=== NAME TAG DEBUG ===");
-        NameTagDebugStore.Snapshot nt = NameTagDebugStore.snapshot();
-        out.add("last update: " + nt.time());
-        out.add("raw: " + oneLine(nt.raw(), 140));
-        out.add("cleaned: " + oneLine(nt.cleaned(), 140));
-        out.add("filtered: " + nt.filtered());
-        out.add("has server meta: " + nt.hasServerMeta());
-        out.add("target nick: " + (nt.nick().isBlank() ? "<none>" : nt.nick()));
-        out.add("has decoration: " + nt.hasDecoration());
-        out.add("role: " + (nt.role().isBlank() ? "<none>" : nt.role()));
-        out.add("last label seen: " + oneLine(nt.lastSeenLabel(), 140));
-        out.add("suppressed marker label: " + nt.suppressedMarkerLabel());
 
         out.add("");
         out.add("=== CONFIG FIELDS ===");
@@ -247,13 +233,6 @@ public class DebugScreen extends Screen {
             return "size=" + n + " sample=" + list.subList(0, take);
         }
         return String.valueOf(v);
-    }
-
-    private static String oneLine(String value, int maxLen) {
-        if (value == null || value.isBlank()) return "<empty>";
-        String s = value.replace("\r", "\\r").replace("\n", "\\n");
-        if (s.length() <= maxLen) return s;
-        return s.substring(0, Math.max(0, maxLen - 3)) + "...";
     }
 
     private static int clamp(int value, int min, int max) {

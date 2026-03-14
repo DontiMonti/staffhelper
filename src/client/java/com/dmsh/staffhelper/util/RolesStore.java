@@ -13,16 +13,6 @@ public final class RolesStore {
             "werkuk", new RoleInfo("LOVE", 0xFF6FB5, RoleTextStyle.LOVE)
     );
 
-    public static String getRoleFor(String nick) {
-        RoleInfo info = getRoleInfoFor(nick);
-        return info == null ? null : info.role();
-    }
-
-    public static int getRoleColorFor(String nick) {
-        RoleInfo info = getRoleInfoFor(nick);
-        return info == null ? DEFAULT_ROLE_COLOR : normalizeColor(info.color());
-    }
-
     public static RoleInfo getRoleInfoFor(String nick) {
         String key = normalizeNick(nick);
         if (key == null || key.isBlank()) return null;
@@ -39,11 +29,6 @@ public final class RolesStore {
         String clean = value.replaceAll("\u00A7.", "").replaceAll("[^A-Za-z0-9_]", "");
         if (clean.isBlank()) return null;
         return clean.toLowerCase(Locale.ROOT);
-    }
-
-    private static int normalizeColor(int color) {
-        if (color < 0 || color > 0xFFFFFF) return DEFAULT_ROLE_COLOR;
-        return color;
     }
 
     public enum RoleTextStyle {
