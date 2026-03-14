@@ -3,7 +3,6 @@ package com.dmsh.staffhelper.feature;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.gui.util.MinimalIconRenderer;
-import com.dmsh.staffhelper.gui.util.RoleTextShader;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.util.RolesStore;
 import com.dmsh.staffhelper.util.TpsTracker;
@@ -119,10 +118,10 @@ public final class StatsHudFeature {
             chips.add(new ChipItem(
                     "role",
                     MinimalIconRenderer.Glyph.TAG,
-                    Text.literal(roleInfo.role()).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(cleanRoleColor))),
-                    mainRgb,
-                    cleanRoleColor,
-                    roleInfo.style()
+                Text.literal(roleInfo.role()),
+                mainRgb,
+                cleanRoleColor,
+                roleInfo.style()
             ));
         }
 
@@ -295,11 +294,10 @@ public final class StatsHudFeature {
         int textY = y + padY + Math.max(0, (contentHeight - mc.textRenderer.fontHeight) / 2);
 
         MinimalIconRenderer.draw(ctx, chip.icon(), x + padX, iconY, iconSize, withAlpha(chip.iconColor(), alpha), withAlpha(chip.accentColor(), alpha));
-        if (chip.roleStyle() != RolesStore.RoleTextStyle.NONE
-                && RoleTextShader.draw(ctx, mc.textRenderer, chip.text().getString(), chip.roleStyle(), textX, textY, alpha)) {
-            return;
-        }
-        UiChrome.drawText(ctx, mc.textRenderer, chip.text(), textX, textY, UiChrome.mainTextColor(alpha), false);
+        int textColor = chip.roleStyle() != RolesStore.RoleTextStyle.NONE
+                ? withAlpha(chip.accentColor(), alpha)
+                : UiChrome.mainTextColor(alpha);
+        UiChrome.drawText(ctx, mc.textRenderer, chip.text(), textX, textY, textColor, false);
     }
 
     private static void drawPanel(DrawContext ctx, int x, int y, ChipContent content, boolean clampToScreen) {

@@ -10,7 +10,6 @@ import com.dmsh.staffhelper.feature.StatsHudFeature;
 import com.dmsh.staffhelper.feature.VanishFeature;
 import com.dmsh.staffhelper.gui.DebugScreen;
 import com.dmsh.staffhelper.gui.StaffHelperMenuScreen;
-import com.dmsh.staffhelper.gui.util.RoleTextShader;
 import com.dmsh.staffhelper.gui.util.SmoothUiShader;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -29,8 +28,6 @@ public class StaffHelperClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         SmoothUiShader.init();
-        RoleTextShader.init();
-
         StaffHelperState.CONFIG = StaffHelperConfig.load();
 
         OPEN_MENU_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
