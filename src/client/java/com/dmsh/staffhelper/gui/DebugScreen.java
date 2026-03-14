@@ -3,7 +3,6 @@ package com.dmsh.staffhelper.gui;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.feature.StaffStatsFeature;
-import com.dmsh.staffhelper.feature.UpdateNotifyFeature;
 import com.dmsh.staffhelper.feature.VanishFeature;
 import com.dmsh.staffhelper.gui.util.UiChrome;
 import com.dmsh.staffhelper.gui.widget.IntSliderWidget;
@@ -11,8 +10,6 @@ import com.dmsh.staffhelper.gui.widget.SoupButtonWidget;
 import com.dmsh.staffhelper.util.DebugLogStore;
 import com.dmsh.staffhelper.util.NameTagDebugStore;
 import com.dmsh.staffhelper.util.NickDecorationsStore;
-import com.dmsh.staffhelper.util.RemoteNickDecorationsPoller;
-import com.dmsh.staffhelper.util.RemoteRolesPoller;
 import com.dmsh.staffhelper.util.RolesStore;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -34,10 +31,7 @@ public class DebugScreen extends Screen {
     private Mode mode = Mode.OVERVIEW;
 
     private ButtonWidget logsBtn;
-    private ButtonWidget forceBtn;
     private ButtonWidget backBtn;
-    private ButtonWidget simulateOldVersionBtn;
-    private ButtonWidget simulateFutureVersionBtn;
     private ButtonWidget closeBtn;
     private IntSliderWidget verticalSlider;
     private IntSliderWidget horizontalSlider;
@@ -54,31 +48,16 @@ public class DebugScreen extends Screen {
     @Override
     protected void init() {
         int closeX = this.width - 92;
-        int simBtnW = 126;
-        int simFutureX = Math.max(12, closeX - simBtnW - 8);
-        int simOldX = Math.max(12, simFutureX - simBtnW - 8);
 
         logsBtn = addDrawableChild(new SoupButtonWidget(12, 10, 120, 20, Text.literal("Logs"), b -> {
             mode = Mode.LOGS;
             updateModeVisibility();
         }));
 
-        forceBtn = addDrawableChild(new SoupButtonWidget(12, 10, 140, 20, Text.literal("Force Sync"), b -> {
-            RemoteNickDecorationsPoller.forcePollNow(StaffHelperState.CONFIG);
-            RemoteRolesPoller.forcePollNow(StaffHelperState.CONFIG);
-        }));
-
-        backBtn = addDrawableChild(new SoupButtonWidget(158, 10, 100, 20, Text.literal("Back"), b -> {
+        backBtn = addDrawableChild(new SoupButtonWidget(12, 10, 100, 20, Text.literal("Back"), b -> {
             mode = Mode.OVERVIEW;
             updateModeVisibility();
         }));
-
-        simulateOldVersionBtn = addDrawableChild(new SoupButtonWidget(
-                simOldX, 10, simBtnW, 20, Text.literal("Sim OLD Version"), b -> UpdateNotifyFeature.simulateOldVersionNotice()
-        ));
-        simulateFutureVersionBtn = addDrawableChild(new SoupButtonWidget(
-                simFutureX, 10, simBtnW, 20, Text.literal("Sim FUTURE Version"), b -> UpdateNotifyFeature.simulateFutureVersionNotice()
-        ));
 
         closeBtn = addDrawableChild(new SoupButtonWidget(closeX, 10, 80, 20, Text.literal("Close"), b -> close()));
 
@@ -95,17 +74,10 @@ public class DebugScreen extends Screen {
 
     private void updateModeVisibility() {
         boolean logsMode = mode == Mode.LOGS;
-        boolean overviewMode = mode == Mode.OVERVIEW;
         logsBtn.visible = !logsMode;
         logsBtn.active = !logsMode;
-        forceBtn.visible = logsMode;
-        forceBtn.active = logsMode;
         backBtn.visible = logsMode;
         backBtn.active = logsMode;
-        simulateOldVersionBtn.visible = overviewMode;
-        simulateOldVersionBtn.active = overviewMode;
-        simulateFutureVersionBtn.visible = overviewMode;
-        simulateFutureVersionBtn.active = overviewMode;
         verticalSlider.visible = logsMode;
         verticalSlider.active = logsMode;
         horizontalSlider.visible = logsMode;

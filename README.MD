@@ -1,4 +1,4 @@
-﻿# ElytraStaffHelper - Closed
+﻿# ElytraStaffHelper - Closed.
 
 Клиентский Fabric-мод для Minecraft 1.21.8, который ускоряет работу стаффа: создание алиасов, HUD, AFK-Zone, визуальная часть для стафа.
 

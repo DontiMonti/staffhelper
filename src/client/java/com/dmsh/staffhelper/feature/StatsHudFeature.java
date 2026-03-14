@@ -3,8 +3,8 @@ package com.dmsh.staffhelper.feature;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
 import com.dmsh.staffhelper.gui.util.MinimalIconRenderer;
+import com.dmsh.staffhelper.gui.util.RoleTextShader;
 import com.dmsh.staffhelper.gui.util.UiChrome;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import com.dmsh.staffhelper.util.RolesStore;
 import com.dmsh.staffhelper.util.TpsTracker;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -48,11 +48,6 @@ public final class StatsHudFeature {
     }
 
     private static void renderHud(DrawContext ctx, RenderTickCounter tickCounter) {
-        if (!AllowedUsersAccessGate.isModAllowed()) {
-            animatedChips.clear();
-            panelProgress = 0.0f;
-            return;
-        }
         StaffHelperConfig cfg = StaffHelperState.CONFIG;
         if (cfg == null) return;
 
@@ -86,13 +81,10 @@ public final class StatsHudFeature {
         String nick = mc.player.getGameProfile().getName();
         if (nick == null) nick = "";
 
-        String role = RolesStore.getRoleFor(nick);
-        int roleColor = RolesStore.getRoleColorFor(nick);
-        if ((role == null || role.isBlank()) && mc.player.getDisplayName() != null) {
-            role = RolesStore.getRoleFor(mc.player.getDisplayName().getString());
-            roleColor = RolesStore.getRoleColorFor(mc.player.getDisplayName().getString());
-        }
-        if (role == null || role.isBlank()) role = "UNKNOWN";
+        RolesStore.RoleInfo roleInfo = resolveRoleInfo(
+                nick,
+                mc.player.getDisplayName() == null ? null : mc.player.getDisplayName().getString()
+        );
 
         int ping = -1;
         PlayerListEntry self = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
@@ -103,32 +95,34 @@ public final class StatsHudFeature {
         double tps10 = TpsTracker.getTps10m();
         double tps15 = TpsTracker.getTps15m();
 
-        return new ChipContent(buildChips(cfg, nick, role, roleColor, ping, tpsNow, tps5, tps10, tps15));
+        return new ChipContent(buildChips(cfg, nick, roleInfo, ping, tpsNow, tps5, tps10, tps15));
     }
 
-    private static List<ChipItem> buildChips(StaffHelperConfig cfg, String nick, String role, int roleColor, int ping, double tpsNow, double tps5, double tps10, double tps15) {
+    private static List<ChipItem> buildChips(StaffHelperConfig cfg, String nick, RolesStore.RoleInfo roleInfo, int ping, double tpsNow, double tps5, double tps10, double tps15) {
         List<ChipItem> chips = new ArrayList<>();
         String shownNick = (nick == null || nick.isBlank()) ? "Unknown" : nick;
         int mainRgb = UiChrome.mainTextColor(255) & 0x00FFFFFF;
         int mutedRgb = UiChrome.mutedTextColor(255) & 0x00FFFFFF;
         int accentRgb = UiChrome.accentColor(255) & 0x00FFFFFF;
-        int cleanRoleColor = normalizeRoleColor(roleColor);
 
         chips.add(new ChipItem(
                 "nick",
                 MinimalIconRenderer.Glyph.PROFILE,
                 Text.literal(shownNick),
                 mainRgb,
-                accentRgb
+                accentRgb,
+                RolesStore.RoleTextStyle.NONE
         ));
 
-        if (cfg.statsShowRole) {
+        if (cfg.statsShowRole && roleInfo != null && roleInfo.role() != null && !roleInfo.role().isBlank()) {
+            int cleanRoleColor = normalizeRoleColor(roleInfo.color());
             chips.add(new ChipItem(
                     "role",
                     MinimalIconRenderer.Glyph.TAG,
-                    Text.literal(role).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(cleanRoleColor))),
+                    Text.literal(roleInfo.role()).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(cleanRoleColor))),
                     mainRgb,
-                    cleanRoleColor
+                    cleanRoleColor,
+                    roleInfo.style()
             ));
         }
 
@@ -139,7 +133,8 @@ public final class StatsHudFeature {
                     MinimalIconRenderer.Glyph.SIGNAL,
                     Text.literal(ping >= 0 ? (ping + " ms") : "?").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(pingRgb))),
                     mutedRgb,
-                    pingRgb
+                    pingRgb,
+                    RolesStore.RoleTextStyle.NONE
             ));
         }
 
@@ -152,7 +147,8 @@ public final class StatsHudFeature {
                         Text.literal(fmt1(tpsNow)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
                                 .append(Text.literal(" now").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
                         mutedRgb,
-                        tpsRgb
+                        tpsRgb,
+                        RolesStore.RoleTextStyle.NONE
                 ));
             }
             if (cfg.statsShowTps5m) {
@@ -163,7 +159,8 @@ public final class StatsHudFeature {
                         Text.literal(fmt1(tps5)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
                                 .append(Text.literal(" 5m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
                         mutedRgb,
-                        tpsRgb
+                        tpsRgb,
+                        RolesStore.RoleTextStyle.NONE
                 ));
             }
             if (cfg.statsShowTps10m) {
@@ -174,7 +171,8 @@ public final class StatsHudFeature {
                         Text.literal(fmt1(tps10)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
                                 .append(Text.literal(" 10m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
                         mutedRgb,
-                        tpsRgb
+                        tpsRgb,
+                        RolesStore.RoleTextStyle.NONE
                 ));
             }
             if (cfg.statsShowTps15m) {
@@ -185,7 +183,8 @@ public final class StatsHudFeature {
                         Text.literal(fmt1(tps15)).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tpsRgb)))
                                 .append(Text.literal(" 15m").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(mutedRgb)))),
                         mutedRgb,
-                        tpsRgb
+                        tpsRgb,
+                        RolesStore.RoleTextStyle.NONE
                 ));
             }
         }
@@ -296,6 +295,10 @@ public final class StatsHudFeature {
         int textY = y + padY + Math.max(0, (contentHeight - mc.textRenderer.fontHeight) / 2);
 
         MinimalIconRenderer.draw(ctx, chip.icon(), x + padX, iconY, iconSize, withAlpha(chip.iconColor(), alpha), withAlpha(chip.accentColor(), alpha));
+        if (chip.roleStyle() != RolesStore.RoleTextStyle.NONE
+                && RoleTextShader.draw(ctx, mc.textRenderer, chip.text().getString(), chip.roleStyle(), textX, textY, alpha)) {
+            return;
+        }
         UiChrome.drawText(ctx, mc.textRenderer, chip.text(), textX, textY, UiChrome.mainTextColor(alpha), false);
     }
 
@@ -340,7 +343,7 @@ public final class StatsHudFeature {
         if (mc == null || mc.textRenderer == null) return 240;
 
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
-        List<ChipItem> chips = buildChips(cfg, "DontiMonti", "MOD", RolesStore.DEFAULT_ROLE_COLOR, 42, 20.0, 19.9, 19.8, 19.7);
+        List<ChipItem> chips = buildChips(cfg, "DontiMonti", RolesStore.getRoleInfoFor("DontiMonti"), 42, 20.0, 19.9, 19.8, 19.7);
         return getPanelWidth(mc, cfg, chips);
     }
 
@@ -348,13 +351,13 @@ public final class StatsHudFeature {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null || mc.textRenderer == null) return 48;
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
-        List<ChipItem> chips = buildChips(cfg, "DontiMonti", "MOD", RolesStore.DEFAULT_ROLE_COLOR, 42, 20.0, 19.9, 19.8, 19.7);
+        List<ChipItem> chips = buildChips(cfg, "DontiMonti", RolesStore.getRoleInfoFor("DontiMonti"), 42, 20.0, 19.9, 19.8, 19.7);
         return getPanelHeight(mc, cfg, chips);
     }
 
     public static void renderPreview(DrawContext ctx, int x, int y) {
         StaffHelperConfig cfg = StaffHelperState.CONFIG != null ? StaffHelperState.CONFIG : new StaffHelperConfig();
-        drawPanel(ctx, x, y, new ChipContent(buildChips(cfg, "DontiMonti", "MOD", RolesStore.DEFAULT_ROLE_COLOR, 42, 20.0, 19.9, 19.8, 19.7)), true);
+        drawPanel(ctx, x, y, new ChipContent(buildChips(cfg, "DontiMonti", RolesStore.getRoleInfoFor("DontiMonti"), 42, 20.0, 19.9, 19.8, 19.7)), true);
     }
 
     private static int getAnimatedPanelWidth(MinecraftClient mc, StaffHelperConfig cfg) {
@@ -489,6 +492,12 @@ public final class StatsHudFeature {
         return Math.max(0.6f, Math.min(2.0f, v));
     }
 
+    private static RolesStore.RoleInfo resolveRoleInfo(String primaryNick, String fallbackNick) {
+        RolesStore.RoleInfo info = RolesStore.getRoleInfoFor(primaryNick);
+        if (info != null) return info;
+        return RolesStore.getRoleInfoFor(fallbackNick);
+    }
+
     private static int normalizeRoleColor(int rgb) {
         if (rgb < 0 || rgb > 0xFFFFFF) return RolesStore.DEFAULT_ROLE_COLOR;
         return rgb;
@@ -504,10 +513,10 @@ public final class StatsHudFeature {
     }
 
     private record ChipContent(List<ChipItem> chips) {}
-    private record ChipItem(String key, MinimalIconRenderer.Glyph icon, Text text, int iconColor, int accentColor) {}
+    private record ChipItem(String key, MinimalIconRenderer.Glyph icon, Text text, int iconColor, int accentColor, RolesStore.RoleTextStyle roleStyle) {}
 
     private static final class AnimatedStatsChip {
-        private ChipItem item = new ChipItem("nick", MinimalIconRenderer.Glyph.PROFILE, Text.literal(""), 0xD9D9E2, 0xD9D9E2);
+        private ChipItem item = new ChipItem("nick", MinimalIconRenderer.Glyph.PROFILE, Text.literal(""), 0xD9D9E2, 0xD9D9E2, RolesStore.RoleTextStyle.NONE);
         private boolean targetVisible = false;
         private float progress = 0.0f;
         private int order = 0;

@@ -33,10 +33,10 @@ public final class RolesStore {
         return ROLES.size();
     }
 
-    private static String normalizeNick(String s) {
-        if (s == null || s.isBlank()) return null;
+    private static String normalizeNick(String value) {
+        if (value == null || value.isBlank()) return null;
 
-        String clean = s.replaceAll("В§.", "").replaceAll("[^A-Za-z0-9_]", "");
+        String clean = value.replaceAll("\u00A7.", "").replaceAll("[^A-Za-z0-9_]", "");
         if (clean.isBlank()) return null;
         return clean.toLowerCase(Locale.ROOT);
     }

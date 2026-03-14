@@ -2,7 +2,6 @@ package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.gui.util.UiChrome;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -76,7 +75,6 @@ public final class VanishFeature {
     }
 
     private static void renderHud(DrawContext ctx, RenderTickCounter tickCounter) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (StaffHelperState.CONFIG == null) return;
         if (!vanishEnabled) return;
 
@@ -101,10 +99,6 @@ public final class VanishFeature {
     }
 
     private static void onChatMessage(String msg) {
-        if (!AllowedUsersAccessGate.isModAllowed()) {
-            vanishEnabled = false;
-            return;
-        }
         if (msg == null || msg.isBlank()) return;
 
         String clean = msg.replaceAll("§.", "");

@@ -13,7 +13,6 @@ public final class NameDecorations {
     }
 
     public static Text withDecorationIfTarget(String profileName, Text base) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return base;
         if (profileName == null || base == null) return base;
 
         NickDecoration d = findDecoration(profileName);
@@ -25,7 +24,6 @@ public final class NameDecorations {
     }
 
     public static Text applyStarsToChat(Text in) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return in;
         if (in == null) return null;
 
         String whole = in.getString();
