@@ -2,7 +2,6 @@ package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.config.StaffHelperConfig;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import com.dmsh.staffhelper.util.DebugLogStore;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.client.MinecraftClient;
@@ -28,7 +27,6 @@ public final class CommandBuilderFeature {
     }
 
     private static String onModifyCommand(String command) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return command;
         StaffHelperConfig cfg = StaffHelperState.CONFIG;
         if (cfg == null || cfg.commandBuilders == null || cfg.commandBuilders.isEmpty()) return command;
 
@@ -64,7 +62,6 @@ public final class CommandBuilderFeature {
     }
 
     public static SuggestData getSuggestData(String text, int cursor) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return null;
         if (text == null || cursor < 0 || cursor > text.length()) return null;
         if (!text.startsWith("/")) return null;
 
@@ -131,7 +128,6 @@ public final class CommandBuilderFeature {
     }
 
     public static boolean isCommandBuilderContext(String text, int cursor) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return false;
         if (text == null || cursor < 0 || cursor > text.length()) return false;
         if (!text.startsWith("/")) return false;
         StaffHelperConfig cfg = StaffHelperState.CONFIG;
@@ -156,7 +152,6 @@ public final class CommandBuilderFeature {
     }
 
     public static boolean applyTabCompletion(TextFieldWidget chatField) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return false;
         if (chatField == null) return false;
         String text = chatField.getText();
         if (text == null || !text.startsWith("/")) return false;

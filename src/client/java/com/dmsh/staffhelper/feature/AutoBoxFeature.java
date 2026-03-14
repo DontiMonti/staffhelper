@@ -1,7 +1,6 @@
 package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
@@ -29,7 +28,6 @@ public final class AutoBoxFeature {
 
     private static void tick(MinecraftClient client) {
         if (sentForCurrentJoin || pendingTicks < 0) return;
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (client == null || client.player == null || client.getNetworkHandler() == null) return;
         if (StaffHelperState.CONFIG == null) return;
 

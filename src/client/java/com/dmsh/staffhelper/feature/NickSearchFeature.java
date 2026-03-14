@@ -3,7 +3,6 @@ package com.dmsh.staffhelper.feature;
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.gui.util.ModernGui;
 import com.dmsh.staffhelper.gui.util.UiChrome;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
@@ -42,11 +41,6 @@ public class NickSearchFeature {
     }
 
     private static void renderHud(DrawContext ctx, RenderTickCounter tickCounter) {
-        if (!AllowedUsersAccessGate.isModAllowed()) {
-            animatedRows.clear();
-            panelProgress = 0.0f;
-            return;
-        }
         if (StaffHelperState.CONFIG == null) return;
 
         MinecraftClient mc = MinecraftClient.getInstance();

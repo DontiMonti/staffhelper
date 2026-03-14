@@ -1,7 +1,6 @@
 package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.config.ConfigSecretCodec;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -121,8 +120,6 @@ public final class StaffStatsFeature {
 
     private static void onMessage(String message) {
         synchronized (LOCK) {
-            if (!AllowedUsersAccessGate.isModAllowed()) return;
-
             String username = currentUsername(MinecraftClient.getInstance());
             if (username.isEmpty()) return;
 
@@ -194,8 +191,7 @@ public final class StaffStatsFeature {
         return client != null
                 && client.player != null
                 && client.world != null
-                && client.getNetworkHandler() != null
-                && AllowedUsersAccessGate.isModAllowed();
+                && client.getNetworkHandler() != null;
     }
 
     private static String currentUsername(MinecraftClient client) {

@@ -2,7 +2,6 @@ package com.dmsh.staffhelper.feature;
 
 import com.dmsh.staffhelper.StaffHelperState;
 import com.dmsh.staffhelper.gui.util.UiChrome;
-import com.dmsh.staffhelper.util.AllowedUsersAccessGate;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
@@ -85,7 +84,6 @@ public final class AfkZoneFeature {
     }
 
     public static void copyToClipboardAndClear() {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null) return;
 
@@ -100,7 +98,6 @@ public final class AfkZoneFeature {
     }
 
     public static void startAltsCheck() {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc == null || mc.player == null || mc.world == null) return;
         if (StaffHelperState.CONFIG == null) return;
@@ -265,10 +262,6 @@ public final class AfkZoneFeature {
     }
 
     private static void tickUpdate(MinecraftClient client) {
-        if (!AllowedUsersAccessGate.isModAllowed()) {
-            clearAllTrackingState();
-            return;
-        }
         if (StaffHelperState.CONFIG == null) return;
 
         tickAltsCheck(client);
@@ -355,7 +348,6 @@ public final class AfkZoneFeature {
     }
 
     private static void onChatMessage(String msg) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (msg == null || msg.isBlank()) return;
 
         String cleanMsg = stripFormattingCodes(msg);
@@ -495,7 +487,6 @@ public final class AfkZoneFeature {
     }
 
     private static void renderHud(DrawContext ctx, RenderTickCounter tickCounter) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (StaffHelperState.CONFIG == null) return;
         long now = System.currentTimeMillis();
         boolean forceShow = altsCheckRunning || now < showWidgetUntilMs;
@@ -651,7 +642,6 @@ public final class AfkZoneFeature {
     }
 
     private static void renderZone(MatrixStack matrices, Vec3d cameraPos, VertexConsumerProvider consumers) {
-        if (!AllowedUsersAccessGate.isModAllowed()) return;
         if (StaffHelperState.CONFIG == null) return;
         if (!StaffHelperState.CONFIG.afkZoneEnabled) return;
 
